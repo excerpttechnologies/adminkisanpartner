@@ -1,0 +1,12 @@
+import connectDB from "@/app/lib/Db";
+import Requirement from "@/app/models/Requirement";
+import User from "@/app/models/User";
+import { NextResponse } from "next/server";
+
+export async function GET(req:Request) {
+       await connectDB()
+      const require=await Requi.find({})
+       return NextResponse.json({
+         require
+       })
+}

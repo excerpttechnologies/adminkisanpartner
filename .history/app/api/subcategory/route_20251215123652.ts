@@ -1,0 +1,11 @@
+import connectDB from "@/app/lib/Db";
+import { NextRequest } from "next/server";
+
+
+export async function GET(req:NextRequest){
+   try {
+    await connectDB()
+   } catch (error) {
+     
+   }
+}
