@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
-     console.log(body)
+    // console.log(body)
     const posting = await Posting.create(body);
 
     return NextResponse.json({ success: true, data: posting });
@@ -41,6 +41,8 @@ export async function GET(req: NextRequest) {
         { item: { $regex: search, $options: "i" } },
         { category: { $regex: search, $options: "i" } },
         { "postedBy.name": { $regex: search, $options: "i" } },
+         { "postedBy.mobile": { $regex: search, $options: "i" } },
+         { acres: { $regex: search, $options: "i" } },
       ];
     }
 

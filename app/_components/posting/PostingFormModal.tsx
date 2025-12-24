@@ -6,11 +6,19 @@ import { FaTimes } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
+///////category type/////////////
+type Cat={
+  _id: string,
+categoryName: string,
+categoryId: string,
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
   defaultData?: any;
+  categories:Cat[]
 }
 
 const modalStyle = {
@@ -32,6 +40,7 @@ export default function PostingFormModal({
   onClose,
   onSubmit,
   defaultData,
+  categories
 }: Props) {
   const [form, setForm] = useState({
     date: defaultData?.date ? new Date(defaultData.date) : new Date(),
@@ -113,19 +122,7 @@ export default function PostingFormModal({
     });
   };
 
-  // Available categories
-  const categories = [
-    "Vegetables",
-    "Fruits",
-    "Grains",
-    "Spices",
-    "Pulses",
-    "Oil Seeds",
-    "Fiber Crops",
-    "Sugarcane",
-    "Medicinal Plants",
-    "Other"
-  ];
+ 
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -183,8 +180,8 @@ export default function PostingFormModal({
                 <em>Select a category</em>
               </MenuItem>
               {categories.map((cat) => (
-                <MenuItem key={cat} value={cat}>
-                  {cat}
+                <MenuItem key={cat._id} value={cat.categoryName}>
+                  {cat.categoryName}
                 </MenuItem>
               ))}
             </Select>

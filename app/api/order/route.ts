@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const total = await Order.countDocuments(filter);
+    const totalPages = Math.ceil(total / limit);
 
     const data = await Order.find(filter)
       .populate("farmer", "name")
@@ -56,6 +57,7 @@ export async function GET(req: NextRequest) {
       page,
       limit,
       total,
+      totalPages, // Added this line
       data,
     });
   } catch (error) {

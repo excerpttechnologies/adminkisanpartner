@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>
+      <body cz-shortcut-listen="true">
         <div className="flex h-screen text-black overflow-hidden">
           {/* Sidebar */}
           <Sidebar />

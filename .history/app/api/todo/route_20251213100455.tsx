@@ -1,5 +1,0 @@
-
-
-function GET(req,res){
-
-}

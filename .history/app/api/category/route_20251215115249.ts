@@ -1,9 +1,0 @@
-
-
-export async function GET(){
-    try {
-        
-    } catch (err) {
-        console.log(err)
-    }
-}

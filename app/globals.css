@@ -45,3 +45,14 @@ body {
 .btn-secondary {
   @apply px-4 py-2 border rounded-lg;
 }
+/* If you set width, add: */
+img {
+  width: 100px;
+  height: auto;
+}
+
+/* If you set height, add: */
+img {
+  height: 100px;
+  width: auto;
+}
