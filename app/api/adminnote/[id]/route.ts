@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '../../../lib/Db';
+import connectDB  from '../../../lib/Db';
 import AdminNote from '../../../models/adminnote';
 import { writeFile, unlink, mkdir } from 'fs/promises';
 import path from 'path';

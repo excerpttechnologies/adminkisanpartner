@@ -7,11 +7,12 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const body = await req.json();
-    // console.log(body)
-    const posting = await Posting.create(body);
 
-    return NextResponse.json({ success: true, data: posting });
+    const crop = await Posting.create(body);
+
+    return NextResponse.json({ success: true, data: crop });
   } catch (error) {
+    console.error(error);
     return NextResponse.json(
       { success: false, message: "Create failed" },
       { status: 500 }
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
 }
 
 /* ================= GET (LIST) ================= */
+/* ================= GET (LIST with SEARCH) ================= */
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -27,33 +29,38 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
-    const category = searchParams.get("category") || "";
     const page = Number(searchParams.get("page")) || 1;
     const limit = Number(searchParams.get("limit")) || 10;
+    const farmingType = searchParams.get("farmingType") || "";
+    const seedType = searchParams.get("seedType") || "";
 
     const filter: any = {};
 
-    // Search filter
     if (search) {
       filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { item: { $regex: search, $options: "i" } },
-        { category: { $regex: search, $options: "i" } },
-        { "postedBy.name": { $regex: search, $options: "i" } },
-         { "postedBy.mobile": { $regex: search, $options: "i" } },
-         { acres: { $regex: search, $options: "i" } },
+        { farmingType: { $regex: search, $options: "i" } },
+        { seedType: { $regex: search, $options: "i" } },
+        { farmerId: { $regex: search, $options: "i" } },
+        { trackingId: { $regex: search, $options: "i" } },
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: "$acres" },
+              regex: search,
+            },
+          },
+        },
       ];
     }
 
-    // Status filter
-    if (status) {
-      filter.status = status;
+    // Add farming type filter if provided
+    if (farmingType) {
+      filter.farmingType = farmingType;
     }
 
-    // Category filter
-    if (category) {
-      filter.category = category;
+    // Add seed type filter if provided
+    if (seedType) {
+      filter.seedType = seedType;
     }
 
     const total = await Posting.countDocuments(filter);
@@ -71,7 +78,7 @@ export async function GET(req: NextRequest) {
       data,
     });
   } catch (error) {
-    console.error("Error fetching postings:", error);
+    console.error("Error fetching crops:", error);
     return NextResponse.json(
       { success: false, message: "Fetch failed" },
       { status: 500 }

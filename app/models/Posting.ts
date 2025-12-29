@@ -1,55 +1,59 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-export interface IPosting extends Document {
-  date: Date;
-  title: string;
-  category: string;
-  item: string;
-  seedType: "Seed" | "undefined";
-  acres: string;
-  postedBy: {
-    name: string;
-    mobile: string;
-  };
-  status: "Pending" | "Approved" | "Rejected";
+export interface ICrop extends Document {
+  farmingType: "organic" | "natural" | "hydroponic" | "inorganic";
+  seedType: "gmo" | "hybrid" | "heirloom" | "local";
+  acres: number;
+  sowingDate: Date;
+  farmerId: string;
+  trackingId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const PostingSchema: Schema<IPosting> = new Schema(
+const CropSchema: Schema<ICrop> = new Schema(
   {
-    date: { type: Date, required: true },
-
-    title: { type: String, required: true },
-
-    category: { type: String, required: true },
-
-    item: { type: String, required: true },
+    farmingType: {
+      type: String,
+      enum: ["organic", "natural", "hydroponic", "inorganic"],
+      required: true,
+    },
 
     seedType: {
       type: String,
-      enum: ["Seed", "undefined"],
-      default: "undefined",
+      enum: ["gmo", "hybrid", "heirloom", "local"],
+      required: true,
     },
 
-    acres: { type: String, required: true },
-
-    postedBy: {
-      name: { type: String, required: true },
-      mobile: { type: String, required: true },
+    acres: {
+      type: Number,
+      required: true,
     },
 
-    status: {
+    sowingDate: {
+      type: Date,
+      required: true,
+    },
+
+    farmerId: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected"],
-      default: "Pending",
+      required: true,
+      index: true,
+    },
+
+    trackingId: {
+      type: String,
+      required: true,
+      index: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    collection: "crops", // ✅ USE EXISTING COLLECTION
+  }
 );
 
-const Posting: Model<IPosting> =
-  mongoose.models.Posting ||
-  mongoose.model<IPosting>("Posting", PostingSchema);
+const Posting: Model<ICrop> =
+  mongoose.models.Crop || mongoose.model<ICrop>("Crop", CropSchema);
 
 export default Posting;

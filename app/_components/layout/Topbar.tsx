@@ -16,15 +16,11 @@ const Topbar = () => {
         /> <h1 className="text-green-600 font-bold">Kisan Partner</h1>
       </div>
 
-      {/* Right */}
-      <div className="flex items-center gap-4">
-        {/* <MdNotifications size={22} className="text-gray-600 cursor-pointer" /> */}
-        <div className="h-9 w-9 rounded-full bg-green-500 text-white flex items-center justify-center">
-          A
-        </div>
-      </div>
+   
     </header>
   );
 };
 
 export default Topbar;
+
+

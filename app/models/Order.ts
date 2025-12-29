@@ -1,55 +1,40 @@
-import { Schema, model, models } from "mongoose";
+// import mongoose, { Schema, Document, Model } from "mongoose";
+
+// export interface IOrder extends Document {}
+
+// const OrderSchema = new Schema({}, {
+//   timestamps: true,
+//   strict: false,          // ✅ accept any structure
+//   collection: "orders",   // ✅ existing collection
+// });
+
+// const Order: Model<IOrder> =
+//   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
+
+// export default Order;
+
+
+
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+import mongoose, { Schema, Document, Model } from "mongoose";
+
+export interface IOrder extends Document {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const OrderSchema = new Schema(
+  {},
   {
-    orderId: {
-      type: String,
-    },
-    cropDetail: {
-      cropName: String,
-      category: String,
-    },
-    farmer: {
-      type: String,
-    },
-    trader: {
-      type: String,
-    },
-    status: {
-      admin: {
-        type: String,
-        enum: ["Pending", "Approved", "Rejected"],
-        default: "Pending",
-      },
-      farmer: {
-        type: String,
-        enum: ["Pending", "Agreed"],
-        default: "Pending",
-      },
-    },
-    delivery: {
-      date: Date,
-      time: String,
-    },
-    payment: {
-      status: {
-        type: String,
-        enum: ["Pending", "Paid"],
-        default: "Pending",
-      },
-      paymentId: String,
-      payDate: Date,
-      slip: String,
-    },
-    bid: {
-      price: Number,
-      quantity: Number,
-    },
-  },
-  {
-    strict: false,
     timestamps: true,
+    strict: false,        // allow any fields
+    collection: "orders", // existing collection
   }
 );
 
-export default models.orders || model("orders", OrderSchema);
+const Order: Model<IOrder> =
+  mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
+
+export default Order;

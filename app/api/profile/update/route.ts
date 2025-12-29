@@ -1,86 +1,61 @@
-import { NextResponse } from "next/server";
-import connectDB from "@/app/lib/Db";
-import User from "@/app/models/User";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from 'next/server';
+import  connectDB  from '@/app/lib/Db';
+import Profile from '@/app/models/Profile';
+import bcrypt from 'bcryptjs';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-/* ================= UPDATE PROFILE ================= */
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
+    
+    const { fullName, password, email } = await request.json();
 
-    // 🔐 READ TOKEN FROM COOKIE
-    const cookie = req.headers.get("cookie");
-    if (!cookie) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
+    // For testing - hardcode email or get from session
+    const userEmail = email || 'test@example.com'; // Change this
+
+    // Find or create profile for testing
+    let profile = await Profile.findOne({ email: userEmail });
+    
+    if (!profile) {
+      // Create a test profile if doesn't exist
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password || 'Test@123', salt);
+      
+      profile = new Profile({
+        fullName: fullName || 'Test User',
+        email: userEmail,
+        password: hashedPassword
+      });
+    } else {
+      // Update existing profile
+      profile.fullName = fullName || profile.fullName;
+      
+      if (password && password.trim() !== '') {
+        const salt = await bcrypt.genSalt(10);
+        profile.password = await bcrypt.hash(password, salt);
+      }
     }
 
-    const token = cookie
-      .split("; ")
-      .find((c) => c.startsWith("token="))
-      ?.split("=")[1];
-
-    if (!token) {
-      return NextResponse.json(
-        { message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // 🔓 VERIFY TOKEN
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: string;
-    };
-
-    const { fullName, password } = await req.json();
-
-    if (!fullName || !fullName.trim()) {
-      return NextResponse.json(
-        { message: "Full Name is required" },
-        { status: 400 }
-      );
-    }
-
-  const updateData: Partial<{
-  fullName: string;
-  password: string;
-}> = {
-  fullName: fullName.trim(),
-};
-
-
-    // 🔑 Update password only if provided
-    if (password && password.trim().length >= 6) {
-      updateData.password = await bcrypt.hash(password, 10);
-    }
-
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      updateData,
-      { new: true }
-    );
-
-    if (!user) {
-      return NextResponse.json(
-        { message: "User not found" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Profile updated successfully",
-    });
-  } catch (error) {
-    console.error("PROFILE UPDATE ERROR:", error);
+    await profile.save();
 
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { 
+        message: 'Profile updated successfully',
+        profile: {
+          fullName: profile.fullName,
+          email: profile.email,
+          updatedAt: profile.updatedAt
+        }
+      },
+      { status: 200 }
+    );
+
+  } catch (error: any) {
+    console.error('Profile update error:', error);
+    return NextResponse.json(
+      { 
+        message: error.message || 'Internal server error',
+        error: error.message 
+      },
       { status: 500 }
     );
   }

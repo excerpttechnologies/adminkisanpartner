@@ -58,10 +58,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const state = await State.create({ name });
-    return NextResponse.json(state, { status: 201 });
+    return NextResponse.json({
+      success:true,
+      message:"success",
+      state
+    }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message },
+      {
+        success:false,
+         message: error.message },
       { status: 400 }
     );
   }

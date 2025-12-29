@@ -8,17 +8,18 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
-const {id}=await params
-  const posting = await Posting.findById(id);
+  const { id } = await params;
 
-  if (!posting) {
+  const crop = await Posting.findById(id);
+
+  if (!crop) {
     return NextResponse.json(
       { success: false, message: "Not found" },
       { status: 404 }
     );
   }
 
-  return NextResponse.json({ success: true, data: posting });
+  return NextResponse.json({ success: true, data: crop });
 }
 
 /* ================= UPDATE ================= */
@@ -28,12 +29,12 @@ export async function PUT(
 ) {
   await connectDB();
   const body = await req.json();
-  const {id}=await params
-  const updated = await Posting.findByIdAndUpdate(
-    id,
-    body,
-    { new: true }
-  );
+  const { id } = await params;
+
+  const updated = await Posting.findByIdAndUpdate(id, body, {
+    new: true,
+    runValidators: true,
+  });
 
   if (!updated) {
     return NextResponse.json(
@@ -51,8 +52,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   await connectDB();
-
-  const {id}=await params
+  const { id } = await params;
 
   await Posting.findByIdAndDelete(id);
 

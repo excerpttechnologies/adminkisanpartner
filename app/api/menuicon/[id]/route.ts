@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '../../../lib/Db';
+import  connectDB  from '../../../lib/Db';
 import AdminMenuIcon from '../../../models/adminmenuicon';
 
 // GET - Fetch single menu icon by ID
