@@ -436,19 +436,15 @@ export default function DashboardPage() {
       </div>
 
       {/* ===== CHART SECTION ===== */}
+       {/* ===== CHART SECTION ===== */}
       <div className="flex w-full lg:flex-row gap-x-2 gap-y-3 flex-col">
         <div className="lg:w-[55vw] w-full">
-          <BarChartBox />
+          <BarChartBox data={dashboard?.monthlyCropPostings?dashboard?.monthlyCropPostings:[]}  year={dashboard?.year}/>
         </div>
 
         <div className="flex-col lg:w-[30vw] gap-y-3 flex">
-          <LineChartBox
-            data={dashboard?.orderTrends || []}
-            year={dashboard?.year}
-          />
-          <PieChartBox
-            data={dashboard?.postingCategoryDistribution || []}
-          />
+          <LineChartBox data={dashboard?.orderTrends?dashboard.orderTrends : []} year={dashboard?.year}/>
+          <PieChartBox data={dashboard?.categoryDistribution?dashboard.categoryDistribution:[]} />
         </div>
       </div>
 
