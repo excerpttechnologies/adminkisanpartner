@@ -59,7 +59,7 @@ export default function PieChartBox({data}:{data:{name:string,value:number}[]}) 
   return (
     <div className="bg-white border border-zinc-200 rounded p-2 shadow">
       <h3 className="font-semibold text-gray-800 mb-4">Crop Farming Type Distribution</h3>
-      <ResponsiveContainer width="100%" height={166}>
+      <ResponsiveContainer width="100%" height={180}>
         <PieChart>
           <Pie data={data} dataKey="value" innerRadius={60} outerRadius={90}>
             {data.map((_, i) => (

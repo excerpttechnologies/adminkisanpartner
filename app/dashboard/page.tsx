@@ -362,7 +362,7 @@ export default function DashboardPage() {
     <div className="p-2 bg-gray-50 min-h-[90vh] space-y-3">
 
       {/* ===== METRIC CARDS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
         <DashboardCard
           title="Total Farmers"
@@ -442,7 +442,7 @@ export default function DashboardPage() {
           <BarChartBox data={dashboard?.monthlyCropPostings?dashboard?.monthlyCropPostings:[]}  year={dashboard?.year}/>
         </div>
 
-        <div className="flex-col lg:w-[30vw] gap-y-3 flex">
+        <div className="flex-col lg:w-[30vw] gap-y-1 flex">
           <LineChartBox data={dashboard?.orderTrends?dashboard.orderTrends : []} year={dashboard?.year}/>
           <PieChartBox data={dashboard?.categoryDistribution?dashboard.categoryDistribution:[]} />
         </div>
