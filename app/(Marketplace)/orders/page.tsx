@@ -1,10 +1,14 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import OrderEditModal from '../OrderEditModal/page';
 
 
-
-
-"use client"
-
-import React, { useEffect, useState } from "react";
+declare global {
+  interface Window {
+    openEditOrderModal?: (orderId: string) => void;
+  }
+}
 
 interface MarketDetails {
   marketName: string;
@@ -63,68 +67,6 @@ interface TransporterDetails {
   verifiedAt?: string;
 }
 
-// Dynamic Invoice Interfaces
-interface InvoiceSettings {
-  companyName: string;
-  companyAddress: string;
-  companyPhone: string;
-  companyEmail: string;
-  termsConditions: string[];
-  gstNumber?: string;
-  panNumber?: string;
-}
-
-interface ProductGradeInfo {
-  grade: string;
-  basePrice: number;
-  appreciationRate?: number;
-  depreciationRate?: number;
-}
-
-interface FeeStructure {
-  processingFarmerPercent: number;
-  processingTraderPercent: number;
-  laborFarmer: number;
-  laborTrader: number;
-  transportFarmer: number;
-  transportTrader: number;
-  advancePercentage: number;
-}
-
-interface InvoiceProduct {
-  grade: string;
-  quantity: number;
-  price: number;
-  total: number;
-  depreciation?: number;
-  appreciation?: number;
-}
-
-interface InvoiceData {
-  farmer: {
-    products: InvoiceProduct[];
-    totalQuantity: number;
-    processingFees: { farmer: number; trader: number };
-    labor: { farmer: number; trader: number };
-    transport: { farmer: number; trader: number };
-    advance: number;
-    finalAmount: number;
-    gstAmount: number;
-    netAmount: number;
-  };
-  trader: {
-    products: InvoiceProduct[];
-    totalQuantity: number;
-    processingFees: { farmer: number; trader: number };
-    labor: { farmer: number; trader: number };
-    transport: { farmer: number; trader: number };
-    advance: number;
-    finalAmount: number;
-    gstAmount: number;
-    netAmount: number;
-  };
-}
-
 interface Order {
   _id: string;
   orderId: string;
@@ -150,6 +92,7 @@ const AdminOrders: React.FC = () => {
   const [transporterStatusFilter, setTransporterStatusFilter] = useState<string>('');
   const [searchInput, setSearchInput] = useState<string>('');
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [verificationData, setVerificationData] = useState({
     transporterReached: false,
     goodsConditionCorrect: false,
@@ -157,59 +100,10 @@ const AdminOrders: React.FC = () => {
     adminNotes: '',
   });
 
-  // Dynamic data states
-  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
-    companyName: '',
-    companyAddress: '',
-    companyPhone: '',
-    companyEmail: '',
-    termsConditions: []
-  });
-  const [productGrades, setProductGrades] = useState<ProductGradeInfo[]>([]);
-  const [feeStructure, setFeeStructure] = useState<FeeStructure>({
-    processingFarmerPercent: 0,
-    processingTraderPercent: 0,
-    laborFarmer: 0,
-    laborTrader: 0,
-    transportFarmer: 0,
-    transportTrader: 0,
-    advancePercentage: 0
-  });
-
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [showInvoiceModal, setShowInvoiceModal] = useState<boolean>(false);
-  const [invoiceType, setInvoiceType] = useState<'farmer' | 'trader'>('farmer');
-  const [invoiceData, setInvoiceData] = useState<InvoiceData>({
-    farmer: {
-      products: [],
-      totalQuantity: 0,
-      processingFees: { farmer: 0, trader: 0 },
-      labor: { farmer: 0, trader: 0 },
-      transport: { farmer: 0, trader: 0 },
-      advance: 0,
-      finalAmount: 0,
-      gstAmount: 0,
-      netAmount: 0
-    },
-    trader: {
-      products: [],
-      totalQuantity: 0,
-      processingFees: { farmer: 0, trader: 0 },
-      labor: { farmer: 0, trader: 0 },
-      transport: { farmer: 0, trader: 0 },
-      advance: 0,
-      finalAmount: 0,
-      gstAmount: 0,
-      netAmount: 0
-    }
-  });
-  const [editingInvoice, setEditingInvoice] = useState<boolean>(false);
-
   const API_BASE = 'https://kisan.etpl.ai/api/admin';
 
   useEffect(() => {
     fetchOrders();
-    fetchDynamicData();
   }, []);
 
   const fetchOrders = async () => {
@@ -236,55 +130,6 @@ const AdminOrders: React.FC = () => {
     }
   };
 
-  const fetchDynamicData = async () => {
-    try {
-      // Fetch invoice settings
-      const settingsRes = await fetch(`${API_BASE}/settings/invoice`);
-      const settingsData = await settingsRes.json();
-      if (settingsData.success) {
-        setInvoiceSettings(settingsData.data);
-      }
-
-      // Fetch product grades with prices
-      const gradesRes = await fetch(`${API_BASE}/products/grades`);
-      const gradesData = await gradesRes.json();
-      if (gradesData.success) {
-        setProductGrades(gradesData.data);
-      }
-
-      // Fetch fee structure
-      const feesRes = await fetch(`${API_BASE}/settings/fees`);
-      const feesData = await feesRes.json();
-      if (feesData.success) {
-        setFeeStructure(feesData.data);
-      }
-    } catch (error) {
-      console.error('Error fetching dynamic data:', error);
-      // Set fallback data if API fails
-      setInvoiceSettings({
-        companyName: 'AGRI TRADING COMPANY',
-        companyAddress: '123 Market Street, Agricultural District, Pin: 560001',
-        companyPhone: '+91 9876543210',
-        companyEmail: 'info@agritrading.com',
-        termsConditions: [
-          'Payment due within 30 days',
-          'Late payment interest @ 1.5% per month',
-          'All disputes subject to jurisdiction'
-        ],
-        gstNumber: 'GSTIN123456789',
-        panNumber: 'ABCDE1234F'
-      });
-
-      setProductGrades([
-        { grade: 'A Grade', basePrice: 100, appreciationRate: 5 },
-        { grade: 'B Grade', basePrice: 80, appreciationRate: 3 },
-        { grade: 'C Grade', basePrice: 60, depreciationRate: 2 },
-        { grade: 'D Grade', basePrice: 40, depreciationRate: 5 },
-        { grade: 'All Mix', basePrice: 70 }
-      ]);
-    }
-  };
-
   const openDetailsModal = (order: Order) => {
     setCurrentOrder(order);
     setVerificationData({
@@ -298,306 +143,6 @@ const AdminOrders: React.FC = () => {
 
   const closeModal = () => {
     setShowModal(false);
-  };
-
-  const closeInvoiceModal = () => {
-    setShowInvoiceModal(false);
-    setEditingInvoice(false);
-  };
-
-  const calculateDepreciationAppreciation = (grade: string, baseAmount: number) => {
-    const gradeInfo = productGrades.find(g => g.grade === grade);
-    if (!gradeInfo) return { depreciation: 0, appreciation: 0 };
-
-    const depreciation = gradeInfo.depreciationRate
-      ? (baseAmount * gradeInfo.depreciationRate) / 100
-      : 0;
-    const appreciation = gradeInfo.appreciationRate
-      ? (baseAmount * gradeInfo.appreciationRate) / 100
-      : 0;
-
-    return { depreciation, appreciation };
-  };
-
-  const initializeInvoiceData = (order: Order) => {
-    const products: InvoiceProduct[] = [];
-    let totalQuantity = 0;
-
-    // Group products by grade from actual order data
-    const gradeGroups = order.productItems.reduce((acc, item) => {
-      if (!acc[item.grade]) {
-        acc[item.grade] = {
-          quantity: 0,
-          total: 0,
-          pricePerUnit: item.pricePerUnit,
-          grade: item.grade
-        };
-      }
-      acc[item.grade].quantity += item.quantity;
-      acc[item.grade].total += item.totalAmount;
-      totalQuantity += item.quantity;
-      return acc;
-    }, {} as Record<string, { quantity: number; total: number; pricePerUnit: number; grade: string }>);
-
-    // Create invoice products with dynamic calculations
-    Object.entries(gradeGroups).forEach(([grade, data]) => {
-      const { depreciation, appreciation } = calculateDepreciationAppreciation(grade, data.total);
-
-      products.push({
-        grade,
-        quantity: data.quantity,
-        price: data.pricePerUnit,
-        total: data.total,
-        depreciation,
-        appreciation
-      });
-    });
-
-    // Sort by grade
-    const gradeOrder = ['A Grade', 'B Grade', 'C Grade', 'D Grade', 'All Mix'];
-    products.sort((a, b) => gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade));
-
-    // Calculate base amount from products
-    const productsTotal = products.reduce((sum, p) => {
-      return sum + p.total + (p.appreciation || 0) - (p.depreciation || 0);
-    }, 0);
-
-    // Calculate advance based on percentage from feeStructure
-    const advanceAmount = productsTotal * (feeStructure.advancePercentage / 100);
-
-    // Calculate processing fees
-    const processingFarmerAmount = productsTotal * (feeStructure.processingFarmerPercent / 100);
-    const processingTraderAmount = productsTotal * (feeStructure.processingTraderPercent / 100);
-
-    // Calculate GST (assuming 18%)
-    const gstRate = 0.18;
-    const taxableAmount = productsTotal + processingFarmerAmount + processingTraderAmount +
-      feeStructure.laborFarmer + feeStructure.laborTrader +
-      feeStructure.transportFarmer + feeStructure.transportTrader;
-    const gstAmount = taxableAmount * gstRate;
-
-    // Calculate net amount
-    const netAmount = taxableAmount + gstAmount;
-
-    const newInvoiceData: InvoiceData = {
-      farmer: {
-        products: [...products],
-        totalQuantity,
-        processingFees: {
-          farmer: processingFarmerAmount,
-          trader: processingTraderAmount
-        },
-        labor: {
-          farmer: feeStructure.laborFarmer,
-          trader: feeStructure.laborTrader
-        },
-        transport: {
-          farmer: feeStructure.transportFarmer,
-          trader: feeStructure.transportTrader
-        },
-        advance: advanceAmount,
-        finalAmount: netAmount - advanceAmount,
-        gstAmount,
-        netAmount
-      },
-      trader: {
-        products: [...products],
-        totalQuantity,
-        processingFees: {
-          farmer: processingFarmerAmount,
-          trader: processingTraderAmount
-        },
-        labor: {
-          farmer: feeStructure.laborFarmer,
-          trader: feeStructure.laborTrader
-        },
-        transport: {
-          farmer: feeStructure.transportFarmer,
-          trader: feeStructure.transportTrader
-        },
-        advance: advanceAmount,
-        finalAmount: netAmount + advanceAmount,
-        gstAmount,
-        netAmount
-      }
-    };
-
-    setInvoiceData(newInvoiceData);
-  };
-
-  const openInvoiceModal = (order: Order, type: 'farmer' | 'trader') => {
-    setCurrentOrder(order);
-    setInvoiceType(type);
-    initializeInvoiceData(order);
-    setShowInvoiceModal(true);
-  };
-
-  const handleInvoiceChange = (field: string, value: any, subField?: string) => {
-    setInvoiceData(prev => {
-      const newData = { ...prev };
-
-      if (field.includes('.')) {
-        const [main, sub] = field.split('.');
-        if (main === 'farmer' || main === 'trader') {
-          if (subField) {
-            (newData[main] as any)[sub][subField] = value;
-          } else {
-            (newData[main] as any)[sub] = value;
-          }
-        }
-      } else {
-        if (subField) {
-          (newData[invoiceType] as any)[field][subField] = value;
-        } else {
-          (newData[invoiceType] as any)[field] = value;
-        }
-      }
-
-      // Recalculate final amount
-      const productsTotal = newData[invoiceType].products.reduce((sum: number, p: InvoiceProduct) => {
-        return sum + p.total + (p.appreciation || 0) - (p.depreciation || 0);
-      }, 0);
-
-      const feesTotal =
-        (newData[invoiceType].processingFees.farmer || 0) +
-        (newData[invoiceType].processingFees.trader || 0) +
-        (newData[invoiceType].labor.farmer || 0) +
-        (newData[invoiceType].labor.trader || 0) +
-        (newData[invoiceType].transport.farmer || 0) +
-        (newData[invoiceType].transport.trader || 0);
-
-      // Recalculate GST and net amount
-      const gstRate = 0.18;
-      const taxableAmount = productsTotal + feesTotal;
-      const gstAmount = taxableAmount * gstRate;
-      const netAmount = taxableAmount + gstAmount;
-
-      newData[invoiceType].gstAmount = gstAmount;
-      newData[invoiceType].netAmount = netAmount;
-
-      if (invoiceType === 'farmer') {
-        newData[invoiceType].finalAmount = netAmount - newData[invoiceType].advance;
-      } else {
-        newData[invoiceType].finalAmount = netAmount + newData[invoiceType].advance;
-      }
-
-      return newData;
-    });
-  };
-
-  const handleProductChange = (index: number, field: keyof InvoiceProduct, value: number) => {
-    setInvoiceData(prev => {
-      const newData = { ...prev };
-      const product = newData[invoiceType].products[index];
-
-      if (field === 'price' || field === 'quantity') {
-        (product as any)[field] = value;
-        product.total = product.price * product.quantity;
-
-        // Recalculate depreciation/appreciation based on new total
-        const { depreciation, appreciation } = calculateDepreciationAppreciation(product.grade, product.total);
-        product.depreciation = depreciation;
-        product.appreciation = appreciation;
-      } else if (field === 'depreciation' || field === 'appreciation') {
-        (product as any)[field] = value;
-      }
-
-      // Recalculate all amounts
-      const productsTotal = newData[invoiceType].products.reduce((sum, p) => {
-        return sum + p.total + (p.appreciation || 0) - (p.depreciation || 0);
-      }, 0);
-
-      const feesTotal =
-        (newData[invoiceType].processingFees.farmer || 0) +
-        (newData[invoiceType].processingFees.trader || 0) +
-        (newData[invoiceType].labor.farmer || 0) +
-        (newData[invoiceType].labor.trader || 0) +
-        (newData[invoiceType].transport.farmer || 0) +
-        (newData[invoiceType].transport.trader || 0);
-
-      const gstRate = 0.18;
-      const taxableAmount = productsTotal + feesTotal;
-      const gstAmount = taxableAmount * gstRate;
-      const netAmount = taxableAmount + gstAmount;
-
-      newData[invoiceType].gstAmount = gstAmount;
-      newData[invoiceType].netAmount = netAmount;
-
-      if (invoiceType === 'farmer') {
-        newData[invoiceType].finalAmount = netAmount - newData[invoiceType].advance;
-      } else {
-        newData[invoiceType].finalAmount = netAmount + newData[invoiceType].advance;
-      }
-
-      return newData;
-    });
-  };
-
-  const saveInvoice = async () => {
-    if (!currentOrder) return;
-
-    try {
-      const response = await fetch(`${API_BASE}/orders/${currentOrder.orderId}/invoice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          invoiceType,
-          invoiceData: invoiceData[invoiceType],
-          updatedBy: localStorage.getItem('adminId') || 'admin-001',
-          timestamp: new Date().toISOString()
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert('Invoice saved successfully!');
-        closeInvoiceModal();
-      } else {
-        alert('Failed to save invoice: ' + result.message);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error saving invoice');
-    }
-  };
-
-  const generateInvoicePDF = () => {
-    const invoiceContent = document.getElementById('invoice-content');
-    if (invoiceContent) {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Invoice - ${currentOrder?.orderId}</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                .invoice-header { text-align: center; margin-bottom: 30px; }
-                .company-name { font-size: 24px; font-weight: bold; }
-                .invoice-title { background: #f0f0f0; padding: 10px; margin: 20px 0; }
-                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f2f2f2; }
-                .total-section { margin-top: 30px; text-align: right; }
-                .footer { margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; }
-                @media print {
-                  .no-print { display: none; }
-                }
-              </style>
-            </head>
-            <body>
-              ${invoiceContent.innerHTML}
-              <div class="no-print" style="margin-top: 20px;">
-                <button onclick="window.print()">Print Invoice</button>
-                <button onclick="window.close()">Close</button>
-              </div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      }
-    }
   };
 
   const saveVerification = async () => {
@@ -626,7 +171,7 @@ const AdminOrders: React.FC = () => {
 
       if (result.success) {
         alert('Verification updated successfully!');
-        closeModal();
+        setShowModal(false);
         fetchOrders();
       } else {
         alert('Failed to update verification: ' + result.message);
@@ -637,45 +182,633 @@ const AdminOrders: React.FC = () => {
     }
   };
 
-  const getStatusBadgeStyle = (status: string) => {
-    const statusColors: { [key: string]: React.CSSProperties } = {
-      pending: { backgroundColor: '#ffc107', color: '#000' },
-      processing: { backgroundColor: '#0dcaf0', color: '#000' },
-      in_transit: { backgroundColor: '#0d6efd', color: '#fff' },
-      completed: { backgroundColor: '#198754', color: '#fff' },
-      cancelled: { backgroundColor: '#dc3545', color: '#fff' },
-      accepted: { backgroundColor: '#198754', color: '#fff' },
-      rejected: { backgroundColor: '#dc3545', color: '#fff' },
-      partial: { backgroundColor: '#ffc107', color: '#000' },
-      paid: { backgroundColor: '#198754', color: '#fff' },
+  const getStatusBadge = (status: string) => {
+    const statusColors: { [key: string]: string } = {
+      pending: '#ffc107',
+      processing: '#0dcaf0',
+      in_transit: '#0d6efd',
+      completed: '#198754',
+      cancelled: '#dc3545',
+      accepted: '#198754',
+      rejected: '#dc3545',
+      partial: '#ffc107',
+      paid: '#198754',
     };
-    return statusColors[status] || { backgroundColor: '#6c757d', color: '#fff' };
+    return statusColors[status] || '#6c757d';
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const generateFarmerInvoice = (order: Order) => {
+    if (!order || !order.adminToFarmerPayment) return;
+
+    const invoiceContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - Farmer Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #198754;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            color: #198754;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .company-tagline {
+            color: #666;
+            font-size: 14px;
+        }
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .details-left, .details-right {
+            flex: 1;
+        }
+        .detail-row {
+            margin-bottom: 8px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 150px;
+            display: inline-block;
+        }
+        .table-container {
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+        table {
+            width: '100%';
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #198754;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .total-section {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        .total-row.final {
+            border-top: 2px solid #198754;
+            padding-top: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #198754;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin: 40px 0 10px 0;
+        }
+        .important-notes {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .payment-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-paid { background: #d1e7dd; color: #0f5132; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-partial { background: #cff4fc; color: #055160; }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-name">KISAN TRADING</div>
+            <div class="company-tagline">Agricultural Produce Trading Platform</div>
+            <div class="invoice-title">FARMER PAYMENT INVOICE</div>
+        </div>
+        
+        <div class="invoice-details">
+            <div class="details-left">
+                <div class="detail-row">
+                    <span class="detail-label">Invoice Number:</span> ${order.orderId}-FARMER
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Invoice Date:</span> ${formatDate(new Date().toISOString())}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Order Date:</span> ${formatDate(order.createdAt)}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Farmer Name:</span> ${order.farmerName || 'N/A'}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Farmer Contact:</span> ${order.farmerMobile || 'N/A'}
+                </div>
+            </div>
+            <div class="details-right">
+                <div class="detail-row">
+                    <span class="detail-label">Order ID:</span> ${order.orderId}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Trader Name:</span> ${order.traderName}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Status:</span> 
+                    <span class="payment-status status-${order.adminToFarmerPayment.paymentStatus.toLowerCase()}">
+                        ${order.adminToFarmerPayment.paymentStatus.toUpperCase()}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Grade</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.productItems.map(item => `
+                    <tr>
+                        <td>${item.productName}</td>
+                        <td>${item.grade}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatCurrency(item.pricePerUnit)}</td>
+                        <td>${formatCurrency(item.totalAmount)}</td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="total-section">
+            <div class="total-row">
+                <span>Total Product Value:</span>
+                <span>${formatCurrency(order.adminToFarmerPayment.totalAmount)}</span>
+            </div>
+            <div class="total-row">
+                <span>Paid Amount:</span>
+                <span style="color: #198754;">${formatCurrency(order.adminToFarmerPayment.paidAmount)}</span>
+            </div>
+            <div class="total-row">
+                <span>Remaining Amount:</span>
+                <span style="color: #dc3545;">${formatCurrency(order.adminToFarmerPayment.remainingAmount)}</span>
+            </div>
+            <div class="total-row final">
+                <span>TOTAL PAYABLE TO FARMER:</span>
+                <span>${formatCurrency(order.adminToFarmerPayment.totalAmount)}</span>
+            </div>
+        </div>
+        
+        ${order.adminToFarmerPayment.paymentHistory && order.adminToFarmerPayment.paymentHistory.length > 0 ? `
+        <div class="important-notes">
+            <strong>Payment History:</strong><br>
+            ${order.adminToFarmerPayment.paymentHistory.map(payment => `
+            • ${formatDate(payment.paidDate)}: ${formatCurrency(payment.amount)}${payment.razorpayPaymentId ? ` (ID: ${payment.razorpayPaymentId})` : ''}<br>
+            `).join('')}
+        </div>
+        ` : ''}
+        
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Farmer's Signature</div>
+                <div style="font-size: 11px; color: #666;">Date: _______________</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Authorized Signatory</div>
+                <div style="font-size: 11px; color: #666;">KISAN TRADING</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>This is a computer generated invoice. No signature required.</p>
+            <p>KISAN TRADING • Agricultural Produce Trading Platform • Contact: support@kisanetpl.ai</p>
+            <p>Invoice generated on: ${new Date().toLocaleString()}</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    const blob = new Blob([invoiceContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Farmer_Invoice_${order.orderId}_${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateTraderInvoice = (order: Order) => {
+    if (!order || !order.traderToAdminPayment) return;
+
+    const invoiceContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice - Trader Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 20px;
+        }
+        .company-name {
+            color: #0d6efd;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .company-tagline {
+            color: #666;
+            font-size: 14px;
+        }
+        .invoice-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .details-left, .details-right {
+            flex: 1;
+        }
+        .detail-row {
+            margin-bottom: 8px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 150px;
+            display: inline-block;
+        }
+        .table-container {
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+        table {
+            width: '100%';
+            border-collapse: collapse;
+        }
+        th {
+            background-color: #0d6efd;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .total-section {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+        }
+        .total-row.final {
+            border-top: 2px solid #0d6efd;
+            padding-top: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            color: #0d6efd;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+        }
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            margin: 40px 0 10px 0;
+        }
+        .important-notes {
+            background: #d1ecf1;
+            border-left: 4px solid #0dcaf0;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .payment-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-paid { background: #d1e7dd; color: #0f5132; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-partial { background: #cff4fc; color: #055160; }
+        .charges-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-name">KISAN TRADING</div>
+            <div class="company-tagline">Agricultural Produce Trading Platform</div>
+            <div class="invoice-title">TRADER PAYMENT INVOICE</div>
+        </div>
+        
+        <div class="invoice-details">
+            <div class="details-left">
+                <div class="detail-row">
+                    <span class="detail-label">Invoice Number:</span> ${order.orderId}-TRADER
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Invoice Date:</span> ${formatDate(new Date().toISOString())}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Order Date:</span> ${formatDate(order.createdAt)}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Trader Name:</span> ${order.traderName}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Trader Contact:</span> ${order.traderMobile || 'N/A'}
+                </div>
+            </div>
+            <div class="details-right">
+                <div class="detail-row">
+                    <span class="detail-label">Order ID:</span> ${order.orderId}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Farmer Name:</span> ${order.farmerName || 'N/A'}
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Status:</span> 
+                    <span class="payment-status status-${order.traderToAdminPayment.paymentStatus.toLowerCase()}">
+                        ${order.traderToAdminPayment.paymentStatus.toUpperCase()}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Grade</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${order.productItems.map(item => `
+                    <tr>
+                        <td>${item.productName}</td>
+                        <td>${item.grade}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatCurrency(item.pricePerUnit)}</td>
+                        <td>${formatCurrency(item.totalAmount)}</td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="charges-section">
+            <h4 style="margin-top: 0; color: #0d6efd;">Additional Charges</h4>
+            <div class="total-row">
+                <span>Platform Service Fee:</span>
+                <span>Included in total</span>
+            </div>
+            <div class="total-row">
+                <span>Transportation Charges:</span>
+                <span>Included in total</span>
+            </div>
+            <div class="total-row">
+                <span>Quality Inspection:</span>
+                <span>Included in total</span>
+            </div>
+        </div>
+        
+        <div class="total-section">
+            <div class="total-row">
+                <span>Total Product Value:</span>
+                <span>${formatCurrency(order.traderToAdminPayment.totalAmount)}</span>
+            </div>
+            <div class="total-row">
+                <span>Paid Amount:</span>
+                <span style="color: #198754;">${formatCurrency(order.traderToAdminPayment.paidAmount)}</span>
+            </div>
+            <div class="total-row">
+                <span>Remaining Amount:</span>
+                <span style="color: #dc3545;">${formatCurrency(order.traderToAdminPayment.remainingAmount)}</span>
+            </div>
+            <div class="total-row final">
+                <span>TOTAL PAYABLE BY TRADER:</span>
+                <span>${formatCurrency(order.traderToAdminPayment.totalAmount)}</span>
+            </div>
+        </div>
+        
+        ${order.traderToAdminPayment.paymentHistory && order.traderToAdminPayment.paymentHistory.length > 0 ? `
+        <div class="important-notes">
+            <strong>Payment History:</strong><br>
+            ${order.traderToAdminPayment.paymentHistory.map(payment => `
+            • ${formatDate(payment.paidDate)}: ${formatCurrency(payment.amount)}${payment.razorpayPaymentId ? ` (ID: ${payment.razorpayPaymentId})` : ''}<br>
+            `).join('')}
+        </div>
+        ` : ''}
+        
+        <div class="important-notes">
+            <strong>Terms & Conditions:</strong><br>
+            1. All payments are due within 7 days of invoice date<br>
+            2. Late payments may incur additional charges<br>
+            3. Goods remain property of KISAN TRADING until full payment is received<br>
+            4. Disputes must be raised within 48 hours of delivery
+        </div>
+        
+        <div class="signature-section">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Trader's Signature</div>
+                <div style="font-size: 11px; color: #666;">Date: _______________</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div>Authorized Signatory</div>
+                <div style="font-size: 11px; color: #666;">KISAN TRADING</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>This is a computer generated invoice. No signature required.</p>
+            <p>KISAN TRADING • Agricultural Produce Trading Platform • Contact: support@kisanetpl.ai</p>
+            <p>Invoice generated on: ${new Date().toLocaleString()}</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
+    const blob = new Blob([invoiceContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Trader_Invoice_${order.orderId}_${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const generateFarmerInvoiceFromModal = () => {
+    if (!currentOrder || !currentOrder.adminToFarmerPayment) return;
+    generateFarmerInvoice(currentOrder);
+  };
+
+  const generateTraderInvoiceFromModal = () => {
+    if (!currentOrder || !currentOrder.traderToAdminPayment) return;
+    generateTraderInvoice(currentOrder);
   };
 
   if (loading) {
     return (
-      <div style={{ padding: '1.5rem', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+      <div style={{ padding: '1rem 0', backgroundColor: '#f8f9fa' }}>
         <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-          <div
-            style={{
-              width: '3rem',
-              height: '3rem',
-              border: '4px solid #0d6efd',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto'
-            }}
-          />
+          <div style={{
+            width: '3rem',
+            height: '3rem',
+            border: '4px solid #0d6efd',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto'
+          }}></div>
           <p style={{ marginTop: '1rem', color: '#6c757d' }}>Loading orders...</p>
         </div>
         <style jsx>{`
@@ -689,421 +822,399 @@ const AdminOrders: React.FC = () => {
   }
 
   return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Header */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', margin: 0, color: '#212529' }}>
-          📋 Order Management
-        </h1>
-        <p style={{ color: '#6c757d', marginTop: '0.5rem' }}>Manage and verify transportation orders with payment details</p>
-      </div>
+    <>
+      <div style={{ padding: '1rem 0', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div>
+            <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              <span style={{ marginRight: '0.5rem' }}>📋</span> Order Management
+            </h1>
+            <p style={{ color: '#6c757d' }}>Manage and verify transportation orders with payment details</p>
+          </div>
+        </div>
 
-      {/* Filters */}
-      <div style={{ marginBottom: '1.5rem' }}>
-        <div style={{
-          backgroundColor: '#fff',
-          borderRadius: '0.375rem',
-          padding: '1rem',
-          boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'
-        }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057', fontWeight: '500' }}>
-                Order Status
-              </label>
-              <select
-                style={{
-                  width: '100%',
-                  padding: '0.375rem 0.75rem',
-                  borderRadius: '0.25rem',
-                  border: '1px solid #ced4da',
-                  backgroundColor: '#fff',
-                  color: '#212529'
-                }}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
-                <option value="in_transit">In Transit</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057', fontWeight: '500' }}>
-                Transporter Status
-              </label>
-              <select
-                style={{
-                  width: '100%',
-                  padding: '0.375rem 0.75rem',
-                  borderRadius: '0.25rem',
-                  border: '1px solid #ced4da',
-                  backgroundColor: '#fff',
-                  color: '#212529'
-                }}
-                value={transporterStatusFilter}
-                onChange={(e) => setTransporterStatusFilter(e.target.value)}
-              >
-                <option value="">All</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="completed">Completed</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057', fontWeight: '500' }}>
-                Search
-              </label>
-              <input
-                type="text"
-                style={{
-                  width: '100%',
-                  padding: '0.375rem 0.75rem',
-                  borderRadius: '0.25rem',
-                  border: '1px solid #ced4da',
-                  backgroundColor: '#fff',
-                  color: '#212529'
-                }}
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Order ID, Trader, Farmer..."
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-              <button
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#0d6efd',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-                onClick={fetchOrders}
-              >
-                🔍 Filter
-              </button>
+        {/* Filters */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '0.375rem',
+              boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)',
+              padding: '1rem'
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057' }}>Order Status</label>
+                  <select
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: '1px solid #ced4da',
+                      backgroundColor: 'white',
+                      color: '#495057',
+                      fontSize: '1rem'
+                    }}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057' }}>Transporter Status</label>
+                  <select
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: '1px solid #ced4da',
+                      backgroundColor: 'white',
+                      color: '#495057',
+                      fontSize: '1rem'
+                    }}
+                    value={transporterStatusFilter}
+                    onChange={(e) => setTransporterStatusFilter(e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: '#495057' }}>Search</label>
+                  <input
+                    type="text"
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: '1px solid #ced4da',
+                      backgroundColor: 'white',
+                      color: '#495057',
+                      fontSize: '1rem'
+                    }}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Order ID, Trader, Farmer..."
+                  />
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  <button
+                    style={{
+                      width: '100%',
+                      padding: '0.375rem 0.75rem',
+                      borderRadius: '0.375rem',
+                      border: 'none',
+                      backgroundColor: '#0d6efd',
+                      color: 'white',
+                      fontSize: '1rem',
+                      cursor: 'pointer'
+                    }}
+                    onClick={fetchOrders}
+                  >
+                    🔍 Filter
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Orders Table */}
-      <div>
-        <div style={{
-          backgroundColor: '#fff',
-          borderRadius: '0.375rem',
-          boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)',
-          overflow: 'hidden'
-        }}>
-          <div style={{ padding: '1rem' }}>
-            {orders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '3rem 0' }}>
-                <div style={{ fontSize: '4rem', color: '#6c757d', marginBottom: '1rem' }}>📦</div>
-                <h4 style={{ margin: '0 0 0.5rem 0', color: '#495057' }}>No orders found</h4>
-                <p style={{ color: '#6c757d', margin: 0 }}>Try adjusting your filters</p>
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead style={{ backgroundColor: '#f8f9fa' }}>
-                    <tr>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Order ID</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Trader</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Farmer</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Products</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Order Status</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Transporter Status</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Trader Payment</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Farmer Payment</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Verification</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((order) => (
-                      <tr
-                        key={order._id}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#f8f9fa';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                        style={{
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s',
-                        }}
-                      >
-
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <strong style={{ color: '#0d6efd' }}>{order.orderId}</strong>
-                          <br />
-                          <small style={{ color: '#6c757d' }}>
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </small>
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <div>{order.traderName}</div>
-                          {order.traderMobile && (
-                            <small style={{ color: '#6c757d' }}>{order.traderMobile}</small>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <div>{order.farmerName || 'N/A'}</div>
-                          {order.farmerMobile && (
-                            <small style={{ color: '#6c757d' }}>{order.farmerMobile}</small>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '0.25em 0.5em',
-                            borderRadius: '0.25rem',
-                            backgroundColor: '#0dcaf0',
-                            color: '#000',
-                            fontSize: '0.875em',
-                            fontWeight: '500'
-                          }}>
-                            {order.productItems.length} item(s)
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '0.25em 0.5em',
-                            borderRadius: '0.25rem',
-                            fontSize: '0.875em',
-                            fontWeight: '500',
-                            ...getStatusBadgeStyle(order.orderStatus)
-                          }}>
-                            {order.orderStatus}
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          <span style={{
-                            display: 'inline-block',
-                            padding: '0.25em 0.5em',
-                            borderRadius: '0.25rem',
-                            fontSize: '0.875em',
-                            fontWeight: '500',
-                            ...getStatusBadgeStyle(order.transporterStatus || 'pending')
-                          }}>
-                            {order.transporterStatus || 'pending'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          {order.traderToAdminPayment ? (
-                            <div>
-                              <div>
-                                <small style={{ color: '#6c757d' }}>Total:</small>{' '}
-                                <strong>
-                                  {formatCurrency(order.traderToAdminPayment.totalAmount)}
-                                </strong>
-                              </div>
-                              <div>
-                                <small style={{ color: '#6c757d' }}>Paid:</small>{' '}
-                                {formatCurrency(order.traderToAdminPayment.paidAmount)}
-                              </div>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '0.25em 0.5em',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.75em',
-                                fontWeight: '500',
-                                marginTop: '0.25rem',
-                                ...getStatusBadgeStyle(order.traderToAdminPayment.paymentStatus)
-                              }}>
-                                {order.traderToAdminPayment.paymentStatus}
-                              </span>
-                            </div>
-                          ) : (
-                            'N/A'
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          {order.adminToFarmerPayment ? (
-                            <div>
-                              <div>
-                                <small style={{ color: '#6c757d' }}>Total:</small>{' '}
-                                <strong>
-                                  {formatCurrency(order.adminToFarmerPayment.totalAmount)}
-                                </strong>
-                              </div>
-                              <div>
-                                <small style={{ color: '#6c757d' }}>Paid:</small>{' '}
-                                {formatCurrency(order.adminToFarmerPayment.paidAmount)}
-                              </div>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '0.25em 0.5em',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.75em',
-                                fontWeight: '500',
-                                marginTop: '0.25rem',
-                                ...getStatusBadgeStyle(order.adminToFarmerPayment.paymentStatus)
-                              }}>
-                                {order.adminToFarmerPayment.paymentStatus}
-                              </span>
-                            </div>
-                          ) : (
-                            'N/A'
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6' }}>
-                          {order.transporterDetails ? (
-                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '0.25em 0.5em',
-                                  borderRadius: '0.25rem',
-                                  backgroundColor: order.transporterDetails.transporterReached ? '#198754' : '#6c757d',
-                                  color: '#fff',
-                                  cursor: 'help'
-                                }}
-                                title="Reached"
-                              >
-                                {order.transporterDetails.transporterReached ? '✓' : '✗'}
-                              </span>
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '0.25em 0.5em',
-                                  borderRadius: '0.25rem',
-                                  backgroundColor: order.transporterDetails.goodsConditionCorrect ? '#198754' : '#6c757d',
-                                  color: '#fff',
-                                  cursor: 'help'
-                                }}
-                                title="Condition"
-                              >
-                                {order.transporterDetails.goodsConditionCorrect ? '✓' : '✗'}
-                              </span>
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  padding: '0.25em 0.5em',
-                                  borderRadius: '0.25rem',
-                                  backgroundColor: order.transporterDetails.quantityCorrect ? '#198754' : '#6c757d',
-                                  color: '#fff',
-                                  cursor: 'help'
-                                }}
-                                title="Quantity"
-                              >
-                                {order.transporterDetails.quantityCorrect ? '✓' : '✗'}
-                              </span>
-                            </div>
-                          ) : (
-                            <span style={{ color: '#6c757d' }}>No transporter</span>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', borderBottom: '1px solid #dee2e6', display: 'flex', gap: '0.5rem' }}>
-                          <button
-                            style={{
+        {/* Orders Table */}
+        <div>
+          <div>
+            <div style={{
+              backgroundColor: 'white',
+              borderRadius: '0.375rem',
+              boxShadow: '0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)',
+              padding: '1rem'
+            }}>
+              {orders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+                  <div style={{ fontSize: '4rem', color: '#6c757d', marginBottom: '1rem' }}>📦</div>
+                  <h4 style={{ marginBottom: '0.5rem' }}>No orders found</h4>
+                  <p style={{ color: '#6c757d' }}>Try adjusting your filters</p>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead style={{ backgroundColor: '#f8f9fa' }}>
+                      <tr>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Order ID</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Trader</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Farmer</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Products</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Order Status</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Transporter Status</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Trader Payment</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Farmer Payment</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Verification</th>
+                        <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #dee2e6' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((order) => (
+                        <tr
+                          key={order._id}
+                          style={{
+                            borderBottom: '1px solid #dee2e6',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8f9fa'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <td style={{ padding: '0.75rem' }}>
+                            <strong style={{ color: '#0d6efd' }}>{order.orderId}</strong>
+                            <br />
+                            <small style={{ color: '#6c757d' }}>
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </small>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <div>{order.traderName}</div>
+                            {order.traderMobile && (
+                              <small style={{ color: '#6c757d' }}>{order.traderMobile}</small>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <div>{order.farmerName || 'N/A'}</div>
+                            {order.farmerMobile && (
+                              <small style={{ color: '#6c757d' }}>{order.farmerMobile}</small>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              display: 'inline-block',
                               padding: '0.25rem 0.5rem',
-                              fontSize: '0.875rem',
-                              backgroundColor: '#0d6efd',
+                              borderRadius: '0.375rem',
+                              backgroundColor: '#0dcaf0',
                               color: 'white',
-                              border: 'none',
-                              borderRadius: '0.25rem',
-                              cursor: 'pointer'
-                            }}
-                            onClick={() => openDetailsModal(order)}
-                          >
-                            👁️ View
-                          </button>
-                          <div style={{ position: 'relative', display: 'inline-block' }}>
-                            <button
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                fontSize: '0.875rem',
-                                backgroundColor: '#198754',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '0.25rem',
-                                cursor: 'pointer'
-                              }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const dropdown = e.currentTarget.nextElementSibling as HTMLElement;
-                                if (dropdown.style.display === 'block') {
-                                  dropdown.style.display = 'none';
-                                } else {
-                                  dropdown.style.display = 'block';
-                                }
-                              }}
-                            >
-                              📝 Edit
-                            </button>
-                            <div style={{
-                              display: 'none',
-                              position: 'absolute',
-                              backgroundColor: 'white',
-                              minWidth: '160px',
-                              boxShadow: '0 8px 16px rgba(0,0,0,0.2)',
-                              zIndex: 1,
-                              borderRadius: '0.25rem',
-                              right: 0
+                              fontSize: '0.875rem'
                             }}>
+                              {order.productItems.length} item(s)
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              backgroundColor: getStatusBadge(order.orderStatus),
+                              color: 'white',
+                              fontSize: '0.875rem'
+                            }}>
+                              {order.orderStatus}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              backgroundColor: getStatusBadge(order.transporterStatus || 'pending'),
+                              color: 'white',
+                              fontSize: '0.875rem'
+                            }}>
+                              {order.transporterStatus || 'pending'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            {order.traderToAdminPayment ? (
+                              <div>
+                                <div>
+                                  <small style={{ color: '#6c757d' }}>Total:</small>{' '}
+                                  <strong>
+                                    {formatCurrency(order.traderToAdminPayment.totalAmount)}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <small style={{ color: '#6c757d' }}>Paid:</small>{' '}
+                                  {formatCurrency(order.traderToAdminPayment.paidAmount)}
+                                </div>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: getStatusBadge(order.traderToAdminPayment.paymentStatus),
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  marginTop: '0.25rem'
+                                }}>
+                                  {order.traderToAdminPayment.paymentStatus}
+                                </span>
+                              </div>
+                            ) : (
+                              'N/A'
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            {order.adminToFarmerPayment ? (
+                              <div>
+                                <div>
+                                  <small style={{ color: '#6c757d' }}>Total:</small>{' '}
+                                  <strong>
+                                    {formatCurrency(order.adminToFarmerPayment.totalAmount)}
+                                  </strong>
+                                </div>
+                                <div>
+                                  <small style={{ color: '#6c757d' }}>Paid:</small>{' '}
+                                  {formatCurrency(order.adminToFarmerPayment.paidAmount)}
+                                </div>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: getStatusBadge(order.adminToFarmerPayment.paymentStatus),
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  marginTop: '0.25rem'
+                                }}>
+                                  {order.adminToFarmerPayment.paymentStatus}
+                                </span>
+                              </div>
+                            ) : (
+                              'N/A'
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            {order.transporterDetails ? (
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: order.transporterDetails.transporterReached ? '#198754' : '#6c757d',
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  cursor: 'help'
+                                }}
+                                  title="Reached">
+                                  {order.transporterDetails.transporterReached ? '✓' : '✗'}
+                                </span>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: order.transporterDetails.goodsConditionCorrect ? '#198754' : '#6c757d',
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  cursor: 'help'
+                                }}
+                                  title="Condition">
+                                  {order.transporterDetails.goodsConditionCorrect ? '✓' : '✗'}
+                                </span>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: order.transporterDetails.quantityCorrect ? '#198754' : '#6c757d',
+                                  color: 'white',
+                                  fontSize: '0.75rem',
+                                  cursor: 'help'
+                                }}
+                                  title="Quantity">
+                                  {order.transporterDetails.quantityCorrect ? '✓' : '✗'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span style={{ color: '#6c757d' }}>No transporter</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
                               <button
                                 style={{
-                                  width: '100%',
-                                  padding: '0.5rem 1rem',
-                                  textAlign: 'left',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
                                   border: 'none',
-                                  background: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '0.875rem'
+                                  backgroundColor: '#0d6efd',
+                                  color: 'white',
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
                                 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openInvoiceModal(order, 'farmer');
-                                  const dropdown = (e.currentTarget.parentElement as HTMLElement);
-                                  dropdown.style.display = 'none';
-                                }}
+                                onClick={() => openDetailsModal(order)}
                               >
-                                👨‍🌾 Farmer Invoice
+                                👁️ View
                               </button>
                               <button
                                 style={{
-                                  width: '100%',
-                                  padding: '0.5rem 1rem',
-                                  textAlign: 'left',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
                                   border: 'none',
-                                  background: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '0.875rem'
+                                  backgroundColor: '#ffc107',
+                                  color: 'black',
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                  if (window.openEditOrderModal) {
+                                    window.openEditOrderModal(order.orderId);
+                                  }
+                                }}
+                              >
+                                ✏️ Edit
+                              </button>
+                              <button
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  border: 'none',
+                                  backgroundColor: '#198754',
+                                  color: 'white',
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
                                 }}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openInvoiceModal(order, 'trader');
-                                  const dropdown = (e.currentTarget.parentElement as HTMLElement);
-                                  dropdown.style.display = 'none';
+                                  generateTraderInvoice(order);
                                 }}
+                                disabled={!order.traderToAdminPayment}
                               >
-                                💼 Trader Invoice
+                                📥 Trader Invoice
+                              </button>
+                              <button
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  border: 'none',
+                                  backgroundColor: '#20c997',
+                                  color: 'white',
+                                  fontSize: '0.875rem',
+                                  cursor: 'pointer'
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  generateFarmerInvoice(order);
+                                }}
+                                disabled={!order.adminToFarmerPayment}
+                              >
+                                📥 Farmer Invoice
                               </button>
                             </div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Invoice Modal */}
-      {showInvoiceModal && currentOrder && (
+      {/* Details Modal */}
+      {showModal && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -1114,1135 +1225,725 @@ const AdminOrders: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1050,
-          padding: '1rem',
-          overflow: 'auto'
-        }}>
-          <div id="invoice-content" style={{
-            backgroundColor: '#fff',
-            borderRadius: '0.375rem',
-            width: '100%',
-            maxWidth: '1200px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            position: 'relative'
-          }}>
-            {/* Modal Header */}
-            <div style={{
-              backgroundColor: invoiceType === 'farmer' ? '#198754' : '#0d6efd',
-              color: '#fff',
-              padding: '1rem',
-              borderTopLeftRadius: '0.375rem',
-              borderTopRightRadius: '0.375rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>
-                {invoiceType === 'farmer' ? '👨‍🌾 Farmer Invoice' : '💼 Trader Invoice'} - {currentOrder.orderId}
-              </h2>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '0.25rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                  onClick={() => setEditingInvoice(!editingInvoice)}
-                >
-                  {editingInvoice ? '👁️ Preview' : '✏️ Edit'}
-                </button>
-                <button
-                  style={{
-                    padding: '0.25rem 0.75rem',
-                    backgroundColor: '#ffc107',
-                    color: '#000',
-                    border: 'none',
-                    borderRadius: '0.25rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                  onClick={generateInvoicePDF}
-                >
-                  📄 Generate PDF
-                </button>
-                <button
-                  onClick={closeInvoiceModal}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#fff',
-                    fontSize: '1.5rem',
-                    cursor: 'pointer',
-                    lineHeight: 1
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body - Invoice Content */}
-            <div style={{ padding: '2rem' }}>
-              {/* Company Header - Dynamic from DB */}
-              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ margin: '0 0 0.5rem 0', color: '#333' }}>{invoiceSettings.companyName || 'AGRI TRADING COMPANY'}</h1>
-                <p style={{ margin: 0, color: '#666' }}>{invoiceSettings.companyAddress || '123 Market Street, Agricultural District'}</p>
-                <p style={{ margin: '0.25rem 0', color: '#666' }}>
-                  Phone: {invoiceSettings.companyPhone || '+91 9876543210'} | Email: {invoiceSettings.companyEmail || 'info@agritrading.com'}
-                </p>
-                {invoiceSettings.gstNumber && (
-                  <p style={{ margin: '0.25rem 0', color: '#666' }}>
-                    GST: {invoiceSettings.gstNumber} | PAN: {invoiceSettings.panNumber}
-                  </p>
-                )}
-                <div style={{ marginTop: '1rem', padding: '0.5rem', backgroundColor: '#f8f9fa', borderRadius: '0.25rem' }}>
-                  <h3 style={{ margin: 0, color: '#333' }}>
-                    INVOICE {invoiceType === 'farmer' ? 'FOR FARMER' : 'FOR TRADER'}
-                  </h3>
-                </div>
-              </div>
-
-              {/* Customer Info - Dynamic from Order */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#495057' }}>
-                    {invoiceType === 'farmer' ? 'Farmer Details:' : 'Trader Details:'}
-                  </h4>
-                  <p style={{ margin: '0.25rem 0', fontWeight: '600' }}>
-                    {invoiceType === 'farmer' ? currentOrder.farmerName || 'N/A' : currentOrder.traderName}
-                  </p>
-                  <p style={{ margin: '0.25rem 0', color: '#666' }}>
-                    {invoiceType === 'farmer' ? currentOrder.farmerMobile || '' : currentOrder.traderMobile || ''}
-                  </p>
-                  <p style={{ margin: '0.25rem 0', color: '#666' }}>
-                    {invoiceType === 'farmer' ? currentOrder.farmerEmail || '' : currentOrder.traderEmail || ''}
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: '#495057' }}>Invoice Info:</h4>
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>Order ID:</strong> {currentOrder.orderId}
-                  </p>
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>Date:</strong> {new Date().toLocaleDateString()}
-                  </p>
-                  <p style={{ margin: '0.25rem 0' }}>
-                    <strong>Invoice Type:</strong> {invoiceType === 'farmer' ? 'Farmer Payment' : 'Trader Billing'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Products Table - Dynamic from Order Products */}
-              <div style={{ marginBottom: '2rem' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
-                  <thead style={{ backgroundColor: '#f8f9fa' }}>
-                    <tr>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'left' }}>Grade</th>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'center' }}>Quantity</th>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right' }}>Price/Unit</th>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right' }}>Depreciation (-)</th>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right' }}>Appreciation (+)</th>
-                      <th style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right' }}>Total Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoiceData[invoiceType].products.map((product, index) => (
-                      <tr key={index}>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
-                          {editingInvoice ? (
-                            <input
-                              type="text"
-                              value={product.grade}
-                              onChange={(e) => handleProductChange(index, 'grade', e.target.value as any)}
-                              style={{ width: '100%', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem' }}
-                            />
-                          ) : (
-                            <strong>{product.grade}</strong>
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'center' }}>
-                          {editingInvoice ? (
-                            <input
-                              type="number"
-                              value={product.quantity}
-                              onChange={(e) => handleProductChange(index, 'quantity', parseFloat(e.target.value))}
-                              style={{ width: '80px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'center' }}
-                            />
-                          ) : (
-                            product.quantity
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right' }}>
-                          {editingInvoice ? (
-                            <input
-                              type="number"
-                              value={product.price}
-                              onChange={(e) => handleProductChange(index, 'price', parseFloat(e.target.value))}
-                              style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                            />
-                          ) : (
-                            formatCurrency(product.price)
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right', color: '#dc3545' }}>
-                          {editingInvoice ? (
-                            <input
-                              type="number"
-                              value={product.depreciation || 0}
-                              onChange={(e) => handleProductChange(index, 'depreciation', parseFloat(e.target.value))}
-                              style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                            />
-                          ) : (
-                            formatCurrency(product.depreciation || 0)
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right', color: '#198754' }}>
-                          {editingInvoice ? (
-                            <input
-                              type="number"
-                              value={product.appreciation || 0}
-                              onChange={(e) => handleProductChange(index, 'appreciation', parseFloat(e.target.value))}
-                              style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                            />
-                          ) : (
-                            formatCurrency(product.appreciation || 0)
-                          )}
-                        </td>
-                        <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right', fontWeight: '600' }}>
-                          {formatCurrency(product.total + (product.appreciation || 0) - (product.depreciation || 0))}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <td colSpan={5} style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right', fontWeight: '600' }}>
-                        Products Total:
-                      </td>
-                      <td style={{ padding: '0.75rem', border: '1px solid #dee2e6', textAlign: 'right', fontWeight: '600' }}>
-                        {formatCurrency(invoiceData[invoiceType].products.reduce((sum, p) => sum + p.total + (p.appreciation || 0) - (p.depreciation || 0), 0))}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Processing Fees, Labor, Transport - Dynamic from Fee Structure */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ border: '1px solid #dee2e6', borderRadius: '0.25rem', padding: '1rem' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#495057' }}>Processing Fees</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>Farmer (%):</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].processingFees.farmer}
-                        onChange={(e) => handleInvoiceChange('processingFees', parseFloat(e.target.value), 'farmer')}
-                        style={{ width: '80px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].processingFees.farmer)}</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Trader (%):</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].processingFees.trader}
-                        onChange={(e) => handleInvoiceChange('processingFees', parseFloat(e.target.value), 'trader')}
-                        style={{ width: '80px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].processingFees.trader)}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ border: '1px solid #dee2e6', borderRadius: '0.25rem', padding: '1rem' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#495057' }}>Labour Charges</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>Farmer:</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].labor.farmer}
-                        onChange={(e) => handleInvoiceChange('labor', parseFloat(e.target.value), 'farmer')}
-                        style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].labor.farmer)}</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Trader:</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].labor.trader}
-                        onChange={(e) => handleInvoiceChange('labor', parseFloat(e.target.value), 'trader')}
-                        style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].labor.trader)}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{ border: '1px solid #dee2e6', borderRadius: '0.25rem', padding: '1rem' }}>
-                  <h4 style={{ margin: '0 0 1rem 0', color: '#495057' }}>Transport Charges</h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span>Farmer:</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].transport.farmer}
-                        onChange={(e) => handleInvoiceChange('transport', parseFloat(e.target.value), 'farmer')}
-                        style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].transport.farmer)}</span>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Trader:</span>
-                    {editingInvoice ? (
-                      <input
-                        type="number"
-                        value={invoiceData[invoiceType].transport.trader}
-                        onChange={(e) => handleInvoiceChange('transport', parseFloat(e.target.value), 'trader')}
-                        style={{ width: '100px', padding: '0.25rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                      />
-                    ) : (
-                      <span>{formatCurrency(invoiceData[invoiceType].transport.trader)}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* GST Calculation */}
-              <div style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '0.25rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>GST (18%):</span>
-                  <strong>{formatCurrency(invoiceData[invoiceType].gstAmount)}</strong>
-                </div>
-              </div>
-
-              {/* Advance Payment */}
-              <div style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '0.25rem' }}>
-                  <h4 style={{ margin: 0, color: '#495057' }}>Advance Payment</h4>
-                  {editingInvoice ? (
-                    <input
-                      type="number"
-                      value={invoiceData[invoiceType].advance}
-                      onChange={(e) => handleInvoiceChange('advance', parseFloat(e.target.value))}
-                      style={{ width: '150px', padding: '0.5rem', border: '1px solid #ced4da', borderRadius: '0.25rem', textAlign: 'right' }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '1.25rem', fontWeight: '600' }}>
-                      {formatCurrency(invoiceData[invoiceType].advance)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Final Total */}
-              <div style={{ borderTop: '2px solid #495057', paddingTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ margin: 0, color: '#495057' }}>
-                      {invoiceType === 'farmer' ? 'Amount Payable to Farmer' : 'Amount Receivable from Trader'}
-                    </h3>
-                    <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.875rem' }}>
-                      Net Amount: {formatCurrency(invoiceData[invoiceType].netAmount)}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <h2 style={{ margin: 0, fontSize: '2rem', color: '#198754' }}>
-                      {formatCurrency(invoiceData[invoiceType].finalAmount)}
-                    </h2>
-                    <p style={{ margin: '0.5rem 0 0 0', color: '#666', fontSize: '0.875rem' }}>
-                      Inclusive of all charges and taxes
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer - Dynamic Terms & Conditions */}
-              <div style={{ marginTop: '3rem', paddingTop: '1rem', borderTop: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', color: '#666' }}>
-                <div>
-                  <p style={{ margin: '0.25rem 0' }}><strong>Terms & Conditions:</strong></p>
-                  {invoiceSettings.termsConditions.map((term, index) => (
-                    <p key={index} style={{ margin: '0.25rem 0' }}>{term}</p>
-                  ))}
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '0.25rem 0' }}>For {invoiceSettings.companyName || 'AGRI TRADING COMPANY'}</p>
-                  <div style={{ marginTop: '2rem' }}>
-                    <p style={{ margin: '0.25rem 0' }}>Authorized Signature</p>
-                    <p style={{ margin: '0.25rem 0' }}>Date: {new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{
-              padding: '1rem',
-              borderTop: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.5rem'
-            }}>
-              <button
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-                onClick={closeInvoiceModal}
-              >
-                Cancel
-              </button>
-              <button
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#198754',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '0.25rem',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-                onClick={saveInvoice}
-              >
-                💾 Save Invoice
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal */}
-      {showModal && currentOrder && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1050,
-          padding: '1rem'
+          zIndex: 1050
         }}>
           <div style={{
-            backgroundColor: '#fff',
-            borderRadius: '0.375rem',
-            width: '100%',
-            maxWidth: '1200px',
+            width: '90%',
+            maxWidth: '1140px',
             maxHeight: '90vh',
-            overflow: 'auto',
-            position: 'relative'
+            backgroundColor: 'white',
+            borderRadius: '0.375rem',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
-            {/* Modal Header */}
             <div style={{
               backgroundColor: '#0d6efd',
-              color: '#fff',
+              color: 'white',
               padding: '1rem',
-              borderTopLeftRadius: '0.375rem',
-              borderTopRightRadius: '0.375rem',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem' }}>
+              <h5 style={{ margin: 0 }}>
                 📄 Order Details
-              </h2>
+              </h5>
               <button
-                onClick={closeModal}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#fff',
+                  color: 'white',
                   fontSize: '1.5rem',
-                  cursor: 'pointer',
-                  lineHeight: 1
+                  cursor: 'pointer'
                 }}
+                onClick={closeModal}
               >
                 ×
               </button>
             </div>
-
-            {/* Modal Body */}
-            <div style={{ padding: '1rem' }}>
-              {/* Order Information */}
-              <div style={{
-                backgroundColor: '#fff',
-                border: '1px solid #dee2e6',
-                borderRadius: '0.375rem',
-                marginBottom: '1rem',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid #dee2e6'
-                }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>
-                    ℹ️ Order Information
-                  </h3>
-                </div>
-                <div style={{ padding: '1rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                      <table style={{ width: '100%' }}>
-                        <tbody>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d', width: '40%' }}>Order ID:</td>
-                            <td style={{ padding: '0.5rem 0', fontWeight: '600' }}>{currentOrder.orderId}</td>
-                          </tr>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Trader:</td>
-                            <td style={{ padding: '0.5rem 0' }}>
-                              {currentOrder.traderName}
-                              {currentOrder.traderMobile && (
-                                <>
-                                  <br />
-                                  <small style={{ color: '#6c757d' }}>{currentOrder.traderMobile}</small>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Farmer:</td>
-                            <td style={{ padding: '0.5rem 0' }}>
-                              {currentOrder.farmerName || 'N/A'}
-                              {currentOrder.farmerMobile && (
-                                <>
-                                  <br />
-                                  <small style={{ color: '#6c757d' }}>{currentOrder.farmerMobile}</small>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div>
-                      <table style={{ width: '100%' }}>
-                        <tbody>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d', width: '40%' }}>Order Status:</td>
-                            <td style={{ padding: '0.5rem 0' }}>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '0.25em 0.5em',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.875em',
-                                fontWeight: '500',
-                                ...getStatusBadgeStyle(currentOrder.orderStatus)
-                              }}>
-                                {currentOrder.orderStatus}
-                              </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Transporter Status:</td>
-                            <td style={{ padding: '0.5rem 0' }}>
-                              <span style={{
-                                display: 'inline-block',
-                                padding: '0.25em 0.5em',
-                                borderRadius: '0.25rem',
-                                fontSize: '0.875em',
-                                fontWeight: '500',
-                                ...getStatusBadgeStyle(currentOrder.transporterStatus || 'pending')
-                              }}>
-                                {currentOrder.transporterStatus || 'pending'}
-                              </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Created At:</td>
-                            <td style={{ padding: '0.5rem 0' }}>{new Date(currentOrder.createdAt).toLocaleString()}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment Details */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                {/* Trader to Admin Payment */}
-                <div style={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '0.375rem',
-                  borderLeft: '3px solid #0d6efd',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    backgroundColor: '#0d6efd',
-                    color: '#fff',
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid #dee2e6'
-                  }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                      ➡️ Trader to Admin Payment
-                    </h4>
-                  </div>
-                  <div style={{ padding: '1rem' }}>
-                    {currentOrder.traderToAdminPayment ? (
-                      <>
-                        <div style={{ marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Total Amount:</span>
-                            <strong style={{ fontSize: '1.125rem' }}>
-                              {formatCurrency(currentOrder.traderToAdminPayment.totalAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Paid Amount:</span>
-                            <strong style={{ color: '#198754' }}>
-                              {formatCurrency(currentOrder.traderToAdminPayment.paidAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Remaining:</span>
-                            <strong style={{ color: '#dc3545' }}>
-                              {formatCurrency(currentOrder.traderToAdminPayment.remainingAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6c757d' }}>Status:</span>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '0.25em 0.5em',
-                              borderRadius: '0.25rem',
-                              fontSize: '0.875em',
-                              fontWeight: '500',
-                              ...getStatusBadgeStyle(currentOrder.traderToAdminPayment.paymentStatus)
-                            }}>
-                              {currentOrder.traderToAdminPayment.paymentStatus}
-                            </span>
-                          </div>
-                        </div>
-
-                        {currentOrder.traderToAdminPayment.paymentHistory &&
-                          currentOrder.traderToAdminPayment.paymentHistory.length > 0 && (
-                            <div>
-                              <h5 style={{ fontSize: '0.875rem', marginBottom: '0.5rem', color: '#495057' }}>
-                                Payment History:
-                              </h5>
-                              <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                                  <thead style={{ backgroundColor: '#f8f9fa' }}>
-                                    <tr>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Date</th>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Amount</th>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Payment ID</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {currentOrder.traderToAdminPayment.paymentHistory.map(
-                                      (payment, idx) => (
-                                        <tr key={idx}>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            <small>{new Date(payment.paidDate).toLocaleDateString()}</small>
-                                          </td>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            {formatCurrency(payment.amount)}
-                                          </td>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            <small style={{ color: '#6c757d' }}>
-                                              {payment.razorpayPaymentId || 'N/A'}
-                                            </small>
-                                          </td>
-                                        </tr>
-                                      )
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-                      </>
-                    ) : (
-                      <p style={{ color: '#6c757d', margin: 0 }}>No payment details available</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Admin to Farmer Payment */}
-                <div style={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #dee2e6',
-                  borderRadius: '0.375rem',
-                  borderLeft: '3px solid #198754',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    backgroundColor: '#198754',
-                    color: '#fff',
-                    padding: '0.75rem 1rem',
-                    borderBottom: '1px solid #dee2e6'
-                  }}>
-                    <h4 style={{ margin: 0, fontSize: '1rem' }}>
-                      ➡️ Admin to Farmer Payment
-                    </h4>
-                  </div>
-                  <div style={{ padding: '1rem' }}>
-                    {currentOrder.adminToFarmerPayment ? (
-                      <>
-                        <div style={{ marginBottom: '1rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Total Amount:</span>
-                            <strong style={{ fontSize: '1.125rem' }}>
-                              {formatCurrency(currentOrder.adminToFarmerPayment.totalAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Paid Amount:</span>
-                            <strong style={{ color: '#198754' }}>
-                              {formatCurrency(currentOrder.adminToFarmerPayment.paidAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ color: '#6c757d' }}>Remaining:</span>
-                            <strong style={{ color: '#dc3545' }}>
-                              {formatCurrency(currentOrder.adminToFarmerPayment.remainingAmount)}
-                            </strong>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#6c757d' }}>Status:</span>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '0.25em 0.5em',
-                              borderRadius: '0.25rem',
-                              fontSize: '0.875em',
-                              fontWeight: '500',
-                              ...getStatusBadgeStyle(currentOrder.adminToFarmerPayment.paymentStatus)
-                            }}>
-                              {currentOrder.adminToFarmerPayment.paymentStatus}
-                            </span>
-                          </div>
-                        </div>
-
-                        {currentOrder.adminToFarmerPayment.paymentHistory &&
-                          currentOrder.adminToFarmerPayment.paymentHistory.length > 0 && (
-                            <div>
-                              <h5 style={{ fontSize: '0.875rem', marginBottom: '0.5rem', color: '#495057' }}>
-                                Payment History:
-                              </h5>
-                              <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                                  <thead style={{ backgroundColor: '#f8f9fa' }}>
-                                    <tr>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Date</th>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Amount</th>
-                                      <th style={{ padding: '0.5rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057' }}>Payment ID</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {currentOrder.adminToFarmerPayment.paymentHistory.map(
-                                      (payment, idx) => (
-                                        <tr key={idx}>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            <small>{new Date(payment.paidDate).toLocaleDateString()}</small>
-                                          </td>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            {formatCurrency(payment.amount)}
-                                          </td>
-                                          <td style={{ padding: '0.5rem', border: '1px solid #dee2e6' }}>
-                                            <small style={{ color: '#6c757d' }}>
-                                              {payment.razorpayPaymentId || 'N/A'}
-                                            </small>
-                                          </td>
-                                        </tr>
-                                      )
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-                      </>
-                    ) : (
-                      <p style={{ color: '#6c757d', margin: 0 }}>No payment details available</p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Product Items */}
-              <div style={{
-                backgroundColor: '#fff',
-                border: '1px solid #dee2e6',
-                borderRadius: '0.375rem',
-                marginBottom: '1rem',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: '0.75rem 1rem',
-                  borderBottom: '1px solid #dee2e6'
-                }}>
-                  <h3 style={{ margin: 0, fontSize: '1rem', color: '#495057' }}>
-                    📦 Product Items
-                  </h3>
-                </div>
-                <div style={{ padding: '1rem' }}>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #dee2e6' }}>
-                      <thead style={{ backgroundColor: '#f8f9fa' }}>
-                        <tr>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Product</th>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Grade</th>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Quantity</th>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Price/Unit</th>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Total</th>
-                          <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6', color: '#495057', fontWeight: '600' }}>Market</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentOrder.productItems.map((item, idx) => (
-                          <tr key={idx}>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.productName}</td>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.grade}</td>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.quantity}</td>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{formatCurrency(item.pricePerUnit)}</td>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
-                              <strong>{formatCurrency(item.totalAmount)}</strong>
-                            </td>
-                            <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
-                              {item.marketDetails ? (
-                                <>
-                                  <strong>{item.marketDetails.marketName}</strong>
-                                  <br />
-                                  <small style={{ color: '#6c757d' }}>
-                                    {item.marketDetails.exactAddress}
-                                    {item.marketDetails.district && (
-                                      <>, {item.marketDetails.district}</>
-                                    )}
-                                  </small>
-                                </>
-                              ) : (
-                                item.nearestMarket || 'N/A'
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transporter Details and Verification */}
-              {currentOrder.transporterDetails && (
+            <div style={{ padding: '1rem', overflowY: 'auto', flex: 1 }}>
+              {currentOrder && (
                 <>
+                  {/* Invoice Download Buttons */}
                   <div style={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #0dcaf0',
-                    borderRadius: '0.375rem',
                     marginBottom: '1rem',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#0dcaf0',
-                      color: '#fff',
-                      padding: '0.75rem 1rem',
-                      borderBottom: '1px solid #dee2e6'
-                    }}>
-                      <h3 style={{ margin: 0, fontSize: '1rem' }}>
-                        🚚 Transporter Information
-                      </h3>
-                    </div>
-                    <div style={{ padding: '1rem' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div>
-                          <table style={{ width: '100%' }}>
-                            <tbody>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d', width: '40%' }}>Name:</td>
-                                <td style={{ padding: '0.5rem 0', fontWeight: '600' }}>{currentOrder.transporterDetails.transporterName}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Mobile:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{currentOrder.transporterDetails.transporterMobile || 'N/A'}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Email:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{currentOrder.transporterDetails.transporterEmail || 'N/A'}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Driver:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{currentOrder.transporterDetails.driverName || 'N/A'}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <div>
-                          <table style={{ width: '100%' }}>
-                            <tbody>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d', width: '40%' }}>Vehicle Type:</td>
-                                <td style={{ padding: '0.5rem 0', fontWeight: '600' }}>{currentOrder.transporterDetails.vehicleType}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Vehicle Number:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{currentOrder.transporterDetails.vehicleNumber}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Capacity:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{currentOrder.transporterDetails.vehicleCapacity || 'N/A'}</td>
-                              </tr>
-                              <tr>
-                                <td style={{ padding: '0.5rem 0', color: '#6c757d' }}>Accepted At:</td>
-                                <td style={{ padding: '0.5rem 0' }}>{new Date(currentOrder.transporterDetails.acceptedAt).toLocaleString()}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #198754',
                     borderRadius: '0.375rem',
+                    border: '1px solid #dee2e6',
                     overflow: 'hidden'
                   }}>
                     <div style={{
-                      backgroundColor: '#198754',
-                      color: '#fff',
+                      backgroundColor: '#f8f9fa',
                       padding: '0.75rem 1rem',
                       borderBottom: '1px solid #dee2e6'
                     }}>
-                      <h3 style={{ margin: 0, fontSize: '1rem' }}>
-                        ✅ Verification Checklist
-                      </h3>
+                      <h6 style={{ margin: 0 }}>
+                        📄 Download Invoices
+                      </h6>
                     </div>
-                    <div style={{ padding: '1rem' }}>
-                      <div
-                        onMouseEnter={(e) => {
-                          // hover color
-                          e.currentTarget.style.backgroundColor = '#e9ecef';
-                        }}
-                        onMouseLeave={(e) => {
-                          // restore original color based on condition
-                          e.currentTarget.style.backgroundColor =
-                            verificationData.transporterReached ? '#d1e7dd' : '#f8f9fa';
-                        }}
-                        style={{
-                          padding: '0.5rem',
-                          marginBottom: '0.5rem',
-                          borderRadius: '0.25rem',
-                          backgroundColor: verificationData.transporterReached
-                            ? '#d1e7dd'
-                            : '#f8f9fa',
-                          transition: 'background-color 0.2s',
-                        }}
-                      >
-
-                        <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={verificationData.transporterReached}
-                            onChange={(e) =>
-                              setVerificationData({
-                                ...verificationData,
-                                transporterReached: e.target.checked,
-                              })
-                            }
-                            style={{ marginRight: '0.5rem', marginTop: '0.25rem' }}
-                          />
-                          <div>
-                            <strong>Transporter Reached Destination</strong>
-                            <small style={{ display: 'block', color: '#6c757d', marginTop: '0.25rem' }}>
-                              Confirm that transporter has arrived at the delivery location
-                            </small>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#e9ecef';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            verificationData.goodsConditionCorrect ? '#d1e7dd' : '#f8f9fa';
-                        }}
-                        style={{
-                          padding: '0.5rem',
-                          marginBottom: '0.5rem',
-                          borderRadius: '0.25rem',
-                          backgroundColor: verificationData.goodsConditionCorrect
-                            ? '#d1e7dd'
-                            : '#f8f9fa',
-                          transition: 'background-color 0.2s',
-                        }}
-                      >
-
-                        <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={verificationData.goodsConditionCorrect}
-                            onChange={(e) =>
-                              setVerificationData({
-                                ...verificationData,
-                                goodsConditionCorrect: e.target.checked,
-                              })
-                            }
-                            style={{ marginRight: '0.5rem', marginTop: '0.25rem' }}
-                          />
-                          <div>
-                            <strong>Goods Condition is Correct</strong>
-                            <small style={{ display: 'block', color: '#6c757d', marginTop: '0.25rem' }}>
-                              Verify that goods are in good condition without damage
-                            </small>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#e9ecef';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            verificationData.quantityCorrect ? '#d1e7dd' : '#f8f9fa';
-                        }}
-                        style={{
-                          padding: '0.5rem',
-                          marginBottom: '1rem',
-                          borderRadius: '0.25rem',
-                          backgroundColor: verificationData.quantityCorrect
-                            ? '#d1e7dd'
-                            : '#f8f9fa',
-                          transition: 'background-color 0.2s',
-                        }}
-                      >
-
-                        <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
-                          <input
-                            type="checkbox"
-                            checked={verificationData.quantityCorrect}
-                            onChange={(e) =>
-                              setVerificationData({
-                                ...verificationData,
-                                quantityCorrect: e.target.checked,
-                              })
-                            }
-                            style={{ marginRight: '0.5rem', marginTop: '0.25rem' }}
-                          />
-                          <div>
-                            <strong>Quantity is Correct</strong>
-                            <small style={{ display: 'block', color: '#6c757d', marginTop: '0.25rem' }}>
-                              Confirm that delivered quantity matches order quantity
-                            </small>
-                          </div>
-                        </label>
-                      </div>
-
-                      <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#495057' }}>
-                          Admin Notes
-                        </label>
-                        <textarea
-                          style={{
-                            width: '100%',
-                            padding: '0.5rem',
-                            borderRadius: '0.25rem',
-                            border: '1px solid #ced4da',
-                            minHeight: '100px',
-                            resize: 'vertical'
-                          }}
-                          placeholder="Add any notes or observations..."
-                          value={verificationData.adminNotes}
-                          onChange={(e) =>
-                            setVerificationData({
-                              ...verificationData,
-                              adminNotes: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-
-                      {currentOrder.transporterDetails.verifiedAt && (
-                        <div style={{
-                          backgroundColor: '#d1ecf1',
-                          color: '#0c5460',
-                          padding: '0.75rem',
-                          borderRadius: '0.25rem',
-                          marginBottom: '1rem',
-                          border: '1px solid #bee5eb'
-                        }}>
-                          <small>
-                            ℹ️ Last verified by{' '}
-                            <strong>
-                              {currentOrder.transporterDetails.verifiedByName || 'Admin'}
-                            </strong>{' '}
-                            on{' '}
-                            {new Date(
-                              currentOrder.transporterDetails.verifiedAt
-                            ).toLocaleString()}
-                          </small>
-                        </div>
-                      )}
-
+                    <div style={{
+                      padding: '1rem',
+                      display: 'flex',
+                      gap: '1rem',
+                      flexWrap: 'wrap'
+                    }}>
                       <button
                         style={{
-                          width: '100%',
-                          padding: '0.75rem',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.375rem',
+                          border: 'none',
                           backgroundColor: '#198754',
                           color: 'white',
-                          border: 'none',
-                          borderRadius: '0.25rem',
+                          fontSize: '1rem',
                           cursor: 'pointer',
-                          fontWeight: '500',
-                          fontSize: '1rem'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
                         }}
-                        onClick={saveVerification}
+                        onClick={generateFarmerInvoiceFromModal}
+                        disabled={!currentOrder.adminToFarmerPayment}
                       >
-                        ✅ Save Verification
+                        <span>📥</span> View Farmer Invoice
+                      </button>
+                      <button
+                        style={{
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          backgroundColor: '#0d6efd',
+                          color: 'white',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
+                        }}
+                        onClick={generateTraderInvoiceFromModal}
+                        disabled={!currentOrder.traderToAdminPayment}
+                      >
+                        <span>📥</span> View Trader Invoice
                       </button>
                     </div>
                   </div>
-                </>
-              )}
 
-              {!currentOrder.transporterDetails && (
-                <div style={{
-                  backgroundColor: '#fff3cd',
-                  color: '#856404',
-                  padding: '0.75rem',
-                  borderRadius: '0.25rem',
-                  marginTop: '1rem',
-                  border: '1px solid #ffeaa7'
-                }}>
-                  ⚠️ No transporter assigned to this order yet.
-                </div>
+                  {/* Order Information */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #dee2e6',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      backgroundColor: '#f8f9fa',
+                      padding: '0.75rem 1rem',
+                      borderBottom: '1px solid #dee2e6'
+                    }}>
+                      <h6 style={{ margin: 0 }}>
+                        ℹ️ Order Information
+                      </h6>
+                    </div>
+                    <div style={{ padding: '1rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                        <div>
+                          <table style={{ width: '100%' }}>
+                            <tbody>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d', width: '40%' }}>Order ID:</td>
+                                <td style={{ padding: '0.375rem' }}>
+                                  <strong>{currentOrder.orderId}</strong>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d' }}>Trader:</td>
+                                <td style={{ padding: '0.375rem' }}>
+                                  {currentOrder.traderName}
+                                  {currentOrder.traderMobile && (
+                                    <>
+                                      <br />
+                                      <small>{currentOrder.traderMobile}</small>
+                                    </>
+                                  )}
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d' }}>Farmer:</td>
+                                <td style={{ padding: '0.375rem' }}>
+                                  {currentOrder.farmerName || 'N/A'}
+                                  {currentOrder.farmerMobile && (
+                                    <>
+                                      <br />
+                                      <small>{currentOrder.farmerMobile}</small>
+                                    </>
+                                  )}
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <div>
+                          <table style={{ width: '100%' }}>
+                            <tbody>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d', width: '40%' }}>Order Status:</td>
+                                <td style={{ padding: '0.375rem' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: getStatusBadge(currentOrder.orderStatus),
+                                    color: 'white',
+                                    fontSize: '0.875rem'
+                                  }}>
+                                    {currentOrder.orderStatus}
+                                  </span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d' }}>Transporter Status:</td>
+                                <td style={{ padding: '0.375rem' }}>
+                                  <span style={{
+                                    display: 'inline-block',
+                                    padding: '0.25rem 0.5rem',
+                                    borderRadius: '0.375rem',
+                                    backgroundColor: getStatusBadge(currentOrder.transporterStatus || 'pending'),
+                                    color: 'white',
+                                    fontSize: '0.875rem'
+                                  }}>
+                                    {currentOrder.transporterStatus || 'pending'}
+                                  </span>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '0.375rem', color: '#6c757d' }}>Created At:</td>
+                                <td style={{ padding: '0.375rem' }}>{new Date(currentOrder.createdAt).toLocaleString()}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    {/* Trader to Admin Payment */}
+                    <div style={{
+                      borderRadius: '0.375rem',
+                      border: '1px solid #dee2e6',
+                      borderLeft: '3px solid #0d6efd',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%'
+                    }}>
+                      <div style={{
+                        backgroundColor: '#0d6efd',
+                        color: 'white',
+                        padding: '0.75rem 1rem'
+                      }}>
+                        🔄 Trader to Admin Payment
+                      </div>
+                      <div style={{ padding: '1rem', flex: 1 }}>
+                        {currentOrder.traderToAdminPayment ? (
+                          <>
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Total Amount:</span>
+                                <strong style={{ fontSize: '1.25rem', margin: 0 }}>
+                                  {formatCurrency(currentOrder.traderToAdminPayment.totalAmount)}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Paid Amount:</span>
+                                <strong style={{ color: '#198754' }}>
+                                  {formatCurrency(currentOrder.traderToAdminPayment.paidAmount)}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Remaining:</span>
+                                <strong style={{ color: '#dc3545' }}>
+                                  {formatCurrency(
+                                    currentOrder.traderToAdminPayment.remainingAmount
+                                  )}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#6c757d' }}>Status:</span>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: getStatusBadge(currentOrder.traderToAdminPayment.paymentStatus),
+                                  color: 'white',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  {currentOrder.traderToAdminPayment.paymentStatus}
+                                </span>
+                              </div>
+                            </div>
+
+                            {currentOrder.traderToAdminPayment.paymentHistory &&
+                              currentOrder.traderToAdminPayment.paymentHistory.length > 0 && (
+                                <div>
+                                  <h6 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Payment History:</h6>
+                                  <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                      <thead style={{ backgroundColor: '#f8f9fa' }}>
+                                        <tr>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Date</th>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Amount</th>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Payment ID</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {currentOrder.traderToAdminPayment.paymentHistory.map(
+                                          (payment, idx) => (
+                                            <tr key={idx}>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>
+                                                <small>
+                                                  {new Date(payment.paidDate).toLocaleDateString()}
+                                                </small>
+                                              </td>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>{formatCurrency(payment.amount)}</td>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>
+                                                <small style={{ color: '#6c757d' }}>
+                                                  {payment.razorpayPaymentId || 'N/A'}
+                                                </small>
+                                              </td>
+                                            </tr>
+                                          )
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                          </>
+                        ) : (
+                          <p style={{ color: '#6c757d' }}>No payment details available</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Admin to Farmer Payment */}
+                    <div style={{
+                      borderRadius: '0.375rem',
+                      border: '1px solid #dee2e6',
+                      borderLeft: '3px solid #198754',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%'
+                    }}>
+                      <div style={{
+                        backgroundColor: '#198754',
+                        color: 'white',
+                        padding: '0.75rem 1rem'
+                      }}>
+                        🔄 Admin to Farmer Payment
+                      </div>
+                      <div style={{ padding: '1rem', flex: 1 }}>
+                        {currentOrder.adminToFarmerPayment ? (
+                          <>
+                            <div style={{ marginBottom: '1rem' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Total Amount:</span>
+                                <strong style={{ fontSize: '1.25rem', margin: 0 }}>
+                                  {formatCurrency(currentOrder.adminToFarmerPayment.totalAmount)}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Paid Amount:</span>
+                                <strong style={{ color: '#198754' }}>
+                                  {formatCurrency(currentOrder.adminToFarmerPayment.paidAmount)}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#6c757d' }}>Remaining:</span>
+                                <strong style={{ color: '#dc3545' }}>
+                                  {formatCurrency(
+                                    currentOrder.adminToFarmerPayment.remainingAmount
+                                  )}
+                                </strong>
+                              </div>
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#6c757d' }}>Status:</span>
+                                <span style={{
+                                  display: 'inline-block',
+                                  padding: '0.25rem 0.5rem',
+                                  borderRadius: '0.375rem',
+                                  backgroundColor: getStatusBadge(currentOrder.adminToFarmerPayment.paymentStatus),
+                                  color: 'white',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  {currentOrder.adminToFarmerPayment.paymentStatus}
+                                </span>
+                              </div>
+                            </div>
+
+                            {currentOrder.adminToFarmerPayment.paymentHistory &&
+                              currentOrder.adminToFarmerPayment.paymentHistory.length > 0 && (
+                                <div>
+                                  <h6 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>Payment History:</h6>
+                                  <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                      <thead style={{ backgroundColor: '#f8f9fa' }}>
+                                        <tr>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Date</th>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Amount</th>
+                                          <th style={{ padding: '0.375rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Payment ID</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {currentOrder.adminToFarmerPayment.paymentHistory.map(
+                                          (payment, idx) => (
+                                            <tr key={idx}>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>
+                                                <small>
+                                                  {new Date(payment.paidDate).toLocaleDateString()}
+                                                </small>
+                                              </td>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>{formatCurrency(payment.amount)}</td>
+                                              <td style={{ padding: '0.375rem', border: '1px solid #dee2e6' }}>
+                                                <small style={{ color: '#6c757d' }}>
+                                                  {payment.razorpayPaymentId || 'N/A'}
+                                                </small>
+                                              </td>
+                                            </tr>
+                                          )
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              )}
+                          </>
+                        ) : (
+                          <p style={{ color: '#6c757d' }}>No payment details available</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Product Items */}
+                  <div style={{
+                    marginBottom: '1rem',
+                    borderRadius: '0.375rem',
+                    border: '1px solid #dee2e6',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      backgroundColor: '#f8f9fa',
+                      padding: '0.75rem 1rem',
+                      borderBottom: '1px solid #dee2e6'
+                    }}>
+                      <h6 style={{ margin: 0 }}>
+                        📦 Product Items
+                      </h6>
+                    </div>
+                    <div style={{ padding: '1rem' }}>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead style={{ backgroundColor: '#f8f9fa' }}>
+                            <tr>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Product</th>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Grade</th>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Quantity</th>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Price/Unit</th>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Total</th>
+                              <th style={{ padding: '0.75rem', textAlign: 'left', border: '1px solid #dee2e6' }}>Market</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {currentOrder.productItems.map((item, idx) => (
+                              <tr key={idx}>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.productName}</td>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.grade}</td>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{item.quantity}</td>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>{formatCurrency(item.pricePerUnit)}</td>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
+                                  <strong>{formatCurrency(item.totalAmount)}</strong>
+                                </td>
+                                <td style={{ padding: '0.75rem', border: '1px solid #dee2e6' }}>
+                                  {item.marketDetails ? (
+                                    <>
+                                      <strong>{item.marketDetails.marketName}</strong>
+                                      <br />
+                                      <small style={{ color: '#6c757d' }}>
+                                        {item.marketDetails.exactAddress}
+                                        {item.marketDetails.district && (
+                                          <>, {item.marketDetails.district}</>
+                                        )}
+                                      </small>
+                                    </>
+                                  ) : (
+                                    item.nearestMarket || 'N/A'
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transporter Details and Verification */}
+                  {currentOrder.transporterDetails && (
+                    <>
+                      <div style={{
+                        marginBottom: '1rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #0dcaf0',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          backgroundColor: '#0dcaf0',
+                          color: 'white',
+                          padding: '0.75rem 1rem'
+                        }}>
+                          🚚 Transporter Information
+                        </div>
+                        <div style={{ padding: '1rem' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+                            <div>
+                              <table style={{ width: '100%' }}>
+                                <tbody>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d', width: '40%' }}>Name:</td>
+                                    <td style={{ padding: '0.375rem' }}><strong>{currentOrder.transporterDetails.transporterName}</strong></td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Mobile:</td>
+                                    <td style={{ padding: '0.375rem' }}>{currentOrder.transporterDetails.transporterMobile || 'N/A'}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Email:</td>
+                                    <td style={{ padding: '0.375rem' }}>{currentOrder.transporterDetails.transporterEmail || 'N/A'}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Driver:</td>
+                                    <td style={{ padding: '0.375rem' }}>{currentOrder.transporterDetails.driverName || 'N/A'}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                            <div>
+                              <table style={{ width: '100%' }}>
+                                <tbody>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d', width: '40%' }}>Vehicle Type:</td>
+                                    <td style={{ padding: '0.375rem' }}><strong>{currentOrder.transporterDetails.vehicleType}</strong></td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Vehicle Number:</td>
+                                    <td style={{ padding: '0.375rem' }}>{currentOrder.transporterDetails.vehicleNumber}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Capacity:</td>
+                                    <td style={{ padding: '0.375rem' }}>{currentOrder.transporterDetails.vehicleCapacity || 'N/A'}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ padding: '0.375rem', color: '#6c757d' }}>Accepted At:</td>
+                                    <td style={{ padding: '0.375rem' }}>{new Date(currentOrder.transporterDetails.acceptedAt).toLocaleString()}</td>
+                                  </tr>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        borderRadius: '0.375rem',
+                        border: '1px solid #198754',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          backgroundColor: '#198754',
+                          color: 'white',
+                          padding: '0.75rem 1rem'
+                        }}>
+                          ✅ Verification Checklist
+                        </div>
+                        <div style={{ padding: '1rem' }}>
+                          <div style={{
+                            backgroundColor: verificationData.transporterReached ? '#d1e7dd' : '#f8f9fa',
+                            borderRadius: '5px',
+                            padding: '1rem',
+                            marginBottom: '1rem',
+                            transition: 'background-color 0.2s'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                              <input
+                                type="checkbox"
+                                id="transporterReached"
+                                checked={verificationData.transporterReached}
+                                onChange={(e) =>
+                                  setVerificationData({
+                                    ...verificationData,
+                                    transporterReached: e.target.checked,
+                                  })
+                                }
+                                style={{ marginTop: '0.25rem' }}
+                              />
+                              <div>
+                                <label htmlFor="transporterReached" style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
+                                  Transporter Reached Destination
+                                </label>
+                                <small style={{ color: '#6c757d', display: 'block' }}>
+                                  Confirm that transporter has arrived at the delivery location
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{
+                            backgroundColor: verificationData.goodsConditionCorrect ? '#d1e7dd' : '#f8f9fa',
+                            borderRadius: '5px',
+                            padding: '1rem',
+                            marginBottom: '1rem',
+                            transition: 'background-color 0.2s'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                              <input
+                                type="checkbox"
+                                id="goodsConditionCorrect"
+                                checked={verificationData.goodsConditionCorrect}
+                                onChange={(e) =>
+                                  setVerificationData({
+                                    ...verificationData,
+                                    goodsConditionCorrect: e.target.checked,
+                                  })
+                                }
+                                style={{ marginTop: '0.25rem' }}
+                              />
+                              <div>
+                                <label htmlFor="goodsConditionCorrect" style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
+                                  Goods Condition is Correct
+                                </label>
+                                <small style={{ color: '#6c757d', display: 'block' }}>
+                                  Verify that goods are in good condition without damage
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{
+                            backgroundColor: verificationData.quantityCorrect ? '#d1e7dd' : '#f8f9fa',
+                            borderRadius: '5px',
+                            padding: '1rem',
+                            marginBottom: '1rem',
+                            transition: 'background-color 0.2s'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                              <input
+                                type="checkbox"
+                                id="quantityCorrect"
+                                checked={verificationData.quantityCorrect}
+                                onChange={(e) =>
+                                  setVerificationData({
+                                    ...verificationData,
+                                    quantityCorrect: e.target.checked,
+                                  })
+                                }
+                                style={{ marginTop: '0.25rem' }}
+                              />
+                              <div>
+                                <label htmlFor="quantityCorrect" style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.25rem' }}>
+                                  Quantity is Correct
+                                </label>
+                                <small style={{ color: '#6c757d', display: 'block' }}>
+                                  Confirm that delivered quantity matches order quantity
+                                </small>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label htmlFor="adminNotes" style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}>
+                              Admin Notes
+                            </label>
+                            <textarea
+                              style={{
+                                width: '100%',
+                                padding: '0.375rem 0.75rem',
+                                borderRadius: '0.375rem',
+                                border: '1px solid #ced4da',
+                                minHeight: '6rem'
+                              }}
+                              id="adminNotes"
+                              placeholder="Add any notes or observations..."
+                              value={verificationData.adminNotes}
+                              onChange={(e) =>
+                                setVerificationData({
+                                  ...verificationData,
+                                  adminNotes: e.target.value,
+                                })
+                              }
+                            ></textarea>
+                          </div>
+
+                          {currentOrder.transporterDetails.verifiedAt && (
+                            <div style={{
+                              backgroundColor: '#d1ecf1',
+                              border: '1px solid #bee5eb',
+                              borderRadius: '0.375rem',
+                              padding: '1rem',
+                              marginBottom: '1rem'
+                            }}>
+                              <small>
+                                ℹ️ Last verified by{' '}
+                                <strong>
+                                  {currentOrder.transporterDetails.verifiedByName || 'Admin'}
+                                </strong>{' '}
+                                on{' '}
+                                {new Date(
+                                  currentOrder.transporterDetails.verifiedAt
+                                ).toLocaleString()}
+                              </small>
+                            </div>
+                          )}
+
+                          <button
+                            style={{
+                              width: '100%',
+                              padding: '0.5rem',
+                              borderRadius: '0.375rem',
+                              border: 'none',
+                              backgroundColor: '#198754',
+                              color: 'white',
+                              fontSize: '1rem',
+                              cursor: 'pointer'
+                            }}
+                            onClick={saveVerification}
+                          >
+                            ✅ Save Verification
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {!currentOrder.transporterDetails && (
+                    <div style={{
+                      backgroundColor: '#fff3cd',
+                      border: '1px solid #ffecb5',
+                      borderRadius: '0.375rem',
+                      padding: '1rem',
+                      color: '#856404'
+                    }}>
+                      ⚠️ No transporter assigned to this order yet.
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
         </div>
       )}
-    </div>
+
+      <OrderEditModal />
+    </>
   );
 };
 

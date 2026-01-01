@@ -1,148 +1,189 @@
-// import { NextRequest, NextResponse } from 'next/server';
-// import connectDB from '../../lib/Db';
-// import AdminSlider from '../../models/adminslider';
-
-// // GET - Fetch all sliders
-// export async function GET() {
-//   try {
-//     await connectDB();
-//     const sliders = await AdminSlider.find({}).sort({ createdAt: -1 });
-    
-//     return NextResponse.json({
-//       success: true,
-//       data: sliders,
-//       count: sliders.length
-//     });
-//   } catch (error: any) {
-//     console.error('Error fetching sliders:', error);
-//     return NextResponse.json(
-//       { success: false, message: 'Failed to fetch sliders', error: error.message },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-// // POST - Create new slider
-// export async function POST(request: NextRequest) {
-//   try {
-//     await connectDB();
-//     const body = await request.json();
-    
-//     // Validate required fields
-//     if (!body.menuName || !body.menuIcon || !body.sliderImage) {
-//       return NextResponse.json(
-//         { success: false, message: 'Menu name, icon, and slider image are required' },
-//         { status: 400 }
-//       );
-//     }
-
-//     const newSlider = await AdminSlider.create({
-//       menuName: body.menuName,
-//       menuIcon: body.menuIcon,
-//       sliderImage: body.sliderImage,
-//       status: body.status || 'active'
-//     });
-
-//     return NextResponse.json({
-//       success: true,
-//       message: 'Slider created successfully',
-//       data: newSlider
-//     }, { status: 201 });
-//   } catch (error: any) {
-//     console.error('Error creating slider:', error);
-//     return NextResponse.json(
-//       { success: false, message: 'Failed to create slider', error: error.message },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '../../lib/Db';
-import AdminSlider from '../../models/adminslider';
+import  connectDB  from '../../../lib/Db';
+import AdminMenuIcon from '../../../models/adminmenuicon';
 
-// GET - Fetch all sliders
-export async function GET() {
+// GET - Fetch single menu icon by ID
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const sliders = await AdminSlider.find({}).sort({ createdAt: -1 });
-    
+
+    const { id } = await context.params;
+
+    // Validate MongoDB ObjectId
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid menu icon ID format' },
+        { status: 400 }
+      );
+    }
+
+    const menuIcon = await AdminMenuIcon.findById(id);
+
+    if (!menuIcon) {
+      return NextResponse.json(
+        { success: false, error: 'Menu icon not found' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
-      data: sliders,
-      count: sliders.length
+      data: menuIcon
     });
+
   } catch (error: any) {
-    console.error('Error fetching sliders:', error);
+    console.error('GET /api/menuicon/[id] error:', error);
     return NextResponse.json(
-      { success: false, message: 'Failed to fetch sliders', error: error.message },
+      { success: false, error: error.message || 'Failed to fetch menu icon' },
       { status: 500 }
     );
   }
 }
 
-// POST - Create new slider
-export async function POST(request: NextRequest) {
+// PUT - Update menu icon by ID
+export async function PUT(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const body = await request.json();
-    
-    // Validate required fields
-    if (!body.menuName || !body.menuIcon || !body.sliderImage) {
+
+    const { id } = await context.params;
+
+    console.log('Updating menu icon with ID:', id);
+
+    // Validate MongoDB ObjectId
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json(
-        { success: false, message: 'Menu name, icon, and slider image are required' },
+        { success: false, error: 'Invalid menu icon ID format' },
         { status: 400 }
       );
     }
 
-    const newSlider = await AdminSlider.create({
-      menuName: body.menuName,
-      menuIcon: body.menuIcon,
-      sliderImage: body.sliderImage,
-      role: body.role || '',
-      status: body.status || 'active'
-    });
+    // Find existing menu icon
+    const existingMenuIcon = await AdminMenuIcon.findById(id);
+    if (!existingMenuIcon) {
+      return NextResponse.json(
+        { success: false, error: 'Menu icon not found' },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const updateData: any = {};
+
+    // Update menuName if provided
+    if (body.menuName !== undefined) {
+      if (!body.menuName.trim()) {
+        return NextResponse.json(
+          { success: false, error: 'Menu name cannot be empty' },
+          { status: 400 }
+        );
+      }
+      updateData.menuName = body.menuName;
+    }
+
+    // Update menuIcon if provided
+    if (body.menuIcon !== undefined) {
+      if (!body.menuIcon.startsWith('data:image/')) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid image format' },
+          { status: 400 }
+        );
+      }
+      updateData.menuIcon = body.menuIcon;
+    }
+
+    // Update isActive if provided
+    if (body.isActive !== undefined) {
+      updateData.isActive = body.isActive;
+    }
+
+    console.log('Update data:', { ...updateData, menuIcon: updateData.menuIcon ? 'base64...' : undefined });
+
+    // Update menu icon
+    const updatedMenuIcon = await AdminMenuIcon.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedMenuIcon) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to update menu icon' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Menu icon updated successfully:', updatedMenuIcon.menuName);
 
     return NextResponse.json({
       success: true,
-      message: 'Slider created successfully',
-      data: newSlider
-    }, { status: 201 });
+      data: updatedMenuIcon,
+      message: 'Menu icon updated successfully'
+    });
+
   } catch (error: any) {
-    console.error('Error creating slider:', error);
+    console.error('PUT /api/menuicon/[id] error:', error);
+    console.error('Error stack:', error.stack);
     return NextResponse.json(
-      { success: false, message: 'Failed to create slider', error: error.message },
+      { success: false, error: error.message || 'Failed to update menu icon' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Delete menu icon by ID
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    await connectDB();
+
+    const { id } = await context.params;
+
+    console.log('Deleting menu icon with ID:', id);
+
+    // Validate MongoDB ObjectId
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid menu icon ID format' },
+        { status: 400 }
+      );
+    }
+
+    // Find menu icon
+    const menuIcon = await AdminMenuIcon.findById(id);
+
+    if (!menuIcon) {
+      return NextResponse.json(
+        { success: false, error: 'Menu icon not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('Menu icon found:', menuIcon.menuName);
+
+    // Delete menu icon from database
+    await AdminMenuIcon.findByIdAndDelete(id);
+
+    console.log('Menu icon deleted successfully');
+
+    return NextResponse.json({
+      success: true,
+      message: 'Menu icon deleted successfully',
+      deletedId: id
+    });
+
+  } catch (error: any) {
+    console.error('DELETE /api/menuicon/[id] error:', error);
+    console.error('Error stack:', error.stack);
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to delete menu icon' },
       { status: 500 }
     );
   }

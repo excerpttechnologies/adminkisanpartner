@@ -491,7 +491,7 @@ export async function GET(req: NextRequest) {
 
     const total = await Farmer.countDocuments(filter);
     const data = await Farmer.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ registeredAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
