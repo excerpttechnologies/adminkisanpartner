@@ -172,7 +172,7 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
       { name: "Labours", path: "/labours", icon: "MdPeople" },
       { name: "Agent Req", path: "/agent-requirements", icon: "MdGroup" },
-      { name: "Postings", path: "/postings", icon: "MdAdminPanelSettings" },
+      { name: "Crop Postings", path: "/postings", icon: "MdAdminPanelSettings" },
     ],
   },
   {
@@ -205,6 +205,9 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Acres", path: "/acres", icon: "MdLandscape" },
       { name: "Seeds", path: "/seeds", icon: "MdEco" },
       { name: "Settings", path: "/settings", icon: "MdSettings" },
+       { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
+      { name: "Market", path: "/market", icon: "MdStore" },
+       { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten" },
     ],
   },
   {
