@@ -7282,7 +7282,7 @@ export default function FarmersPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Number</label>
-                  <input name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
+                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">IFSC Code</label>
@@ -7475,7 +7475,7 @@ export default function FarmersPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Number</label>
-                  <input name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
+                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">IFSC Code</label>
