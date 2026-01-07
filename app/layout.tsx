@@ -117,9 +117,11 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Check if current route is public
-  const isPublicRoute = pathname === '/admin/login' || 
-                       pathname === '/login' || 
-                       pathname === '/';
+  const isPublicRoute = pathname === '/admin/login' ||
+    pathname === '/login' ||
+    pathname.startsWith('/admin/reset-password') ||
+
+    pathname === '/';
 
   useEffect(() => {
     // Only check auth for protected routes

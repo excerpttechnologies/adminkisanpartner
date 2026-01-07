@@ -276,6 +276,9 @@
 
 
 
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -332,13 +335,14 @@ const Sidebar = () => {
       'orders': 'Orders',
       'labours': 'Labours',
       'agent req': 'Agent Req',
-      'postings': 'Postings',
+      'crop postings': 'Crop Postings', 
       'farmers': 'Farmers',
       'agents': 'Agents',
       'sub admins': 'Sub Admins',
       'slider': 'Slider',
       'categories': 'Categories',
-      'cropcare': 'Crop Care',
+      // 'cropcare': 'Crop Care',
+      'crop care': 'Crop Care',
       'post ads': 'Post Ads',
       'add notes': 'Add Notes',
       'menu icons': 'Menu Icons',

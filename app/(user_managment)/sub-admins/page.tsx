@@ -18,7 +18,7 @@
 //   FaPlus,
 //   FaTrashRestore,
 //   FaHistory,
-//   FaFilter,
+//   FaTrashAlt, // New icon for permanent delete
 // } from "react-icons/fa";
 // import * as XLSX from "xlsx";
 // import jsPDF from "jspdf";
@@ -69,9 +69,11 @@
 //   const [open, setOpen] = useState(false);
 //   const [deleteOpen, setDeleteOpen] = useState(false);
 //   const [restoreOpen, setRestoreOpen] = useState(false);
+//   const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false); // New state
 //   const [viewOpen, setViewOpen] = useState(false);
 //   const [selectedAdmin, setSelectedAdmin] = useState<SubAdmin | null>(null);
 //   const [adminToRestore, setAdminToRestore] = useState<SubAdmin | null>(null);
+//   const [adminToDeletePermanently, setAdminToDeletePermanently] = useState<SubAdmin | null>(null); // New state
 //   const [editing, setEditing] = useState<SubAdmin | null>(null);
 //   const [showDeleted, setShowDeleted] = useState(false);
 
@@ -142,6 +144,7 @@
 //     }
 //   };
 
+//   // Soft delete (move to trash)
 //   const deleteSubAdminAPI = async (id: string) => {
 //     try {
 //       const response = await axios.delete<ApiResponse>(`/api/admin/${id}`);
@@ -152,6 +155,7 @@
 //     }
 //   };
 
+//   // Restore from trash
 //   const restoreSubAdminAPI = async (id: string) => {
 //     try {
 //       const response = await axios.patch<ApiResponse>(`/api/admin/${id}/restore`);
@@ -159,6 +163,17 @@
 //     } catch (err: any) {
 //       console.error("Error restoring sub-admin:", err);
 //       throw new Error(err.response?.data?.message || "Failed to restore sub-admin");
+//     }
+//   };
+
+//   // Permanent delete API (new function)
+//   const permanentDeleteSubAdminAPI = async (id: string) => {
+//     try {
+//       const response = await axios.delete<ApiResponse>(`/api/admin/${id}/permanent`);
+//       return response.data;
+//     } catch (err: any) {
+//       console.error("Error permanently deleting sub-admin:", err);
+//       throw new Error(err.response?.data?.message || "Failed to permanently delete sub-admin");
 //     }
 //   };
 
@@ -259,6 +274,7 @@
 //     }
 //   };
 
+//   // Soft delete (move to trash)
 //   const handleDelete = async () => {
 //     if (!selectedAdmin) return;
    
@@ -273,6 +289,7 @@
 //     }
 //   };
 
+//   // Restore from trash
 //   const handleRestore = async () => {
 //     if (!adminToRestore) return;
    
@@ -284,6 +301,21 @@
 //     } catch (error: any) {
 //       console.error("Error restoring sub-admin:", error);
 //       toast.error(error.response?.data?.message || "Failed to restore sub-admin. Please try again.");
+//     }
+//   };
+
+//   // Permanent delete (new function)
+//   const handlePermanentDelete = async () => {
+//     if (!adminToDeletePermanently) return;
+   
+//     try {
+//       await permanentDeleteSubAdminAPI(adminToDeletePermanently._id);
+//       toast.success("Sub-admin permanently deleted!");
+//       setPermanentDeleteOpen(false);
+//       fetchSubAdmins(currentPage, search);
+//     } catch (error: any) {
+//       console.error("Error permanently deleting sub-admin:", error);
+//       toast.error(error.response?.data?.message || "Failed to permanently delete sub-admin. Please try again.");
 //     }
 //   };
 
@@ -375,6 +407,7 @@
 //     setEditing(null);
 //     setSelectedAdmin(null);
 //     setAdminToRestore(null);
+//     setAdminToDeletePermanently(null);
 //     setViewOpen(false);
 //     setForm({ name: "", email: "", password: "", pageAccess: [] });
 //     setErrors({});
@@ -643,7 +676,7 @@
 //           </h1>
 //           <p className="text-gray-600 mt-2">
 //             {showDeleted 
-//               ? "View and restore deleted sub-admin accounts" 
+//               ? "View, restore or permanently delete sub-admin accounts" 
 //               : `Overview and management of all sub-admin accounts. ${totalAdmins} sub-admins found.`}
 //           </p>
 //         </div>
@@ -826,20 +859,30 @@
 //                           </button>
 //                         )}
                         
-//                         {/* Delete/Restore based on status */}
+//                         {/* Actions for deleted admins */}
 //                         {admin.isDeleted ? (
-//                           <button
-//                             onClick={() => { setAdminToRestore(admin); setRestoreOpen(true); }}
-//                             className="p-[.6rem] text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
-//                             title="Restore"
-//                           >
-//                             <FaTrashRestore />
-//                           </button>
+//                           <>
+//                             <button
+//                               onClick={() => { setAdminToRestore(admin); setRestoreOpen(true); }}
+//                               className="p-[.6rem] text-sm text-green-600 hover:bg-green-50 rounded transition-colors"
+//                               title="Restore"
+//                             >
+//                               <FaTrashRestore />
+//                             </button>
+//                             <button
+//                               onClick={() => { setAdminToDeletePermanently(admin); setPermanentDeleteOpen(true); }}
+//                               className="p-[.6rem] text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
+//                               title="Delete Permanently"
+//                             >
+//                               <FaTrashAlt />
+//                             </button>
+//                           </>
 //                         ) : (
+//                           /* Delete button for active admins (soft delete) */
 //                           <button
 //                             onClick={() => { setSelectedAdmin(admin); setDeleteOpen(true); }}
 //                             className="p-[.6rem] text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
-//                             title="Delete"
+//                             title="Move to Trash"
 //                           >
 //                             <FaTrash />
 //                           </button>
@@ -881,9 +924,14 @@
 //                       </button>
 //                     )}
 //                     {admin.isDeleted ? (
-//                       <button onClick={() => { setAdminToRestore(admin); setRestoreOpen(true); }} className="p-1.5 text-green-600">
-//                         <FaTrashRestore />
-//                       </button>
+//                       <>
+//                         <button onClick={() => { setAdminToRestore(admin); setRestoreOpen(true); }} className="p-1.5 text-green-600">
+//                           <FaTrashRestore />
+//                         </button>
+//                         <button onClick={() => { setAdminToDeletePermanently(admin); setPermanentDeleteOpen(true); }} className="p-1.5 text-red-600">
+//                           <FaTrashAlt />
+//                         </button>
+//                       </>
 //                     ) : (
 //                       <button onClick={() => { setSelectedAdmin(admin); setDeleteOpen(true); }} className="p-1.5 text-red-600">
 //                         <FaTrash />
@@ -1135,7 +1183,7 @@
 //         </Modal>
 //       )}
 
-//       {/* DELETE CONFIRMATION MODAL */}
+//       {/* SOFT DELETE (MOVE TO TRASH) MODAL */}
 //       {deleteOpen && selectedAdmin && (
 //         <Modal 
 //           title="Move to Trash?" 
@@ -1191,6 +1239,39 @@
 //                 className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
 //               >
 //                 Restore Sub-Admin
+//               </button>
+//             </div>
+//           </div>
+//         </Modal>
+//       )}
+
+//       {/* PERMANENT DELETE CONFIRMATION MODAL */}
+//       {permanentDeleteOpen && adminToDeletePermanently && (
+//         <Modal 
+//           title="Delete Permanently?" 
+//           onClose={() => { setPermanentDeleteOpen(false); setAdminToDeletePermanently(null); }}
+//         >
+//           <div className="text-center">
+//             <div className="text-red-500 text-5xl mb-4">⚠️</div>
+//             <h2 className="text-xl font-semibold mb-2">Delete Permanently?</h2>
+//             <p className="text-gray-600 mb-2">
+//               Are you sure you want to permanently delete <span className="font-semibold">{adminToDeletePermanently.name}</span>?
+//             </p>
+//             <p className="text-red-600 mb-6 font-semibold">
+//               ⚠️ This action cannot be undone! All data will be lost forever.
+//             </p>
+//             <div className="flex justify-center gap-3">
+//               <button
+//                 onClick={() => { setPermanentDeleteOpen(false); setAdminToDeletePermanently(null); }}
+//                 className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+//               >
+//                 Cancel
+//               </button>
+//               <button
+//                 onClick={handlePermanentDelete}
+//                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+//               >
+//                 Delete Permanently
 //               </button>
 //             </div>
 //           </div>
@@ -1271,6 +1352,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -1288,7 +1378,7 @@ import {
   FaPlus,
   FaTrashRestore,
   FaHistory,
-  FaTrashAlt, // New icon for permanent delete
+  FaTrashAlt,
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -1311,6 +1401,9 @@ interface SubAdmin {
   deletedBy?: string;
   createdAt?: string;
   updatedAt?: string;
+  state?: string;
+  district?: string;
+  commodity?: string[];
 }
 
 interface ApiResponse {
@@ -1321,6 +1414,19 @@ interface ApiResponse {
   limit?: number;
   total?: number;
 }
+
+interface State {
+  _id: string;
+  name: string;
+}
+
+interface District {
+  _id: string;
+  name: string;
+  stateId: string;
+}
+
+const COMMODITIES = ["Wheat", "Rice", "Cotton", "Sugarcane"];
 
 /* ================= PAGE ================= */
 
@@ -1335,23 +1441,29 @@ export default function SubAdminAccountsPage() {
   const [totalAdmins, setTotalAdmins] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [states, setStates] = useState<State[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
+  const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
 
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
-  const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false); // New state
+  const [permanentDeleteOpen, setPermanentDeleteOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<SubAdmin | null>(null);
   const [adminToRestore, setAdminToRestore] = useState<SubAdmin | null>(null);
-  const [adminToDeletePermanently, setAdminToDeletePermanently] = useState<SubAdmin | null>(null); // New state
+  const [adminToDeletePermanently, setAdminToDeletePermanently] = useState<SubAdmin | null>(null);
   const [editing, setEditing] = useState<SubAdmin | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
 
-  const [form, setForm] = useState<Omit<SubAdmin, "_id">>({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    pageAccess: [],
+    pageAccess: [] as string[],
+    state: "",
+    district: "",
+    commodity: [] as string[],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1394,7 +1506,29 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  const createSubAdmin = async (adminData: Omit<SubAdmin, "_id">) => {
+  const fetchStates = async () => {
+    try {
+      const response = await axios.get("/api/states");
+      if (response.data.success) {
+        setStates(response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching states:", err);
+    }
+  };
+
+  const fetchDistricts = async () => {
+    try {
+      const response = await axios.get("/api/districts");
+      if (response.data.success) {
+        setDistricts(response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching districts:", err);
+    }
+  };
+
+  const createSubAdmin = async (adminData: any) => {
     try {
       const response = await axios.post<ApiResponse>("/api/admin", adminData);
       return response.data;
@@ -1414,7 +1548,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Soft delete (move to trash)
   const deleteSubAdminAPI = async (id: string) => {
     try {
       const response = await axios.delete<ApiResponse>(`/api/admin/${id}`);
@@ -1425,7 +1558,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Restore from trash
   const restoreSubAdminAPI = async (id: string) => {
     try {
       const response = await axios.patch<ApiResponse>(`/api/admin/${id}/restore`);
@@ -1436,7 +1568,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Permanent delete API (new function)
   const permanentDeleteSubAdminAPI = async (id: string) => {
     try {
       const response = await axios.delete<ApiResponse>(`/api/admin/${id}/permanent`);
@@ -1451,16 +1582,25 @@ export default function SubAdminAccountsPage() {
 
   useEffect(() => {
     fetchSubAdmins(currentPage, search);
+    fetchStates();
+    fetchDistricts();
   }, [currentPage, rowsPerPage, showDeleted]);
 
-  // Load modules dynamically from menu config
   useEffect(() => {
     const dynamicModules = getAllMenuModules();
     setAllModules(dynamicModules);
     setModules(["All", ...dynamicModules]);
   }, []);
 
-  // Debounced search
+  useEffect(() => {
+    if (form.state) {
+      const filtered = districts.filter(district => district.stateId === form.state);
+      setFilteredDistricts(filtered);
+    } else {
+      setFilteredDistricts([]);
+    }
+  }, [form.state, districts]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchSubAdmins(1, search);
@@ -1500,6 +1640,18 @@ export default function SubAdminAccountsPage() {
     if (form.pageAccess.length === 0) {
       e.pageAccess = "Select at least one module";
     }
+
+    if (!form.state) {
+      e.state = "State is required";
+    }
+
+    if (!form.district) {
+      e.district = "District is required";
+    }
+
+    if (form.commodity.length === 0) {
+      e.commodity = "Select at least one commodity";
+    }
     
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -1519,10 +1671,16 @@ export default function SubAdminAccountsPage() {
         pageAccessToSave = form.pageAccess;
       }
 
+      const selectedState = states.find(s => s._id === form.state);
+      const selectedDistrict = districts.find(d => d._id === form.district);
+
       const adminData: any = {
         name: form.name.trim(),
         email: form.email.trim(),
         pageAccess: pageAccessToSave,
+        state: selectedState?.name || "",
+        district: selectedDistrict?.name || "",
+        commodity: form.commodity,
       };
       
       if (form.password && form.password.trim()) {
@@ -1544,7 +1702,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Soft delete (move to trash)
   const handleDelete = async () => {
     if (!selectedAdmin) return;
    
@@ -1559,7 +1716,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Restore from trash
   const handleRestore = async () => {
     if (!adminToRestore) return;
    
@@ -1574,7 +1730,6 @@ export default function SubAdminAccountsPage() {
     }
   };
 
-  // Permanent delete (new function)
   const handlePermanentDelete = async () => {
     if (!adminToDeletePermanently) return;
    
@@ -1610,19 +1765,18 @@ export default function SubAdminAccountsPage() {
       displayModules.includes(module)
     );
     
-    if (hasAllModules) {
-      setForm({
-        ...admin,
-        password: "",
-        pageAccess: ["All"],
-      });
-    } else {
-      setForm({
-        ...admin,
-        password: "",
-        pageAccess: displayModules,
-      });
-    }
+    const selectedState = states.find(s => s.name.toLowerCase() === admin.state?.toLowerCase());
+    const selectedDistrict = districts.find(d => d.name.toLowerCase() === admin.district?.toLowerCase());
+
+    setForm({
+      name: admin.name,
+      email: admin.email,
+      password: "",
+      pageAccess: hasAllModules ? ["All"] : displayModules,
+      state: selectedState?._id || "",
+      district: selectedDistrict?._id || "",
+      commodity: admin.commodity || [],
+    });
     
     setOpen(true);
   };
@@ -1660,6 +1814,20 @@ export default function SubAdminAccountsPage() {
     }
   };
 
+  const handleCommodityChange = (commodity: string) => {
+    if (form.commodity.includes(commodity)) {
+      setForm(p => ({
+        ...p,
+        commodity: p.commodity.filter(c => c !== commodity),
+      }));
+    } else {
+      setForm(p => ({
+        ...p,
+        commodity: [...p.commodity, commodity],
+      }));
+    }
+  };
+
   const areAllModulesSelected = () => {
     return form.pageAccess.includes("All") || 
            (allModules.length > 0 && allModules.every(module => 
@@ -1679,7 +1847,15 @@ export default function SubAdminAccountsPage() {
     setAdminToRestore(null);
     setAdminToDeletePermanently(null);
     setViewOpen(false);
-    setForm({ name: "", email: "", password: "", pageAccess: [] });
+    setForm({ 
+      name: "", 
+      email: "", 
+      password: "", 
+      pageAccess: [],
+      state: "",
+      district: "",
+      commodity: []
+    });
     setErrors({});
   };
 
@@ -1696,6 +1872,9 @@ export default function SubAdminAccountsPage() {
   const exportData = subAdmins.map(({ _id, createdAt, updatedAt, password, ...rest }) => ({
     ...rest,
     password: "********",
+    state: rest.state || "",
+    district: rest.district || "",
+    commodity: rest.commodity?.join(", ") || "",
   }));
 
   const handlePrint = () => {
@@ -1796,6 +1975,9 @@ export default function SubAdminAccountsPage() {
               <th>Name</th>
               <th>Email</th>
               <th>Password</th>
+              <th>State</th>
+              <th>District</th>
+              <th>Commodities</th>
               <th>Access Modules</th>
               <th>Status</th>
             </tr>
@@ -1807,6 +1989,9 @@ export default function SubAdminAccountsPage() {
                 <td><strong>${admin.name}</strong></td>
                 <td>${admin.email}</td>
                 <td>********</td>
+                <td>${admin.state || '-'}</td>
+                <td>${admin.district || '-'}</td>
+                <td>${admin.commodity?.join(', ') || '-'}</td>
                 <td>${admin.pageAccess.join(', ')}</td>
                 <td>${admin.isDeleted ? 'Deleted' : 'Active'}</td>
               </tr>
@@ -1844,7 +2029,7 @@ export default function SubAdminAccountsPage() {
     }
 
     const text = exportData.map(admin => 
-      `${admin.name}\t${admin.email}\t********\t${admin.pageAccess.join(", ")}\t${admin.isDeleted ? 'Deleted' : 'Active'}`
+      `${admin.name}\t${admin.email}\t********\t${admin.state || '-'}\t${admin.district || '-'}\t${admin.commodity}\t${admin.pageAccess.join(", ")}\t${admin.isDeleted ? 'Deleted' : 'Active'}`
     ).join("\n");
     
     try {
@@ -1902,12 +2087,14 @@ export default function SubAdminAccountsPage() {
       const doc = new jsPDF();
       doc.text("Sub-Admins Management Report", 14, 16);
       
-      const tableColumn = ["Sr.", "Name", "Email", "Password", "Access Modules", "Status"];
+      const tableColumn = ["Sr.", "Name", "Email", "State", "District", "Commodities", "Access Modules", "Status"];
       const tableRows: any = exportData.map((admin, index) => [
         index + 1 + (currentPage - 1) * rowsPerPage,
         admin.name,
         admin.email,
-        "********",
+        admin.state || '-',
+        admin.district || '-',
+        admin.commodity || '-',
         admin.pageAccess.join(', '),
         admin.isDeleted ? 'Deleted' : 'Active'
       ]);
@@ -1980,7 +2167,7 @@ export default function SubAdminAccountsPage() {
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email, state or district..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="md:w-96 w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
@@ -2002,7 +2189,7 @@ export default function SubAdminAccountsPage() {
             </button>
           </div>
 
-          {/* Add New Button (only show when not viewing deleted) */}
+          {/* Add New Button */}
           {!showDeleted && (
             <div className="md:col-span-2">
               <button
@@ -2062,7 +2249,9 @@ export default function SubAdminAccountsPage() {
                   <th className="p-[.6rem] text-sm text-left font-semibold">Sr.</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Name</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Email</th>
-                  <th className="p-[.6rem] text-sm text-left font-semibold">Password</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">State</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">District</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">Commodities</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Access Modules</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Status</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Actions</th>
@@ -2084,8 +2273,19 @@ export default function SubAdminAccountsPage() {
                       )}
                     </td>
                     <td className="p-[.6rem] text-sm">{admin.email}</td>
+                    <td className="p-[.6rem] text-sm">{admin.state || '-'}</td>
+                    <td className="p-[.6rem] text-sm">{admin.district || '-'}</td>
                     <td className="p-[.6rem] text-sm">
-                      <span className="text-gray-400">********</span>
+                      <div className="flex flex-wrap gap-1">
+                        {admin.commodity?.map(commodity => (
+                          <span 
+                            key={commodity} 
+                            className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs"
+                          >
+                            {commodity}
+                          </span>
+                        )) || '-'}
+                      </div>
                     </td>
                     <td className="p-[.6rem] text-sm">
                       <div className="flex flex-wrap gap-1">
@@ -2118,7 +2318,6 @@ export default function SubAdminAccountsPage() {
                           <FaEye />
                         </button>
                         
-                        {/* Edit button - only for active admins */}
                         {!admin.isDeleted && (
                           <button
                             onClick={() => loadAdminForEdit(admin)}
@@ -2129,7 +2328,6 @@ export default function SubAdminAccountsPage() {
                           </button>
                         )}
                         
-                        {/* Actions for deleted admins */}
                         {admin.isDeleted ? (
                           <>
                             <button
@@ -2148,7 +2346,6 @@ export default function SubAdminAccountsPage() {
                             </button>
                           </>
                         ) : (
-                          /* Delete button for active admins (soft delete) */
                           <button
                             onClick={() => { setSelectedAdmin(admin); setDeleteOpen(true); }}
                             className="p-[.6rem] text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
@@ -2215,8 +2412,25 @@ export default function SubAdminAccountsPage() {
                     <div className="text-sm">{admin.email}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500">Password</div>
-                    <div className="text-sm text-gray-400">********</div>
+                    <div className="text-sm text-gray-500">State</div>
+                    <div className="text-sm">{admin.state || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">District</div>
+                    <div className="text-sm">{admin.district || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500">Commodities</div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {admin.commodity?.map(commodity => (
+                        <span 
+                          key={commodity} 
+                          className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs"
+                        >
+                          {commodity}
+                        </span>
+                      )) || '-'}
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Access Modules</div>
@@ -2273,7 +2487,7 @@ export default function SubAdminAccountsPage() {
         </div>
       )}
 
-      {/* Pagination with MUI Component */}
+      {/* Pagination */}
       {!loading && subAdmins.length > 0 && (
         <div className="flex flex-col bg-white sm:flex-row p-3 shadow justify-between items-center gap-[.6rem] text-sm">
           <div className="text-gray-600">
@@ -2347,6 +2561,75 @@ export default function SubAdminAccountsPage() {
               required={!editing}
             />
 
+            {/* State Dropdown */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                State <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.state}
+                onChange={(e) => setForm(p => ({ ...p, state: e.target.value, district: "" }))}
+                className={`border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  errors.state ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select State</option>
+                {states.map(state => (
+                  <option key={state._id} value={state._id}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
+              {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>}
+            </div>
+
+            {/* District Dropdown */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                District <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={form.district}
+                onChange={(e) => setForm(p => ({ ...p, district: e.target.value }))}
+                disabled={!form.state}
+                className={`border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                  errors.district ? "border-red-500" : "border-gray-300"
+                } ${!form.state ? "bg-gray-100" : ""}`}
+              >
+                <option value="">Select District</option>
+                {filteredDistricts.map(district => (
+                  <option key={district._id} value={district._id}>
+                    {district.name}
+                  </option>
+                ))}
+              </select>
+              {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district}</p>}
+            </div>
+
+            {/* Commodities Checkboxes */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Select Commodities <span className="text-red-500">*</span>
+              </label>
+              <div className="border rounded p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {COMMODITIES.map(commodity => (
+                    <label key={commodity} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={form.commodity.includes(commodity)}
+                        onChange={() => handleCommodityChange(commodity)}
+                        className="rounded"
+                      />
+                      {commodity}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {errors.commodity && <p className="text-red-500 text-xs mt-1">{errors.commodity}</p>}
+            </div>
+
+            {/* Page Access */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Page Access <span className="text-red-500">*</span>
@@ -2408,6 +2691,21 @@ export default function SubAdminAccountsPage() {
             <DetailRow label="Name" value={selectedAdmin.name} />
             <DetailRow label="Email" value={selectedAdmin.email} />
             <DetailRow label="Password" value="********" />
+            <DetailRow label="State" value={selectedAdmin.state || '-'} />
+            <DetailRow label="District" value={selectedAdmin.district || '-'} />
+            <div>
+              <div className="font-medium text-gray-600 mb-2">Commodities:</div>
+              <div className="flex flex-wrap gap-1">
+                {selectedAdmin.commodity?.map(commodity => (
+                  <span 
+                    key={commodity} 
+                    className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded text-sm"
+                  >
+                    {commodity}
+                  </span>
+                )) || '-'}
+              </div>
+            </div>
             <div>
               <div className="font-medium text-gray-600 mb-2">Access Modules:</div>
               <div className="flex flex-wrap gap-1">
@@ -2453,7 +2751,7 @@ export default function SubAdminAccountsPage() {
         </Modal>
       )}
 
-      {/* SOFT DELETE (MOVE TO TRASH) MODAL */}
+      {/* SOFT DELETE MODAL */}
       {deleteOpen && selectedAdmin && (
         <Modal 
           title="Move to Trash?" 
@@ -2484,7 +2782,7 @@ export default function SubAdminAccountsPage() {
         </Modal>
       )}
 
-      {/* RESTORE CONFIRMATION MODAL */}
+      {/* RESTORE MODAL */}
       {restoreOpen && adminToRestore && (
         <Modal 
           title="Restore Sub-Admin?" 
@@ -2515,7 +2813,7 @@ export default function SubAdminAccountsPage() {
         </Modal>
       )}
 
-      {/* PERMANENT DELETE CONFIRMATION MODAL */}
+      {/* PERMANENT DELETE MODAL */}
       {permanentDeleteOpen && adminToDeletePermanently && (
         <Modal 
           title="Delete Permanently?" 

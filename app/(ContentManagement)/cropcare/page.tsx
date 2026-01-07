@@ -1,4 +1,5 @@
 
+
 // // "use client";
 
 // // import React, { useState, useEffect, useRef } from 'react';
@@ -12,6 +13,8 @@
 // //   status: 'draft' | 'active' | 'inactive';
 // //   createdAt: string;
 // //   updatedAt: string;
+// //   // Optional properties for UI display
+// //   SubCategory?: SubCategory[];
 // // }
 
 // // interface SubCategory {
@@ -22,6 +25,8 @@
 // //   status: 'draft' | 'active' | 'inactive';
 // //   createdAt: string;
 // //   updatedAt: string;
+// //   // Optional properties for UI display
+// //   products?: Product[];
 // // }
 
 // // interface TargetPestDisease {
@@ -41,7 +46,7 @@
 // //   subCategoryId: string | { 
 // //     _id: string; 
 // //     name: string; 
-// //     categoryId: { _id: string; name: string } 
+// //     categoryId: string | { _id: string; name: string } 
 // //   };
 // //   targetPestsDiseases: TargetPestDisease[];
 // //   recommendedSeeds: RecommendedSeed[];
@@ -53,7 +58,33 @@
 // // // Update the API_BASE_URL
 // // const API_BASE_URL = '/api/cropcare';
 
-// // // Keep all other code the same...
+// // // Helper functions for safe data access
+// // const getSafeCategorySubCount = (categoryId: string, subCategories: SubCategory[]): number => {
+// //   if (!categoryId || !subCategories.length) return 0;
+// //   return subCategories.filter(
+// //     (sub) => {
+// //       if (typeof sub.categoryId === 'string') {
+// //         return sub.categoryId === categoryId;
+// //       } else {
+// //         return sub.categoryId?._id === categoryId;
+// //       }
+// //     }
+// //   ).length;
+// // };
+
+// // const getSafeSubCategoryProductCount = (subCategoryId: string, products: Product[]): number => {
+// //   if (!subCategoryId || !products.length) return 0;
+// //   return products.filter(
+// //     (prod) => {
+// //       if (typeof prod.subCategoryId === 'string') {
+// //         return prod.subCategoryId === subCategoryId;
+// //       } else {
+// //         return prod.subCategoryId?._id === subCategoryId;
+// //       }
+// //     }
+// //   ).length;
+// // };
+
 // // const CropCare: React.FC = () => {
 // //   // State for active tab
 // //   const [activeTab, setActiveTab] = useState<'category' | 'subCategory' | 'product' | 'view'>('category');
@@ -102,44 +133,65 @@
 // //     fetchAllData();
 // //   }, []);
 
-// //   // Fetch all data
-// // const fetchAllData = async () => {
-// //   setLoading(true);
-// //   try {
-// //     const [categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
-// //       axios.get(`${API_BASE_URL}/categories`),
-// //       axios.get(`${API_BASE_URL}/subcategories`),
-// //       axios.get(`${API_BASE_URL}/products`)
-// //     ]);
+// //   // Fetch all data (Updated for server-side storage)
+// //   const fetchAllData = async () => {
+// //     setLoading(true);
+// //     try {
+// //       const [categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
+// //         axios.get(`${API_BASE_URL}?type=categories`),
+// //         axios.get(`${API_BASE_URL}?type=subcategories`),
+// //         axios.get(`${API_BASE_URL}?type=products`)
+// //       ]);
 
-// //     if (categoriesRes.data.success) {
-// //       setCategories(categoriesRes.data.data);
-// //       console.log('Categories loaded:', categoriesRes.data.data);
+// //       if (categoriesRes.data.success) {
+// //         const categoriesData = categoriesRes.data.data.map((category: Category) => ({
+// //           ...category,
+// //           SubCategory: subcategoriesRes.data.data?.filter(
+// //             (sub: SubCategory) => {
+// //               if (typeof sub.categoryId === 'string') {
+// //                 return sub.categoryId === category._id;
+// //               } else {
+// //                 return sub.categoryId?._id === category._id;
+// //               }
+// //             }
+// //           ) || []
+// //         }));
+// //         setCategories(categoriesData);
+// //       }
+      
+// //       if (subcategoriesRes.data.success) {
+// //         const subCategoriesData = subcategoriesRes.data.data.map((sub: SubCategory) => ({
+// //           ...sub,
+// //           products: productsRes.data.data?.filter(
+// //             (product: Product) => {
+// //               if (typeof product.subCategoryId === 'string') {
+// //                 return product.subCategoryId === sub._id;
+// //               } else {
+// //                 return product.subCategoryId?._id === sub._id;
+// //               }
+// //             }
+// //           ) || []
+// //         }));
+// //         setSubCategories(subCategoriesData);
+// //       }
+      
+// //       if (productsRes.data.success) {
+// //         setProducts(productsRes.data.data);
+// //       }
+      
+// //       // Calculate summary
+// //       setSummary({
+// //         categories: categoriesRes.data.success ? categoriesRes.data.data.length : 0,
+// //         subCategories: subcategoriesRes.data.success ? subcategoriesRes.data.data.length : 0,
+// //         products: productsRes.data.success ? productsRes.data.data.length : 0
+// //       });
+// //     } catch (error) {
+// //       console.error('Error fetching data:', error);
+// //       alert('Failed to fetch data. Please check console for details.');
+// //     } finally {
+// //       setLoading(false);
 // //     }
-    
-// //     if (subcategoriesRes.data.success) {
-// //       setSubCategories(subcategoriesRes.data.data);
-// //       console.log('SubCategories loaded:', subcategoriesRes.data.data);
-// //     }
-    
-// //     if (productsRes.data.success) {
-// //       setProducts(productsRes.data.data);
-// //       console.log('Products loaded:', productsRes.data.data);
-// //     }
-    
-// //     // Calculate summary
-// //     setSummary({
-// //       categories: categoriesRes.data.success ? categoriesRes.data.data.length : 0,
-// //       subCategories: subcategoriesRes.data.success ? subcategoriesRes.data.data.length : 0,
-// //       products: productsRes.data.success ? productsRes.data.data.length : 0
-// //     });
-// //   } catch (error) {
-// //     console.error('Error fetching data:', error);
-// //     alert('Failed to fetch data. Please check console for details.');
-// //   } finally {
-// //     setLoading(false);
-// //   }
-// // };
+// //   };
 
 // //   // Handle category image upload
 // //   const handleCategoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -274,21 +326,13 @@
 // //     setActiveTab('product');
 // //   };
 
-// //   // Handle status change
+// //   // Handle status change (Updated for server-side storage)
 // //   const handleStatusChange = async (type: 'category' | 'subcategory' | 'product', id: string, status: 'draft' | 'active' | 'inactive') => {
 // //     if (!confirm(`Are you sure you want to change status to ${status}?`)) return;
 
 // //     try {
 // //       setLoading(true);
-// //       const endpointMap: Record<string, string> = {
-// //   category: 'categories',
-// //   subcategory: 'subcategories',
-// //   product: 'products'
-// // };
-
-// // const endpoint = `${API_BASE_URL}/${endpointMap[type]}?id=${id}`;
-
-// //       const response = await axios.patch(endpoint, { status });
+// //       const response = await axios.patch(`${API_BASE_URL}?id=${id}&type=${type}`, { status });
       
 // //       if (response.data.success) {
 // //         alert(`Status updated successfully to ${status}`);
@@ -304,20 +348,13 @@
 // //     }
 // //   };
 
-// //   // Handle delete
+// //   // Handle delete (Updated for server-side storage)
 // //   const handleDelete = async (type: 'category' | 'subcategory' | 'product', id: string, name: string) => {
 // //     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
 
 // //     try {
 // //       setLoading(true);
-// //       const endpointMap: Record<string, string> = {
-// //   category: 'categories',
-// //   subcategory: 'subcategories',
-// //   product: 'products'
-// // };
-
-// // const endpoint = `${API_BASE_URL}/${endpointMap[type]}?id=${id}`;
-// //       const response = await axios.delete(endpoint);
+// //       const response = await axios.delete(`${API_BASE_URL}?id=${id}&type=${type}`);
       
 // //       if (response.data.success) {
 // //         alert(`"${name}" deleted successfully`);
@@ -333,7 +370,7 @@
 // //     }
 // //   };
 
-// //   // Add/Update Category
+// //   // Add/Update Category (Updated for server-side storage)
 // //   const handleAddCategory = async () => {
 // //     if (!categoryName.trim()) {
 // //       alert('Please enter category name');
@@ -342,17 +379,31 @@
 
 // //     setLoading(true);
 // //     try {
-// //       const categoryData = {
-// //         name: categoryName.trim(),
-// //         image: categoryImagePreview || '',
-// //         status: 'active'
-// //       };
+// //       const formData = new FormData();
+// //       formData.append('type', 'category');
+// //       formData.append('name', categoryName.trim());
+// //       formData.append('status', 'active');
+      
+// //       if (categoryImage) {
+// //         formData.append('image', categoryImage);
+// //       } else if (editMode && categoryImagePreview) {
+// //         // For edit mode, if no new image but existing image exists
+// //         formData.append('image', ''); // Keep existing image
+// //       }
 
 // //       let response;
 // //       if (editMode && currentEditId) {
-// //         response = await axios.put(`${API_BASE_URL}/categories?id=${currentEditId}`, categoryData);
+// //         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=category`, formData, {
+// //           headers: {
+// //             'Content-Type': 'multipart/form-data'
+// //           }
+// //         });
 // //       } else {
-// //         response = await axios.post(`${API_BASE_URL}/categories`, categoryData);
+// //         response = await axios.post(API_BASE_URL, formData, {
+// //           headers: {
+// //             'Content-Type': 'multipart/form-data'
+// //           }
+// //         });
 // //       }
 
 // //       if (response.data.success) {
@@ -370,7 +421,7 @@
 // //     }
 // //   };
 
-// //   // Add/Update Sub Category
+// //   // Add/Update Sub Category (Updated for server-side storage)
 // //   const handleAddSubCategory = async () => {
 // //     if (!subCategoryName.trim() || !selectedCategory) {
 // //       alert('Please fill all required fields');
@@ -379,18 +430,32 @@
 
 // //     setLoading(true);
 // //     try {
-// //       const subCategoryData = {
-// //         name: subCategoryName.trim(),
-// //         image: subCategoryImagePreview || '',
-// //         categoryId: selectedCategory,
-// //         status: 'active'
-// //       };
+// //       const formData = new FormData();
+// //       formData.append('type', 'subcategory');
+// //       formData.append('name', subCategoryName.trim());
+// //       formData.append('categoryId', selectedCategory);
+// //       formData.append('status', 'active');
+      
+// //       if (subCategoryImage) {
+// //         formData.append('image', subCategoryImage);
+// //       } else if (editMode && subCategoryImagePreview) {
+// //         // For edit mode, if no new image but existing image exists
+// //         formData.append('image', ''); // Keep existing image
+// //       }
 
 // //       let response;
 // //       if (editMode && currentEditId) {
-// //         response = await axios.put(`${API_BASE_URL}/subcategories?id=${currentEditId}`, subCategoryData);
+// //         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=subcategory`, formData, {
+// //           headers: {
+// //             'Content-Type': 'multipart/form-data'
+// //           }
+// //         });
 // //       } else {
-// //         response = await axios.post(`${API_BASE_URL}/subcategories`, subCategoryData);
+// //         response = await axios.post(API_BASE_URL, formData, {
+// //           headers: {
+// //             'Content-Type': 'multipart/form-data'
+// //           }
+// //         });
 // //       }
 
 // //       if (response.data.success) {
@@ -408,59 +473,139 @@
 // //     }
 // //   };
 
-// //   // Add/Update Product
-// //   const handleAddProduct = async () => {
-// //     if (!productName.trim() || !selectedSubCategory) {
-// //       alert('Please fill all required fields');
-// //       return;
+// //   // Add/Update Product (Updated for server-side storage)
+// //   // const handleAddProduct = async () => {
+// //   //   if (!productName.trim() || !selectedSubCategory) {
+// //   //     alert('Please fill all required fields');
+// //   //     return;
+// //   //   }
+
+// //   //   // Validate target pests/diseases
+// //   //   const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
+// //   //   if (validPests.length === 0) {
+// //   //     alert('Please add at least one target pest/disease');
+// //   //     return;
+// //   //   }
+
+// //   //   // Validate recommended seeds
+// //   //   const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
+// //   //   if (validSeeds.length === 0) {
+// //   //     alert('Please add at least one recommended seed');
+// //   //     return;
+// //   //   }
+
+// //   //   setLoading(true);
+// //   //   try {
+// //   //     const formData = new FormData();
+// //   //     formData.append('type', 'product');
+// //   //     formData.append('name', productName.trim());
+// //   //     formData.append('subCategoryId', selectedSubCategory);
+// //   //     formData.append('targetPestsDiseases', JSON.stringify(validPests));
+// //   //     formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+// //   //     formData.append('status', 'active');
+
+// //   //     let response;
+// //   //     if (editMode && currentEditId) {
+// //   //       response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, {
+// //   //         name: productName.trim(),
+// //   //         subCategoryId: selectedSubCategory,
+// //   //         targetPestsDiseases: validPests,
+// //   //         recommendedSeeds: validSeeds,
+// //   //         status: 'active'
+// //   //       });
+// //   //     } else {
+// //   //       response = await axios.post(API_BASE_URL, formData, {
+// //   //         headers: {
+// //   //           'Content-Type': 'multipart/form-data'
+// //   //         }
+// //   //       });
+// //   //     }
+
+// //   //     if (response.data.success) {
+// //   //       alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
+// //   //       clearProductForm();
+// //   //       fetchAllData();
+// //   //     } else {
+// //   //       throw new Error(response.data.message);
+// //   //     }
+// //   //   } catch (error: any) {
+// //   //     console.error('Error saving product:', error);
+// //   //     alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
+// //   //   } finally {
+// //   //     setLoading(false);
+// //   //   }
+// //   // };
+// // // Add/Update Product (Updated for server-side storage)
+// // const handleAddProduct = async () => {
+// //   if (!productName.trim() || !selectedSubCategory) {
+// //     alert('Please fill all required fields');
+// //     return;
+// //   }
+
+// //   // Validate target pests/diseases
+// //   const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
+// //   if (validPests.length === 0) {
+// //     alert('Please add at least one target pest/disease');
+// //     return;
+// //   }
+
+// //   // Validate recommended seeds
+// //   const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
+// //   if (validSeeds.length === 0) {
+// //     alert('Please add at least one recommended seed');
+// //     return;
+// //   }
+
+// //   setLoading(true);
+// //   try {
+// //     let response;
+    
+// //     if (editMode && currentEditId) {
+// //       // For UPDATE (PUT request) - using FormData
+// //       const formData = new FormData();
+// //       formData.append('type', 'product');
+// //       formData.append('name', productName.trim());
+// //       formData.append('subCategoryId', selectedSubCategory);
+// //       formData.append('targetPestsDiseases', JSON.stringify(validPests));
+// //       formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+// //       formData.append('status', 'active');
+      
+// //       response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, formData, {
+// //         headers: {
+// //           'Content-Type': 'multipart/form-data'
+// //         }
+// //       });
+// //     } else {
+// //       // For CREATE (POST request) - using FormData
+// //       const formData = new FormData();
+// //       formData.append('type', 'product');
+// //       formData.append('name', productName.trim());
+// //       formData.append('subCategoryId', selectedSubCategory);
+// //       formData.append('targetPestsDiseases', JSON.stringify(validPests));
+// //       formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+// //       formData.append('status', 'active');
+      
+// //       response = await axios.post(API_BASE_URL, formData, {
+// //         headers: {
+// //           'Content-Type': 'multipart/form-data'
+// //         }
+// //       });
 // //     }
 
-// //     // Validate target pests/diseases
-// //     const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
-// //     if (validPests.length === 0) {
-// //       alert('Please add at least one target pest/disease');
-// //       return;
+// //     if (response.data.success) {
+// //       alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
+// //       clearProductForm();
+// //       fetchAllData();
+// //     } else {
+// //       throw new Error(response.data.message);
 // //     }
-
-// //     // Validate recommended seeds
-// //     const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
-// //     if (validSeeds.length === 0) {
-// //       alert('Please add at least one recommended seed');
-// //       return;
-// //     }
-
-// //     setLoading(true);
-// //     try {
-// //       const productData = {
-// //         name: productName.trim(),
-// //         subCategoryId: selectedSubCategory,
-// //         targetPestsDiseases: validPests,
-// //         recommendedSeeds: validSeeds,
-// //         status: 'active'
-// //       };
-
-// //       let response;
-// //       if (editMode && currentEditId) {
-// //         response = await axios.put(`${API_BASE_URL}/products?id=${currentEditId}`, productData);
-// //       } else {
-// //         response = await axios.post(`${API_BASE_URL}/products`, productData);
-// //       }
-
-// //       if (response.data.success) {
-// //         alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
-// //         clearProductForm();
-// //         fetchAllData();
-// //       } else {
-// //         throw new Error(response.data.message);
-// //       }
-// //     } catch (error: any) {
-// //       console.error('Error saving product:', error);
-// //       alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
-// //     } finally {
-// //       setLoading(false);
-// //     }
-// //   };
-
+// //   } catch (error: any) {
+// //     console.error('Error saving product:', error);
+// //     alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
+// //   } finally {
+// //     setLoading(false);
+// //   }
+// // };
 // //   // Get category name by ID
 // //   const getCategoryName = (categoryId: string) => {
 // //     if (!categoryId) return 'Unknown';
@@ -504,6 +649,17 @@
 // //       case 'draft': return '#6c757d';
 // //       default: return '#6c757d';
 // //     }
+// //   };
+
+// //   // Get full image URL
+// //   const getImageUrl = (imagePath: string) => {
+// //     if (!imagePath) return '';
+// //     // If it's already a full URL (for backward compatibility)
+// //     if (imagePath.startsWith('http')) return imagePath;
+// //     // If it's a server-side stored image
+// //     if (imagePath.startsWith('/uploads/')) return imagePath;
+// //     // Default fallback
+// //     return imagePath;
 // //   };
 
 // //   return (
@@ -649,7 +805,7 @@
 // //                         </td>
 // //                         <td>
 // //                           {category.image ? (
-// //                             <img src={category.image} alt={category.name} className="table-image" />
+// //                             <img src={getImageUrl(category.image)} alt={category.name} className="table-image" />
 // //                           ) : (
 // //                             <span className="no-image">No Image</span>
 // //                           )}
@@ -669,7 +825,7 @@
 // //                         </td>
 // //                         <td>
 // //                           <span className="count-badge">
-// //                             {category?.SubCategory?.length || 0}
+// //                             {getSafeCategorySubCount(category._id, subCategories)}
 // //                           </span>
 // //                         </td>
 // //                         <td>
@@ -826,12 +982,12 @@
 // //                         <td>
 // //                           {typeof subCategory.categoryId === 'string' 
 // //                             ? getCategoryName(subCategory.categoryId)
-// //                             : subCategory.categoryId.name
+// //                             : subCategory.categoryId?.name || 'Unknown'
 // //                           }
 // //                         </td>
 // //                         <td>
 // //                           {subCategory.image ? (
-// //                             <img src={subCategory.image} alt={subCategory.name} className="table-image" />
+// //                             <img src={getImageUrl(subCategory.image)} alt={subCategory.name} className="table-image" />
 // //                           ) : (
 // //                             <span className="no-image">No Image</span>
 // //                           )}
@@ -851,7 +1007,7 @@
 // //                         </td>
 // //                         <td>
 // //                           <span className="count-badge">
-// //                             {subCategory?.products?.length || 0}
+// //                             {getSafeSubCategoryProductCount(subCategory._id, products)}
 // //                           </span>
 // //                         </td>
 // //                         <td>
@@ -905,7 +1061,7 @@
 // //                   <option key={subCategory._id} value={subCategory._id}>
 // //                     {subCategory.name} ({typeof subCategory.categoryId === 'string' 
 // //                       ? getCategoryName(subCategory.categoryId)
-// //                       : subCategory.categoryId.name
+// //                       : subCategory.categoryId?.name || 'Unknown'
 // //                     })
 // //                   </option>
 // //                 ))}
@@ -1089,7 +1245,7 @@
 // //                         <td>
 // //                           {typeof product.subCategoryId === 'string'
 // //                             ? getSubCategoryName(product.subCategoryId)
-// //                             : product.subCategoryId.name
+// //                             : product.subCategoryId?.name || 'Unknown'
 // //                           }
 // //                         </td>
 // //                         <td>
@@ -1229,10 +1385,13 @@
                     
 // //                     <div className="node-children">
 // //                       {subCategories
-// //                         .filter(sub => typeof sub.categoryId === 'string' 
-// //                           ? sub.categoryId === category._id 
-// //                           : sub.categoryId._id === category._id
-// //                         )
+// //                         .filter(sub => {
+// //                           if (typeof sub.categoryId === 'string') {
+// //                             return sub.categoryId === category._id;
+// //                           } else {
+// //                             return sub.categoryId?._id === category._id;
+// //                           }
+// //                         })
 // //                         .map((subCategory) => (
 // //                           <div key={subCategory._id} className="tree-node level-2">
 // //                             <div className="node-header">
@@ -1265,10 +1424,13 @@
                             
 // //                             <div className="node-children">
 // //                               {products
-// //                                 .filter(prod => typeof prod.subCategoryId === 'string'
-// //                                   ? prod.subCategoryId === subCategory._id
-// //                                   : prod.subCategoryId._id === subCategory._id
-// //                                 )
+// //                                 .filter(prod => {
+// //                                   if (typeof prod.subCategoryId === 'string') {
+// //                                     return prod.subCategoryId === subCategory._id;
+// //                                   } else {
+// //                                     return prod.subCategoryId?._id === subCategory._id;
+// //                                   }
+// //                                 })
 // //                                 .map((product) => (
 // //                                   <div key={product._id} className="tree-node level-3">
 // //                                     <div className="node-header">
@@ -1302,7 +1464,7 @@
 // //                                     <div className="product-details">
 // //                                       <div className="detail-section">
 // //                                         <strong>🎯 Target Pests/Diseases:</strong>
-// //                                         {product.targetPestsDiseases.map((pest, idx) => (
+// //                                         {product.targetPestsDiseases && product.targetPestsDiseases.map((pest, idx) => (
 // //                                           <div key={idx} className="detail-item">
 // //                                             {pest.name}
 // //                                           </div>
@@ -1310,7 +1472,7 @@
 // //                                       </div>
 // //                                       <div className="detail-section">
 // //                                         <strong>🌱 Recommended Seeds:</strong>
-// //                                         {product.recommendedSeeds.map((seed, idx) => (
+// //                                         {product.recommendedSeeds && product.recommendedSeeds.map((seed, idx) => (
 // //                                           <div key={idx} className="detail-item">
 // //                                             {seed.name} - ₹{seed.price.toFixed(2)}
 // //                                           </div>
@@ -1319,10 +1481,13 @@
 // //                                     </div>
 // //                                   </div>
 // //                                 ))}
-// //                               {products.filter(prod => typeof prod.subCategoryId === 'string'
-// //                                 ? prod.subCategoryId === subCategory._id
-// //                                 : prod.subCategoryId._id === subCategory._id
-// //                               ).length === 0 && (
+// //                               {products.filter(prod => {
+// //                                 if (typeof prod.subCategoryId === 'string') {
+// //                                   return prod.subCategoryId === subCategory._id;
+// //                                 } else {
+// //                                   return prod.subCategoryId?._id === subCategory._id;
+// //                                 }
+// //                               }).length === 0 && (
 // //                                 <div className="no-children">
 // //                                   No products in this sub category
 // //                                 </div>
@@ -1330,10 +1495,13 @@
 // //                             </div>
 // //                           </div>
 // //                         ))}
-// //                       {subCategories.filter(sub => typeof sub.categoryId === 'string' 
-// //                         ? sub.categoryId === category._id 
-// //                         : sub.categoryId._id === category._id
-// //                       ).length === 0 && (
+// //                       {subCategories.filter(sub => {
+// //                         if (typeof sub.categoryId === 'string') {
+// //                           return sub.categoryId === category._id;
+// //                         } else {
+// //                           return sub.categoryId?._id === category._id;
+// //                         }
+// //                       }).length === 0 && (
 // //                         <div className="no-children">
 // //                           No sub categories in this category
 // //                         </div>
@@ -2073,7 +2241,11 @@
 // //   );
 // // };
 
-// // export default CropCare;
+// // export default CropCare
+
+
+
+
 
 
 
@@ -2209,6 +2381,12 @@
 //     products: 0
 //   });
 
+//   // Pagination states
+//   const [categoryPage, setCategoryPage] = useState(1);
+//   const [subCategoryPage, setSubCategoryPage] = useState(1);
+//   const [productPage, setProductPage] = useState(1);
+//   const [itemsPerPage, setItemsPerPage] = useState(10); // Default items per page
+
 //   // Ref for file inputs
 //   const categoryFileInputRef = useRef<HTMLInputElement>(null);
 //   const subCategoryFileInputRef = useRef<HTMLInputElement>(null);
@@ -2218,14 +2396,14 @@
 //     fetchAllData();
 //   }, []);
 
-//   // Fetch all data
+//   // Fetch all data (Updated for server-side storage)
 //   const fetchAllData = async () => {
 //     setLoading(true);
 //     try {
 //       const [categoriesRes, subcategoriesRes, productsRes] = await Promise.all([
-//         axios.get(`${API_BASE_URL}/categories`),
-//         axios.get(`${API_BASE_URL}/subcategories`),
-//         axios.get(`${API_BASE_URL}/products`)
+//         axios.get(`${API_BASE_URL}?type=categories`),
+//         axios.get(`${API_BASE_URL}?type=subcategories`),
+//         axios.get(`${API_BASE_URL}?type=products`)
 //       ]);
 
 //       if (categoriesRes.data.success) {
@@ -2242,6 +2420,7 @@
 //           ) || []
 //         }));
 //         setCategories(categoriesData);
+//         setCategoryPage(1); // Reset to first page when data refreshes
 //       }
       
 //       if (subcategoriesRes.data.success) {
@@ -2258,10 +2437,12 @@
 //           ) || []
 //         }));
 //         setSubCategories(subCategoriesData);
+//         setSubCategoryPage(1); // Reset to first page when data refreshes
 //       }
       
 //       if (productsRes.data.success) {
 //         setProducts(productsRes.data.data);
+//         setProductPage(1); // Reset to first page when data refreshes
 //       }
       
 //       // Calculate summary
@@ -2276,6 +2457,54 @@
 //     } finally {
 //       setLoading(false);
 //     }
+//   };
+
+//   // Pagination calculations for categories
+//   const categoryStartIndex = (categoryPage - 1) * itemsPerPage;
+//   const categoryEndIndex = categoryStartIndex + itemsPerPage;
+//   const paginatedCategories = categories.slice(categoryStartIndex, categoryEndIndex);
+//   const totalCategoryPages = Math.ceil(categories.length / itemsPerPage);
+
+//   // Pagination calculations for sub categories
+//   const subCategoryStartIndex = (subCategoryPage - 1) * itemsPerPage;
+//   const subCategoryEndIndex = subCategoryStartIndex + itemsPerPage;
+//   const paginatedSubCategories = subCategories.slice(subCategoryStartIndex, subCategoryEndIndex);
+//   const totalSubCategoryPages = Math.ceil(subCategories.length / itemsPerPage);
+
+//   // Pagination calculations for products
+//   const productStartIndex = (productPage - 1) * itemsPerPage;
+//   const productEndIndex = productStartIndex + itemsPerPage;
+//   const paginatedProducts = products.slice(productStartIndex, productEndIndex);
+//   const totalProductPages = Math.ceil(products.length / itemsPerPage);
+
+//   // Handle page change for categories
+//   const handleCategoryPageChange = (newPage: number) => {
+//     if (newPage >= 1 && newPage <= totalCategoryPages) {
+//       setCategoryPage(newPage);
+//     }
+//   };
+
+//   // Handle page change for sub categories
+//   const handleSubCategoryPageChange = (newPage: number) => {
+//     if (newPage >= 1 && newPage <= totalSubCategoryPages) {
+//       setSubCategoryPage(newPage);
+//     }
+//   };
+
+//   // Handle page change for products
+//   const handleProductPageChange = (newPage: number) => {
+//     if (newPage >= 1 && newPage <= totalProductPages) {
+//       setProductPage(newPage);
+//     }
+//   };
+
+//   // Handle items per page change
+//   const handleItemsPerPageChange = (value: number) => {
+//     setItemsPerPage(value);
+//     // Reset to first page when changing items per page
+//     setCategoryPage(1);
+//     setSubCategoryPage(1);
+//     setProductPage(1);
 //   };
 
 //   // Handle category image upload
@@ -2411,21 +2640,13 @@
 //     setActiveTab('product');
 //   };
 
-//   // Handle status change
+//   // Handle status change (Updated for server-side storage)
 //   const handleStatusChange = async (type: 'category' | 'subcategory' | 'product', id: string, status: 'draft' | 'active' | 'inactive') => {
 //     if (!confirm(`Are you sure you want to change status to ${status}?`)) return;
 
 //     try {
 //       setLoading(true);
-//       const endpointMap: Record<string, string> = {
-//         category: 'categories',
-//         subcategory: 'subcategories',
-//         product: 'products'
-//       };
-
-//       const endpoint = `${API_BASE_URL}/${endpointMap[type]}?id=${id}`;
-
-//       const response = await axios.patch(endpoint, { status });
+//       const response = await axios.patch(`${API_BASE_URL}?id=${id}&type=${type}`, { status });
       
 //       if (response.data.success) {
 //         alert(`Status updated successfully to ${status}`);
@@ -2441,20 +2662,13 @@
 //     }
 //   };
 
-//   // Handle delete
+//   // Handle delete (Updated for server-side storage)
 //   const handleDelete = async (type: 'category' | 'subcategory' | 'product', id: string, name: string) => {
 //     if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) return;
 
 //     try {
 //       setLoading(true);
-//       const endpointMap: Record<string, string> = {
-//         category: 'categories',
-//         subcategory: 'subcategories',
-//         product: 'products'
-//       };
-
-//       const endpoint = `${API_BASE_URL}/${endpointMap[type]}?id=${id}`;
-//       const response = await axios.delete(endpoint);
+//       const response = await axios.delete(`${API_BASE_URL}?id=${id}&type=${type}`);
       
 //       if (response.data.success) {
 //         alert(`"${name}" deleted successfully`);
@@ -2470,7 +2684,7 @@
 //     }
 //   };
 
-//   // Add/Update Category
+//   // Add/Update Category (Updated for server-side storage)
 //   const handleAddCategory = async () => {
 //     if (!categoryName.trim()) {
 //       alert('Please enter category name');
@@ -2479,17 +2693,31 @@
 
 //     setLoading(true);
 //     try {
-//       const categoryData = {
-//         name: categoryName.trim(),
-//         image: categoryImagePreview || '',
-//         status: 'active'
-//       };
+//       const formData = new FormData();
+//       formData.append('type', 'category');
+//       formData.append('name', categoryName.trim());
+//       formData.append('status', 'active');
+      
+//       if (categoryImage) {
+//         formData.append('image', categoryImage);
+//       } else if (editMode && categoryImagePreview) {
+//         // For edit mode, if no new image but existing image exists
+//         formData.append('image', ''); // Keep existing image
+//       }
 
 //       let response;
 //       if (editMode && currentEditId) {
-//         response = await axios.put(`${API_BASE_URL}/categories?id=${currentEditId}`, categoryData);
+//         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=category`, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       } else {
-//         response = await axios.post(`${API_BASE_URL}/categories`, categoryData);
+//         response = await axios.post(API_BASE_URL, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       }
 
 //       if (response.data.success) {
@@ -2507,7 +2735,7 @@
 //     }
 //   };
 
-//   // Add/Update Sub Category
+//   // Add/Update Sub Category (Updated for server-side storage)
 //   const handleAddSubCategory = async () => {
 //     if (!subCategoryName.trim() || !selectedCategory) {
 //       alert('Please fill all required fields');
@@ -2516,18 +2744,32 @@
 
 //     setLoading(true);
 //     try {
-//       const subCategoryData = {
-//         name: subCategoryName.trim(),
-//         image: subCategoryImagePreview || '',
-//         categoryId: selectedCategory,
-//         status: 'active'
-//       };
+//       const formData = new FormData();
+//       formData.append('type', 'subcategory');
+//       formData.append('name', subCategoryName.trim());
+//       formData.append('categoryId', selectedCategory);
+//       formData.append('status', 'active');
+      
+//       if (subCategoryImage) {
+//         formData.append('image', subCategoryImage);
+//       } else if (editMode && subCategoryImagePreview) {
+//         // For edit mode, if no new image but existing image exists
+//         formData.append('image', ''); // Keep existing image
+//       }
 
 //       let response;
 //       if (editMode && currentEditId) {
-//         response = await axios.put(`${API_BASE_URL}/subcategories?id=${currentEditId}`, subCategoryData);
+//         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=subcategory`, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       } else {
-//         response = await axios.post(`${API_BASE_URL}/subcategories`, subCategoryData);
+//         response = await axios.post(API_BASE_URL, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       }
 
 //       if (response.data.success) {
@@ -2545,7 +2787,7 @@
 //     }
 //   };
 
-//   // Add/Update Product
+//   // Add/Update Product (Updated for server-side storage)
 //   const handleAddProduct = async () => {
 //     if (!productName.trim() || !selectedSubCategory) {
 //       alert('Please fill all required fields');
@@ -2568,19 +2810,38 @@
 
 //     setLoading(true);
 //     try {
-//       const productData = {
-//         name: productName.trim(),
-//         subCategoryId: selectedSubCategory,
-//         targetPestsDiseases: validPests,
-//         recommendedSeeds: validSeeds,
-//         status: 'active'
-//       };
-
 //       let response;
+      
 //       if (editMode && currentEditId) {
-//         response = await axios.put(`${API_BASE_URL}/products?id=${currentEditId}`, productData);
+//         // For UPDATE (PUT request) - using FormData
+//         const formData = new FormData();
+//         formData.append('type', 'product');
+//         formData.append('name', productName.trim());
+//         formData.append('subCategoryId', selectedSubCategory);
+//         formData.append('targetPestsDiseases', JSON.stringify(validPests));
+//         formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+//         formData.append('status', 'active');
+        
+//         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       } else {
-//         response = await axios.post(`${API_BASE_URL}/products`, productData);
+//         // For CREATE (POST request) - using FormData
+//         const formData = new FormData();
+//         formData.append('type', 'product');
+//         formData.append('name', productName.trim());
+//         formData.append('subCategoryId', selectedSubCategory);
+//         formData.append('targetPestsDiseases', JSON.stringify(validPests));
+//         formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+//         formData.append('status', 'active');
+        
+//         response = await axios.post(API_BASE_URL, formData, {
+//           headers: {
+//             'Content-Type': 'multipart/form-data'
+//           }
+//         });
 //       }
 
 //       if (response.data.success) {
@@ -2641,6 +2902,17 @@
 //       case 'draft': return '#6c757d';
 //       default: return '#6c757d';
 //     }
+//   };
+
+//   // Get full image URL
+//   const getImageUrl = (imagePath: string) => {
+//     if (!imagePath) return '';
+//     // If it's already a full URL (for backward compatibility)
+//     if (imagePath.startsWith('http')) return imagePath;
+//     // If it's a server-side stored image
+//     if (imagePath.startsWith('/uploads/')) return imagePath;
+//     // Default fallback
+//     return imagePath;
 //   };
 
 //   return (
@@ -2766,77 +3038,123 @@
 //             {categories.length === 0 ? (
 //               <p className="no-data">No categories added yet.</p>
 //             ) : (
-//               <div className="table-container">
-//                 <table className="data-table">
-//                   <thead>
-//                     <tr>
-//                       <th>Name</th>
-//                       <th>Image</th>
-//                       <th>Status</th>
-//                       <th>Sub Categories</th>
-//                       <th>Created</th>
-//                       <th>Actions</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {categories.map((category) => (
-//                       <tr key={category._id}>
-//                         <td>
-//                           <div className="item-name">{category.name}</div>
-//                         </td>
-//                         <td>
-//                           {category.image ? (
-//                             <img src={category.image} alt={category.name} className="table-image" />
-//                           ) : (
-//                             <span className="no-image">No Image</span>
-//                           )}
-//                         </td>
-//                         <td>
-//                           <select
-//                             value={category.status}
-//                             onChange={(e) => handleStatusChange('category', category._id, e.target.value as any)}
-//                             className="status-select"
-//                             style={{ backgroundColor: getStatusColor(category.status) }}
-//                             disabled={loading}
-//                           >
-//                             <option value="draft">Draft</option>
-//                             <option value="active">Active</option>
-//                             <option value="inactive">Inactive</option>
-//                           </select>
-//                         </td>
-//                         <td>
-//                           <span className="count-badge">
-//                             {getSafeCategorySubCount(category._id, subCategories)}
-//                           </span>
-//                         </td>
-//                         <td>
-//                           {formatDate(category.createdAt)}
-//                         </td>
-//                         <td>
-//                           <div className="action-buttons">
-//                             <button
-//                               className="edit-btn"
-//                               onClick={() => handleEditCategory(category)}
-//                               disabled={loading}
-//                               title="Edit"
-//                             >
-//                               ✏️
-//                             </button>
-//                             <button
-//                               className="delete-btn"
-//                               onClick={() => handleDelete('category', category._id, category.name)}
-//                               disabled={loading}
-//                               title="Delete"
-//                             >
-//                               🗑️
-//                             </button>
-//                           </div>
-//                         </td>
+//               <>
+//                 <div className="table-container">
+//                   <table className="data-table">
+//                     <thead>
+//                       <tr>
+//                         <th>Name</th>
+//                         <th>Image</th>
+//                         <th>Status</th>
+//                         <th>Sub Categories</th>
+//                         <th>Created</th>
+//                         <th>Actions</th>
 //                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               </div>
+//                     </thead>
+//                     <tbody>
+//                       {paginatedCategories.map((category) => (
+//                         <tr key={category._id}>
+//                           <td>
+//                             <div className="item-name">{category.name}</div>
+//                           </td>
+//                           <td>
+//                             {category.image ? (
+//                               <img src={getImageUrl(category.image)} alt={category.name} className="table-image" />
+//                             ) : (
+//                               <span className="no-image">No Image</span>
+//                             )}
+//                           </td>
+//                           <td>
+//                             <select
+//                               value={category.status}
+//                               onChange={(e) => handleStatusChange('category', category._id, e.target.value as any)}
+//                               className="status-select"
+//                               style={{ backgroundColor: getStatusColor(category.status) }}
+//                               disabled={loading}
+//                             >
+//                               <option value="draft">Draft</option>
+//                               <option value="active">Active</option>
+//                               <option value="inactive">Inactive</option>
+//                             </select>
+//                           </td>
+//                           <td>
+//                             <span className="count-badge">
+//                               {getSafeCategorySubCount(category._id, subCategories)}
+//                             </span>
+//                           </td>
+//                           <td>
+//                             {formatDate(category.createdAt)}
+//                           </td>
+//                           <td>
+//                             <div className="action-buttons">
+//                               <button
+//                                 className="edit-btn"
+//                                 onClick={() => handleEditCategory(category)}
+//                                 disabled={loading}
+//                                 title="Edit"
+//                               >
+//                                 ✏️
+//                               </button>
+//                               <button
+//                                 className="delete-btn"
+//                                 onClick={() => handleDelete('category', category._id, category.name)}
+//                                 disabled={loading}
+//                                 title="Delete"
+//                               >
+//                                 🗑️
+//                               </button>
+//                             </div>
+//                           </td>
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+                
+//                 {/* Category Pagination - Bottom of table */}
+//                 <div className="pagination-footer">
+//                   <div className="pagination-info-left">
+//                     <div className="items-per-page">
+//                       <label>Show: </label>
+//                       <select 
+//                         value={itemsPerPage} 
+//                         onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+//                         disabled={loading}
+//                       >
+//                         <option value={5}>5</option>
+//                         <option value={10}>10</option>
+//                         <option value={20}>20</option>
+//                         <option value={50}>50</option>
+//                       </select>
+//                     </div>
+//                     <div className="showing-info">
+//                       Showing {categoryStartIndex + 1} to {Math.min(categoryEndIndex, categories.length)} of {categories.length} categories
+//                     </div>
+//                   </div>
+                  
+//                   <div className="pagination-controls-right">
+//                     <div className="pagination-buttons">
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleCategoryPageChange(categoryPage - 1)}
+//                         disabled={categoryPage === 1 || loading}
+//                       >
+//                         ← Previous
+//                       </button>
+//                       <span className="pagination-page">
+//                         Page {categoryPage} of {totalCategoryPages}
+//                       </span>
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleCategoryPageChange(categoryPage + 1)}
+//                         disabled={categoryPage === totalCategoryPages || loading}
+//                       >
+//                         Next →
+//                       </button>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </>
 //             )}
 //           </div>
 //         </div>
@@ -2941,84 +3259,130 @@
 //             {subCategories.length === 0 ? (
 //               <p className="no-data">No sub categories added yet.</p>
 //             ) : (
-//               <div className="table-container">
-//                 <table className="data-table">
-//                   <thead>
-//                     <tr>
-//                       <th>Name</th>
-//                       <th>Parent Category</th>
-//                       <th>Image</th>
-//                       <th>Status</th>
-//                       <th>Products</th>
-//                       <th>Created</th>
-//                       <th>Actions</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {subCategories.map((subCategory) => (
-//                       <tr key={subCategory._id}>
-//                         <td>
-//                           <div className="item-name">{subCategory.name}</div>
-//                         </td>
-//                         <td>
-//                           {typeof subCategory.categoryId === 'string' 
-//                             ? getCategoryName(subCategory.categoryId)
-//                             : subCategory.categoryId?.name || 'Unknown'
-//                           }
-//                         </td>
-//                         <td>
-//                           {subCategory.image ? (
-//                             <img src={subCategory.image} alt={subCategory.name} className="table-image" />
-//                           ) : (
-//                             <span className="no-image">No Image</span>
-//                           )}
-//                         </td>
-//                         <td>
-//                           <select
-//                             value={subCategory.status}
-//                             onChange={(e) => handleStatusChange('subcategory', subCategory._id, e.target.value as any)}
-//                             className="status-select"
-//                             style={{ backgroundColor: getStatusColor(subCategory.status) }}
-//                             disabled={loading}
-//                           >
-//                             <option value="draft">Draft</option>
-//                             <option value="active">Active</option>
-//                             <option value="inactive">Inactive</option>
-//                           </select>
-//                         </td>
-//                         <td>
-//                           <span className="count-badge">
-//                             {getSafeSubCategoryProductCount(subCategory._id, products)}
-//                           </span>
-//                         </td>
-//                         <td>
-//                           {formatDate(subCategory.createdAt)}
-//                         </td>
-//                         <td>
-//                           <div className="action-buttons">
-//                             <button
-//                               className="edit-btn"
-//                               onClick={() => handleEditSubCategory(subCategory)}
-//                               disabled={loading}
-//                               title="Edit"
-//                             >
-//                               ✏️
-//                             </button>
-//                             <button
-//                               className="delete-btn"
-//                               onClick={() => handleDelete('subcategory', subCategory._id, subCategory.name)}
-//                               disabled={loading}
-//                               title="Delete"
-//                             >
-//                               🗑️
-//                             </button>
-//                           </div>
-//                         </td>
+//               <>
+//                 <div className="table-container">
+//                   <table className="data-table">
+//                     <thead>
+//                       <tr>
+//                         <th>Name</th>
+//                         <th>Parent Category</th>
+//                         <th>Image</th>
+//                         <th>Status</th>
+//                         <th>Products</th>
+//                         <th>Created</th>
+//                         <th>Actions</th>
 //                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               </div>
+//                     </thead>
+//                     <tbody>
+//                       {paginatedSubCategories.map((subCategory) => (
+//                         <tr key={subCategory._id}>
+//                           <td>
+//                             <div className="item-name">{subCategory.name}</div>
+//                           </td>
+//                           <td>
+//                             {typeof subCategory.categoryId === 'string' 
+//                               ? getCategoryName(subCategory.categoryId)
+//                               : subCategory.categoryId?.name || 'Unknown'
+//                             }
+//                           </td>
+//                           <td>
+//                             {subCategory.image ? (
+//                               <img src={getImageUrl(subCategory.image)} alt={subCategory.name} className="table-image" />
+//                             ) : (
+//                               <span className="no-image">No Image</span>
+//                             )}
+//                           </td>
+//                           <td>
+//                             <select
+//                               value={subCategory.status}
+//                               onChange={(e) => handleStatusChange('subcategory', subCategory._id, e.target.value as any)}
+//                               className="status-select"
+//                               style={{ backgroundColor: getStatusColor(subCategory.status) }}
+//                               disabled={loading}
+//                             >
+//                               <option value="draft">Draft</option>
+//                               <option value="active">Active</option>
+//                               <option value="inactive">Inactive</option>
+//                             </select>
+//                           </td>
+//                           <td>
+//                             <span className="count-badge">
+//                               {getSafeSubCategoryProductCount(subCategory._id, products)}
+//                             </span>
+//                           </td>
+//                           <td>
+//                             {formatDate(subCategory.createdAt)}
+//                           </td>
+//                           <td>
+//                             <div className="action-buttons">
+//                               <button
+//                                 className="edit-btn"
+//                                 onClick={() => handleEditSubCategory(subCategory)}
+//                                 disabled={loading}
+//                                 title="Edit"
+//                               >
+//                                 ✏️
+//                               </button>
+//                               <button
+//                                 className="delete-btn"
+//                                 onClick={() => handleDelete('subcategory', subCategory._id, subCategory.name)}
+//                                 disabled={loading}
+//                                 title="Delete"
+//                               >
+//                                 🗑️
+//                               </button>
+//                             </div>
+//                           </td>
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+                
+//                 {/* Sub Category Pagination - Bottom of table */}
+//                 <div className="pagination-footer">
+//                   <div className="pagination-info-left">
+//                     <div className="items-per-page">
+//                       <label>Show: </label>
+//                       <select 
+//                         value={itemsPerPage} 
+//                         onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+//                         disabled={loading}
+//                       >
+//                         <option value={5}>5</option>
+//                         <option value={10}>10</option>
+//                         <option value={20}>20</option>
+//                         <option value={50}>50</option>
+//                       </select>
+//                     </div>
+//                     <div className="showing-info">
+//                       Showing {subCategoryStartIndex + 1} to {Math.min(subCategoryEndIndex, subCategories.length)} of {subCategories.length} sub categories
+//                     </div>
+//                   </div>
+                  
+//                   <div className="pagination-controls-right">
+//                     <div className="pagination-buttons">
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleSubCategoryPageChange(subCategoryPage - 1)}
+//                         disabled={subCategoryPage === 1 || loading}
+//                       >
+//                         ← Previous
+//                       </button>
+//                       <span className="pagination-page">
+//                         Page {subCategoryPage} of {totalSubCategoryPages}
+//                       </span>
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleSubCategoryPageChange(subCategoryPage + 1)}
+//                         disabled={subCategoryPage === totalSubCategoryPages || loading}
+//                       >
+//                         Next →
+//                       </button>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </>
 //             )}
 //           </div>
 //         </div>
@@ -3204,82 +3568,128 @@
 //             {products.length === 0 ? (
 //               <p className="no-data">No products added yet.</p>
 //             ) : (
-//               <div className="table-container">
-//                 <table className="data-table">
-//                   <thead>
-//                     <tr>
-//                       <th>Name</th>
-//                       <th>Sub Category</th>
-//                       <th>Pests/Diseases</th>
-//                       <th>Recommended Seeds</th>
-//                       <th>Status</th>
-//                       <th>Created</th>
-//                       <th>Actions</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody>
-//                     {products.map((product) => (
-//                       <tr key={product._id}>
-//                         <td>
-//                           <div className="item-name">{product.name}</div>
-//                         </td>
-//                         <td>
-//                           {typeof product.subCategoryId === 'string'
-//                             ? getSubCategoryName(product.subCategoryId)
-//                             : product.subCategoryId?.name || 'Unknown'
-//                           }
-//                         </td>
-//                         <td>
-//                           <span className="count-badge">
-//                             {product.targetPestsDiseases?.length || 0}
-//                           </span>
-//                         </td>
-//                         <td>
-//                           <span className="count-badge">
-//                             {product.recommendedSeeds?.length || 0}
-//                           </span>
-//                         </td>
-//                         <td>
-//                           <select
-//                             value={product.status}
-//                             onChange={(e) => handleStatusChange('product', product._id, e.target.value as any)}
-//                             className="status-select"
-//                             style={{ backgroundColor: getStatusColor(product.status) }}
-//                             disabled={loading}
-//                           >
-//                             <option value="draft">Draft</option>
-//                             <option value="active">Active</option>
-//                             <option value="inactive">Inactive</option>
-//                           </select>
-//                         </td>
-//                         <td>
-//                           {formatDate(product.createdAt)}
-//                         </td>
-//                         <td>
-//                           <div className="action-buttons">
-//                             <button
-//                               className="edit-btn"
-//                               onClick={() => handleEditProduct(product)}
-//                               disabled={loading}
-//                               title="Edit"
-//                             >
-//                               ✏️
-//                             </button>
-//                             <button
-//                               className="delete-btn"
-//                               onClick={() => handleDelete('product', product._id, product.name)}
-//                               disabled={loading}
-//                               title="Delete"
-//                             >
-//                               🗑️
-//                             </button>
-//                           </div>
-//                         </td>
+//               <>
+//                 <div className="table-container">
+//                   <table className="data-table">
+//                     <thead>
+//                       <tr>
+//                         <th>Name</th>
+//                         <th>Sub Category</th>
+//                         <th>Pests/Diseases</th>
+//                         <th>Recommended Seeds</th>
+//                         <th>Status</th>
+//                         <th>Created</th>
+//                         <th>Actions</th>
 //                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               </div>
+//                     </thead>
+//                     <tbody>
+//                       {paginatedProducts.map((product) => (
+//                         <tr key={product._id}>
+//                           <td>
+//                             <div className="item-name">{product.name}</div>
+//                           </td>
+//                           <td>
+//                             {typeof product.subCategoryId === 'string'
+//                               ? getSubCategoryName(product.subCategoryId)
+//                               : product.subCategoryId?.name || 'Unknown'
+//                             }
+//                           </td>
+//                           <td>
+//                             <span className="count-badge">
+//                               {product.targetPestsDiseases?.length || 0}
+//                             </span>
+//                           </td>
+//                           <td>
+//                             <span className="count-badge">
+//                               {product.recommendedSeeds?.length || 0}
+//                             </span>
+//                           </td>
+//                           <td>
+//                             <select
+//                               value={product.status}
+//                               onChange={(e) => handleStatusChange('product', product._id, e.target.value as any)}
+//                               className="status-select"
+//                               style={{ backgroundColor: getStatusColor(product.status) }}
+//                               disabled={loading}
+//                             >
+//                               <option value="draft">Draft</option>
+//                               <option value="active">Active</option>
+//                               <option value="inactive">Inactive</option>
+//                             </select>
+//                           </td>
+//                           <td>
+//                             {formatDate(product.createdAt)}
+//                           </td>
+//                           <td>
+//                             <div className="action-buttons">
+//                               <button
+//                                 className="edit-btn"
+//                                 onClick={() => handleEditProduct(product)}
+//                                 disabled={loading}
+//                                 title="Edit"
+//                               >
+//                                 ✏️
+//                               </button>
+//                               <button
+//                                 className="delete-btn"
+//                                 onClick={() => handleDelete('product', product._id, product.name)}
+//                                 disabled={loading}
+//                                 title="Delete"
+//                               >
+//                                 🗑️
+//                               </button>
+//                             </div>
+//                           </td>
+//                         </tr>
+//                       ))}
+//                     </tbody>
+//                   </table>
+//                 </div>
+                
+//                 {/* Product Pagination - Bottom of table */}
+//                 <div className="pagination-footer">
+//                   <div className="pagination-info-left">
+//                     <div className="items-per-page">
+//                       <label>Show: </label>
+//                       <select 
+//                         value={itemsPerPage} 
+//                         onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+//                         disabled={loading}
+//                       >
+//                         <option value={5}>5</option>
+//                         <option value={10}>10</option>
+//                         <option value={20}>20</option>
+//                         <option value={50}>50</option>
+//                       </select>
+//                     </div>
+//                     <div className="showing-info">
+//                       Showing {productStartIndex + 1} to {Math.min(productEndIndex, products.length)} of {products.length} products
+//                     </div>
+//                   </div>
+                  
+//                   <div className="pagination-controls-right">
+//                     <div className="pagination-buttons">
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleProductPageChange(productPage - 1)}
+//                         disabled={productPage === 1 || loading}
+//                       >
+//                         ← Previous
+//                       </button>
+//                       <span className="pagination-page">
+//                         Page {productPage} of {totalProductPages}
+//                       </span>
+//                       <button
+//                         className="pagination-btn"
+//                         onClick={() => handleProductPageChange(productPage + 1)}
+//                         disabled={productPage === totalProductPages || loading}
+//                       >
+//                         Next →
+//                       </button>
+//                     </div>
+//                   </div>
+//                 </div>
+//               </>
 //             )}
 //           </div>
 //         </div>
@@ -3999,6 +4409,108 @@
 //           border: 2px dashed #dee2e6;
 //         }
 
+//         /* Pagination Footer Styles - New Layout */
+//         .pagination-footer {
+//           display: flex;
+//           justify-content: space-between;
+//           align-items: center;
+//           margin-top: 20px;
+//           padding: 15px;
+//           background: #f8f9fa;
+//           border-radius: 8px;
+//           border: 1px solid #e9ecef;
+//           flex-wrap: wrap;
+//           gap: 15px;
+//         }
+
+//         .pagination-info-left {
+//           display: flex;
+//           align-items: center;
+//           gap: 20px;
+//           flex-wrap: wrap;
+//         }
+
+//         .pagination-controls-right {
+//           display: flex;
+//           align-items: center;
+//         }
+
+//         .items-per-page {
+//           display: flex;
+//           align-items: center;
+//           gap: 8px;
+//         }
+
+//         .items-per-page label {
+//           font-size: 14px;
+//           color: #495057;
+//           font-weight: 500;
+//         }
+
+//         .items-per-page select {
+//           padding: 6px 12px;
+//           border: 1px solid #dee2e6;
+//           border-radius: 4px;
+//           background: white;
+//           font-size: 14px;
+//           cursor: pointer;
+//           transition: border-color 0.3s;
+//         }
+
+//         .items-per-page select:focus {
+//           outline: none;
+//           border-color: #3498db;
+//         }
+
+//         .items-per-page select:disabled {
+//           opacity: 0.6;
+//           cursor: not-allowed;
+//         }
+
+//         .showing-info {
+//           color: #6c757d;
+//           font-size: 14px;
+//           font-weight: 500;
+//         }
+
+//         .pagination-buttons {
+//           display: flex;
+//           align-items: center;
+//           gap: 15px;
+//         }
+
+//         .pagination-btn {
+//           background: #3498db;
+//           color: white;
+//           border: none;
+//           padding: 8px 16px;
+//           border-radius: 6px;
+//           cursor: pointer;
+//           font-size: 14px;
+//           font-weight: 600;
+//           transition: all 0.3s;
+//           min-width: 90px;
+//         }
+
+//         .pagination-btn:hover:not(:disabled) {
+//           background: #2980b9;
+//           transform: translateY(-2px);
+//           box-shadow: 0 2px 5px rgba(41, 128, 185, 0.3);
+//         }
+
+//         .pagination-btn:disabled {
+//           opacity: 0.6;
+//           cursor: not-allowed;
+//         }
+
+//         .pagination-page {
+//           font-weight: 600;
+//           color: #2c3e50;
+//           font-size: 14px;
+//           min-width: 100px;
+//           text-align: center;
+//         }
+
 //         .summary-section {
 //           margin-bottom: 40px;
 //         }
@@ -4180,14 +4692,46 @@
 //             text-align: center;
 //           }
           
-//           .form-actions {
-//             flex-direction: column;
-//           }
-          
 //           .section-header {
 //             flex-direction: column;
 //             gap: 10px;
 //             align-items: flex-start;
+//           }
+          
+//           .form-actions {
+//             flex-direction: column;
+//           }
+          
+//           .pagination-footer {
+//             flex-direction: column;
+//             align-items: stretch;
+//             gap: 15px;
+//           }
+          
+//           .pagination-info-left {
+//             flex-direction: column;
+//             align-items: flex-start;
+//             gap: 10px;
+//           }
+          
+//           .pagination-controls-right {
+//             width: 100%;
+//           }
+          
+//           .pagination-buttons {
+//             width: 100%;
+//             justify-content: space-between;
+//           }
+          
+//           .pagination-btn {
+//             min-width: auto;
+//             flex: 1;
+//             text-align: center;
+//           }
+          
+//           .pagination-page {
+//             flex: 0;
+//             min-width: auto;
 //           }
           
 //           .data-table {
@@ -4223,6 +4767,9 @@
 // };
 
 // export default CropCare;
+
+
+
 
 
 
@@ -4355,6 +4902,12 @@ const CropCare: React.FC = () => {
     products: 0
   });
 
+  // Pagination states
+  const [categoryPage, setCategoryPage] = useState(1);
+  const [subCategoryPage, setSubCategoryPage] = useState(1);
+  const [productPage, setProductPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Default items per page
+
   // Ref for file inputs
   const categoryFileInputRef = useRef<HTMLInputElement>(null);
   const subCategoryFileInputRef = useRef<HTMLInputElement>(null);
@@ -4388,6 +4941,7 @@ const CropCare: React.FC = () => {
           ) || []
         }));
         setCategories(categoriesData);
+        setCategoryPage(1); // Reset to first page when data refreshes
       }
       
       if (subcategoriesRes.data.success) {
@@ -4404,10 +4958,12 @@ const CropCare: React.FC = () => {
           ) || []
         }));
         setSubCategories(subCategoriesData);
+        setSubCategoryPage(1); // Reset to first page when data refreshes
       }
       
       if (productsRes.data.success) {
         setProducts(productsRes.data.data);
+        setProductPage(1); // Reset to first page when data refreshes
       }
       
       // Calculate summary
@@ -4422,6 +4978,54 @@ const CropCare: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Pagination calculations for categories
+  const categoryStartIndex = (categoryPage - 1) * itemsPerPage;
+  const categoryEndIndex = categoryStartIndex + itemsPerPage;
+  const paginatedCategories = categories.slice(categoryStartIndex, categoryEndIndex);
+  const totalCategoryPages = Math.ceil(categories.length / itemsPerPage);
+
+  // Pagination calculations for sub categories
+  const subCategoryStartIndex = (subCategoryPage - 1) * itemsPerPage;
+  const subCategoryEndIndex = subCategoryStartIndex + itemsPerPage;
+  const paginatedSubCategories = subCategories.slice(subCategoryStartIndex, subCategoryEndIndex);
+  const totalSubCategoryPages = Math.ceil(subCategories.length / itemsPerPage);
+
+  // Pagination calculations for products
+  const productStartIndex = (productPage - 1) * itemsPerPage;
+  const productEndIndex = productStartIndex + itemsPerPage;
+  const paginatedProducts = products.slice(productStartIndex, productEndIndex);
+  const totalProductPages = Math.ceil(products.length / itemsPerPage);
+
+  // Handle page change for categories
+  const handleCategoryPageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalCategoryPages) {
+      setCategoryPage(newPage);
+    }
+  };
+
+  // Handle page change for sub categories
+  const handleSubCategoryPageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalSubCategoryPages) {
+      setSubCategoryPage(newPage);
+    }
+  };
+
+  // Handle page change for products
+  const handleProductPageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalProductPages) {
+      setProductPage(newPage);
+    }
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    // Reset to first page when changing items per page
+    setCategoryPage(1);
+    setSubCategoryPage(1);
+    setProductPage(1);
   };
 
   // Handle category image upload
@@ -4615,13 +5219,11 @@ const CropCare: React.FC = () => {
       formData.append('name', categoryName.trim());
       formData.append('status', 'active');
       
+      // Only append image if a new file is selected
       if (categoryImage) {
         formData.append('image', categoryImage);
-      } else if (editMode && categoryImagePreview) {
-        // For edit mode, if no new image but existing image exists
-        formData.append('image', ''); // Keep existing image
       }
-
+      
       let response;
       if (editMode && currentEditId) {
         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=category`, formData, {
@@ -4630,6 +5232,10 @@ const CropCare: React.FC = () => {
           }
         });
       } else {
+        // For new category, send empty string if no image
+        if (!categoryImage) {
+          formData.append('image', '');
+        }
         response = await axios.post(API_BASE_URL, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -4667,13 +5273,11 @@ const CropCare: React.FC = () => {
       formData.append('categoryId', selectedCategory);
       formData.append('status', 'active');
       
+      // Only append image if a new file is selected
       if (subCategoryImage) {
         formData.append('image', subCategoryImage);
-      } else if (editMode && subCategoryImagePreview) {
-        // For edit mode, if no new image but existing image exists
-        formData.append('image', ''); // Keep existing image
       }
-
+      
       let response;
       if (editMode && currentEditId) {
         response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=subcategory`, formData, {
@@ -4682,6 +5286,10 @@ const CropCare: React.FC = () => {
           }
         });
       } else {
+        // For new subcategory, send empty string if no image
+        if (!subCategoryImage) {
+          formData.append('image', '');
+        }
         response = await axios.post(API_BASE_URL, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
@@ -4705,138 +5313,77 @@ const CropCare: React.FC = () => {
   };
 
   // Add/Update Product (Updated for server-side storage)
-  // const handleAddProduct = async () => {
-  //   if (!productName.trim() || !selectedSubCategory) {
-  //     alert('Please fill all required fields');
-  //     return;
-  //   }
-
-  //   // Validate target pests/diseases
-  //   const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
-  //   if (validPests.length === 0) {
-  //     alert('Please add at least one target pest/disease');
-  //     return;
-  //   }
-
-  //   // Validate recommended seeds
-  //   const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
-  //   if (validSeeds.length === 0) {
-  //     alert('Please add at least one recommended seed');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append('type', 'product');
-  //     formData.append('name', productName.trim());
-  //     formData.append('subCategoryId', selectedSubCategory);
-  //     formData.append('targetPestsDiseases', JSON.stringify(validPests));
-  //     formData.append('recommendedSeeds', JSON.stringify(validSeeds));
-  //     formData.append('status', 'active');
-
-  //     let response;
-  //     if (editMode && currentEditId) {
-  //       response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, {
-  //         name: productName.trim(),
-  //         subCategoryId: selectedSubCategory,
-  //         targetPestsDiseases: validPests,
-  //         recommendedSeeds: validSeeds,
-  //         status: 'active'
-  //       });
-  //     } else {
-  //       response = await axios.post(API_BASE_URL, formData, {
-  //         headers: {
-  //           'Content-Type': 'multipart/form-data'
-  //         }
-  //       });
-  //     }
-
-  //     if (response.data.success) {
-  //       alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
-  //       clearProductForm();
-  //       fetchAllData();
-  //     } else {
-  //       throw new Error(response.data.message);
-  //     }
-  //   } catch (error: any) {
-  //     console.error('Error saving product:', error);
-  //     alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-// Add/Update Product (Updated for server-side storage)
-const handleAddProduct = async () => {
-  if (!productName.trim() || !selectedSubCategory) {
-    alert('Please fill all required fields');
-    return;
-  }
-
-  // Validate target pests/diseases
-  const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
-  if (validPests.length === 0) {
-    alert('Please add at least one target pest/disease');
-    return;
-  }
-
-  // Validate recommended seeds
-  const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
-  if (validSeeds.length === 0) {
-    alert('Please add at least one recommended seed');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    let response;
-    
-    if (editMode && currentEditId) {
-      // For UPDATE (PUT request) - using FormData
-      const formData = new FormData();
-      formData.append('type', 'product');
-      formData.append('name', productName.trim());
-      formData.append('subCategoryId', selectedSubCategory);
-      formData.append('targetPestsDiseases', JSON.stringify(validPests));
-      formData.append('recommendedSeeds', JSON.stringify(validSeeds));
-      formData.append('status', 'active');
-      
-      response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-    } else {
-      // For CREATE (POST request) - using FormData
-      const formData = new FormData();
-      formData.append('type', 'product');
-      formData.append('name', productName.trim());
-      formData.append('subCategoryId', selectedSubCategory);
-      formData.append('targetPestsDiseases', JSON.stringify(validPests));
-      formData.append('recommendedSeeds', JSON.stringify(validSeeds));
-      formData.append('status', 'active');
-      
-      response = await axios.post(API_BASE_URL, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+  const handleAddProduct = async () => {
+    if (!productName.trim() || !selectedSubCategory) {
+      alert('Please fill all required fields');
+      return;
     }
 
-    if (response.data.success) {
-      alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
-      clearProductForm();
-      fetchAllData();
-    } else {
-      throw new Error(response.data.message);
+    // Validate target pests/diseases
+    const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
+    if (validPests.length === 0) {
+      alert('Please add at least one target pest/disease');
+      return;
     }
-  } catch (error: any) {
-    console.error('Error saving product:', error);
-    alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    // Validate recommended seeds
+    const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
+    if (validSeeds.length === 0) {
+      alert('Please add at least one recommended seed');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let response;
+      
+      if (editMode && currentEditId) {
+        // For UPDATE (PUT request) - using FormData
+        const formData = new FormData();
+        formData.append('type', 'product');
+        formData.append('name', productName.trim());
+        formData.append('subCategoryId', selectedSubCategory);
+        formData.append('targetPestsDiseases', JSON.stringify(validPests));
+        formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+        formData.append('status', 'active');
+        
+        response = await axios.put(`${API_BASE_URL}?id=${currentEditId}&type=product`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        // For CREATE (POST request) - using FormData
+        const formData = new FormData();
+        formData.append('type', 'product');
+        formData.append('name', productName.trim());
+        formData.append('subCategoryId', selectedSubCategory);
+        formData.append('targetPestsDiseases', JSON.stringify(validPests));
+        formData.append('recommendedSeeds', JSON.stringify(validSeeds));
+        formData.append('status', 'active');
+        
+        response = await axios.post(API_BASE_URL, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
+
+      if (response.data.success) {
+        alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
+        clearProductForm();
+        fetchAllData();
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get category name by ID
   const getCategoryName = (categoryId: string) => {
     if (!categoryId) return 'Unknown';
@@ -5016,77 +5563,123 @@ const handleAddProduct = async () => {
             {categories.length === 0 ? (
               <p className="no-data">No categories added yet.</p>
             ) : (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Image</th>
-                      <th>Status</th>
-                      <th>Sub Categories</th>
-                      <th>Created</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((category) => (
-                      <tr key={category._id}>
-                        <td>
-                          <div className="item-name">{category.name}</div>
-                        </td>
-                        <td>
-                          {category.image ? (
-                            <img src={getImageUrl(category.image)} alt={category.name} className="table-image" />
-                          ) : (
-                            <span className="no-image">No Image</span>
-                          )}
-                        </td>
-                        <td>
-                          <select
-                            value={category.status}
-                            onChange={(e) => handleStatusChange('category', category._id, e.target.value as any)}
-                            className="status-select"
-                            style={{ backgroundColor: getStatusColor(category.status) }}
-                            disabled={loading}
-                          >
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </td>
-                        <td>
-                          <span className="count-badge">
-                            {getSafeCategorySubCount(category._id, subCategories)}
-                          </span>
-                        </td>
-                        <td>
-                          {formatDate(category.createdAt)}
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button
-                              className="edit-btn"
-                              onClick={() => handleEditCategory(category)}
-                              disabled={loading}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDelete('category', category._id, category.name)}
-                              disabled={loading}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Sub Categories</th>
+                        <th>Created</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginatedCategories.map((category) => (
+                        <tr key={category._id}>
+                          <td>
+                            <div className="item-name">{category.name}</div>
+                          </td>
+                          <td>
+                            {category.image ? (
+                              <img src={getImageUrl(category.image)} alt={category.name} className="table-image" />
+                            ) : (
+                              <span className="no-image">No Image</span>
+                            )}
+                          </td>
+                          <td>
+                            <select
+                              value={category.status}
+                              onChange={(e) => handleStatusChange('category', category._id, e.target.value as any)}
+                              className="status-select"
+                              style={{ backgroundColor: getStatusColor(category.status) }}
+                              disabled={loading}
+                            >
+                              <option value="draft">Draft</option>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </td>
+                          <td>
+                            <span className="count-badge">
+                              {getSafeCategorySubCount(category._id, subCategories)}
+                            </span>
+                          </td>
+                          <td>
+                            {formatDate(category.createdAt)}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="edit-btn"
+                                onClick={() => handleEditCategory(category)}
+                                disabled={loading}
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDelete('category', category._id, category.name)}
+                                disabled={loading}
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Category Pagination - Bottom of table */}
+                <div className="pagination-footer">
+                  <div className="pagination-info-left">
+                    <div className="items-per-page">
+                      <label>Show: </label>
+                      <select 
+                        value={itemsPerPage} 
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        disabled={loading}
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                    <div className="showing-info">
+                      Showing {categoryStartIndex + 1} to {Math.min(categoryEndIndex, categories.length)} of {categories.length} categories
+                    </div>
+                  </div>
+                  
+                  <div className="pagination-controls-right">
+                    <div className="pagination-buttons">
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleCategoryPageChange(categoryPage - 1)}
+                        disabled={categoryPage === 1 || loading}
+                      >
+                        ← Previous
+                      </button>
+                      <span className="pagination-page">
+                        Page {categoryPage} of {totalCategoryPages}
+                      </span>
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleCategoryPageChange(categoryPage + 1)}
+                        disabled={categoryPage === totalCategoryPages || loading}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -5191,84 +5784,130 @@ const handleAddProduct = async () => {
             {subCategories.length === 0 ? (
               <p className="no-data">No sub categories added yet.</p>
             ) : (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Parent Category</th>
-                      <th>Image</th>
-                      <th>Status</th>
-                      <th>Products</th>
-                      <th>Created</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subCategories.map((subCategory) => (
-                      <tr key={subCategory._id}>
-                        <td>
-                          <div className="item-name">{subCategory.name}</div>
-                        </td>
-                        <td>
-                          {typeof subCategory.categoryId === 'string' 
-                            ? getCategoryName(subCategory.categoryId)
-                            : subCategory.categoryId?.name || 'Unknown'
-                          }
-                        </td>
-                        <td>
-                          {subCategory.image ? (
-                            <img src={getImageUrl(subCategory.image)} alt={subCategory.name} className="table-image" />
-                          ) : (
-                            <span className="no-image">No Image</span>
-                          )}
-                        </td>
-                        <td>
-                          <select
-                            value={subCategory.status}
-                            onChange={(e) => handleStatusChange('subcategory', subCategory._id, e.target.value as any)}
-                            className="status-select"
-                            style={{ backgroundColor: getStatusColor(subCategory.status) }}
-                            disabled={loading}
-                          >
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </td>
-                        <td>
-                          <span className="count-badge">
-                            {getSafeSubCategoryProductCount(subCategory._id, products)}
-                          </span>
-                        </td>
-                        <td>
-                          {formatDate(subCategory.createdAt)}
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button
-                              className="edit-btn"
-                              onClick={() => handleEditSubCategory(subCategory)}
-                              disabled={loading}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDelete('subcategory', subCategory._id, subCategory.name)}
-                              disabled={loading}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Parent Category</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Products</th>
+                        <th>Created</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginatedSubCategories.map((subCategory) => (
+                        <tr key={subCategory._id}>
+                          <td>
+                            <div className="item-name">{subCategory.name}</div>
+                          </td>
+                          <td>
+                            {typeof subCategory.categoryId === 'string' 
+                              ? getCategoryName(subCategory.categoryId)
+                              : subCategory.categoryId?.name || 'Unknown'
+                            }
+                          </td>
+                          <td>
+                            {subCategory.image ? (
+                              <img src={getImageUrl(subCategory.image)} alt={subCategory.name} className="table-image" />
+                            ) : (
+                              <span className="no-image">No Image</span>
+                            )}
+                          </td>
+                          <td>
+                            <select
+                              value={subCategory.status}
+                              onChange={(e) => handleStatusChange('subcategory', subCategory._id, e.target.value as any)}
+                              className="status-select"
+                              style={{ backgroundColor: getStatusColor(subCategory.status) }}
+                              disabled={loading}
+                            >
+                              <option value="draft">Draft</option>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </td>
+                          <td>
+                            <span className="count-badge">
+                              {getSafeSubCategoryProductCount(subCategory._id, products)}
+                            </span>
+                          </td>
+                          <td>
+                            {formatDate(subCategory.createdAt)}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="edit-btn"
+                                onClick={() => handleEditSubCategory(subCategory)}
+                                disabled={loading}
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDelete('subcategory', subCategory._id, subCategory.name)}
+                                disabled={loading}
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Sub Category Pagination - Bottom of table */}
+                <div className="pagination-footer">
+                  <div className="pagination-info-left">
+                    <div className="items-per-page">
+                      <label>Show: </label>
+                      <select 
+                        value={itemsPerPage} 
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        disabled={loading}
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                    <div className="showing-info">
+                      Showing {subCategoryStartIndex + 1} to {Math.min(subCategoryEndIndex, subCategories.length)} of {subCategories.length} sub categories
+                    </div>
+                  </div>
+                  
+                  <div className="pagination-controls-right">
+                    <div className="pagination-buttons">
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleSubCategoryPageChange(subCategoryPage - 1)}
+                        disabled={subCategoryPage === 1 || loading}
+                      >
+                        ← Previous
+                      </button>
+                      <span className="pagination-page">
+                        Page {subCategoryPage} of {totalSubCategoryPages}
+                      </span>
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleSubCategoryPageChange(subCategoryPage + 1)}
+                        disabled={subCategoryPage === totalSubCategoryPages || loading}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -5454,82 +6093,128 @@ const handleAddProduct = async () => {
             {products.length === 0 ? (
               <p className="no-data">No products added yet.</p>
             ) : (
-              <div className="table-container">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Sub Category</th>
-                      <th>Pests/Diseases</th>
-                      <th>Recommended Seeds</th>
-                      <th>Status</th>
-                      <th>Created</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {products.map((product) => (
-                      <tr key={product._id}>
-                        <td>
-                          <div className="item-name">{product.name}</div>
-                        </td>
-                        <td>
-                          {typeof product.subCategoryId === 'string'
-                            ? getSubCategoryName(product.subCategoryId)
-                            : product.subCategoryId?.name || 'Unknown'
-                          }
-                        </td>
-                        <td>
-                          <span className="count-badge">
-                            {product.targetPestsDiseases?.length || 0}
-                          </span>
-                        </td>
-                        <td>
-                          <span className="count-badge">
-                            {product.recommendedSeeds?.length || 0}
-                          </span>
-                        </td>
-                        <td>
-                          <select
-                            value={product.status}
-                            onChange={(e) => handleStatusChange('product', product._id, e.target.value as any)}
-                            className="status-select"
-                            style={{ backgroundColor: getStatusColor(product.status) }}
-                            disabled={loading}
-                          >
-                            <option value="draft">Draft</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                          </select>
-                        </td>
-                        <td>
-                          {formatDate(product.createdAt)}
-                        </td>
-                        <td>
-                          <div className="action-buttons">
-                            <button
-                              className="edit-btn"
-                              onClick={() => handleEditProduct(product)}
-                              disabled={loading}
-                              title="Edit"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDelete('product', product._id, product.name)}
-                              disabled={loading}
-                              title="Delete"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </td>
+              <>
+                <div className="table-container">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Sub Category</th>
+                        <th>Pests/Diseases</th>
+                        <th>Recommended Seeds</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginatedProducts.map((product) => (
+                        <tr key={product._id}>
+                          <td>
+                            <div className="item-name">{product.name}</div>
+                          </td>
+                          <td>
+                            {typeof product.subCategoryId === 'string'
+                              ? getSubCategoryName(product.subCategoryId)
+                              : product.subCategoryId?.name || 'Unknown'
+                            }
+                          </td>
+                          <td>
+                            <span className="count-badge">
+                              {product.targetPestsDiseases?.length || 0}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="count-badge">
+                              {product.recommendedSeeds?.length || 0}
+                            </span>
+                          </td>
+                          <td>
+                            <select
+                              value={product.status}
+                              onChange={(e) => handleStatusChange('product', product._id, e.target.value as any)}
+                              className="status-select"
+                              style={{ backgroundColor: getStatusColor(product.status) }}
+                              disabled={loading}
+                            >
+                              <option value="draft">Draft</option>
+                              <option value="active">Active</option>
+                              <option value="inactive">Inactive</option>
+                            </select>
+                          </td>
+                          <td>
+                            {formatDate(product.createdAt)}
+                          </td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="edit-btn"
+                                onClick={() => handleEditProduct(product)}
+                                disabled={loading}
+                                title="Edit"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={() => handleDelete('product', product._id, product.name)}
+                                disabled={loading}
+                                title="Delete"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {/* Product Pagination - Bottom of table */}
+                <div className="pagination-footer">
+                  <div className="pagination-info-left">
+                    <div className="items-per-page">
+                      <label>Show: </label>
+                      <select 
+                        value={itemsPerPage} 
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        disabled={loading}
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                      </select>
+                    </div>
+                    <div className="showing-info">
+                      Showing {productStartIndex + 1} to {Math.min(productEndIndex, products.length)} of {products.length} products
+                    </div>
+                  </div>
+                  
+                  <div className="pagination-controls-right">
+                    <div className="pagination-buttons">
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleProductPageChange(productPage - 1)}
+                        disabled={productPage === 1 || loading}
+                      >
+                        ← Previous
+                      </button>
+                      <span className="pagination-page">
+                        Page {productPage} of {totalProductPages}
+                      </span>
+                      <button
+                        className="pagination-btn"
+                        onClick={() => handleProductPageChange(productPage + 1)}
+                        disabled={productPage === totalProductPages || loading}
+                      >
+                        Next →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -6249,6 +6934,108 @@ const handleAddProduct = async () => {
           border: 2px dashed #dee2e6;
         }
 
+        /* Pagination Footer Styles - New Layout */
+        .pagination-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: 20px;
+          padding: 15px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          border: 1px solid #e9ecef;
+          flex-wrap: wrap;
+          gap: 15px;
+        }
+
+        .pagination-info-left {
+          display: flex;
+          align-items: center;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+
+        .pagination-controls-right {
+          display: flex;
+          align-items: center;
+        }
+
+        .items-per-page {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .items-per-page label {
+          font-size: 14px;
+          color: #495057;
+          font-weight: 500;
+        }
+
+        .items-per-page select {
+          padding: 6px 12px;
+          border: 1px solid #dee2e6;
+          border-radius: 4px;
+          background: white;
+          font-size: 14px;
+          cursor: pointer;
+          transition: border-color 0.3s;
+        }
+
+        .items-per-page select:focus {
+          outline: none;
+          border-color: #3498db;
+        }
+
+        .items-per-page select:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .showing-info {
+          color: #6c757d;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .pagination-buttons {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+        }
+
+        .pagination-btn {
+          background: #3498db;
+          color: white;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s;
+          min-width: 90px;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+          background: #2980b9;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 5px rgba(41, 128, 185, 0.3);
+        }
+
+        .pagination-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .pagination-page {
+          font-weight: 600;
+          color: #2c3e50;
+          font-size: 14px;
+          min-width: 100px;
+          text-align: center;
+        }
+
         .summary-section {
           margin-bottom: 40px;
         }
@@ -6430,14 +7217,46 @@ const handleAddProduct = async () => {
             text-align: center;
           }
           
-          .form-actions {
-            flex-direction: column;
-          }
-          
           .section-header {
             flex-direction: column;
             gap: 10px;
             align-items: flex-start;
+          }
+          
+          .form-actions {
+            flex-direction: column;
+          }
+          
+          .pagination-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 15px;
+          }
+          
+          .pagination-info-left {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+          
+          .pagination-controls-right {
+            width: 100%;
+          }
+          
+          .pagination-buttons {
+            width: 100%;
+            justify-content: space-between;
+          }
+          
+          .pagination-btn {
+            min-width: auto;
+            flex: 1;
+            text-align: center;
+          }
+          
+          .pagination-page {
+            flex: 0;
+            min-width: auto;
           }
           
           .data-table {
@@ -6472,4 +7291,4 @@ const handleAddProduct = async () => {
   );
 };
 
-export default CropCare
+export default CropCare;

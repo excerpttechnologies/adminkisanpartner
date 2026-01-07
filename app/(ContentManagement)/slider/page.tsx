@@ -1,7 +1,6 @@
 
 
 
-
 // "use client";
 
 // import { useState, useEffect, useRef } from 'react';
@@ -12,6 +11,7 @@
 //   menuIcon: string;
 //   sliderImage: string;
 //   status: 'active' | 'inactive';
+//   role: string;
 //   createdAt: string;
 // }
 
@@ -33,9 +33,12 @@
 //     menuName: '',
 //     menuIcon: '',
 //     sliderImage: '',
+//     role: '',
 //     status: 'active' as 'active' | 'inactive'
 //   });
   
+//   const [iconFile, setIconFile] = useState<File | null>(null);
+//   const [sliderFile, setSliderFile] = useState<File | null>(null);
 //   const [editingId, setEditingId] = useState<string | null>(null);
   
 //   const iconFileRef = useRef<HTMLInputElement>(null);
@@ -48,7 +51,6 @@
 //     const newToast = { id, message, type };
 //     setToasts(prev => [...prev, newToast]);
     
-//     // Auto remove toast after 4 seconds
 //     setTimeout(() => {
 //       setToasts(prev => prev.filter(toast => toast.id !== id));
 //     }, 4000);
@@ -99,15 +101,19 @@
 //         showToast('Icon file size must be less than 2MB', 'error');
 //         return;
 //       }
+      
+//       setIconFile(file);
+      
+//       // Create preview URL
 //       const reader = new FileReader();
 //       reader.onloadend = () => {
 //         setFormData(prev => ({ 
 //           ...prev, 
 //           menuIcon: reader.result as string 
 //         }));
-//         showToast('Icon uploaded successfully', 'success');
 //       };
 //       reader.readAsDataURL(file);
+//       showToast('Icon selected successfully', 'success');
 //     }
 //   };
 
@@ -119,15 +125,19 @@
 //         showToast('Slider image file size must be less than 5MB', 'error');
 //         return;
 //       }
+      
+//       setSliderFile(file);
+      
+//       // Create preview URL
 //       const reader = new FileReader();
 //       reader.onloadend = () => {
 //         setFormData(prev => ({ 
 //           ...prev, 
 //           sliderImage: reader.result as string 
 //         }));
-//         showToast('Slider image uploaded successfully', 'success');
 //       };
 //       reader.readAsDataURL(file);
+//       showToast('Slider image selected successfully', 'success');
 //     }
 //   };
 
@@ -140,53 +150,49 @@
 //       return;
 //     }
 
-//     if (!formData.menuIcon && !editingId) {
-//       showToast('Please upload a menu icon', 'error');
-//       return;
-//     }
-
-//     if (!formData.sliderImage && !editingId) {
-//       showToast('Please upload a slider image', 'error');
+//     if (!editingId && (!iconFile || !sliderFile)) {
+//       showToast('Please upload both icon and slider image', 'error');
 //       return;
 //     }
 
 //     try {
 //       setSubmitting(true);
 
+//       const formDataToSend = new FormData();
+//       formDataToSend.append('menuName', formData.menuName);
+//       formDataToSend.append('role', formData.role);
+//       formDataToSend.append('status', formData.status);
+      
+//       // Only append files if they exist
+//       if (iconFile) {
+//         formDataToSend.append('menuIcon', iconFile);
+//       }
+      
+//       if (sliderFile) {
+//         formDataToSend.append('sliderImage', sliderFile);
+//       }
+
+//       let url = '/api/adminslider';
+//       let method = 'POST';
+      
 //       if (editingId) {
-//         // Update existing slider
-//         const res = await fetch(`/api/adminslider/${editingId}`, {
-//           method: 'PUT',
-//           headers: { 'Content-Type': 'application/json' },
-//           body: JSON.stringify(formData)
-//         });
-        
-//         const data = await res.json();
-        
-//         if (data.success) {
-//           showToast('Slider updated successfully!', 'success');
-//           fetchSliders();
-//           resetForm();
-//         } else {
-//           showToast(data.message || 'Failed to update slider', 'error');
-//         }
+//         url = `/api/adminslider/${editingId}`;
+//         method = 'PUT';
+//       }
+
+//       const res = await fetch(url, {
+//         method: method,
+//         body: formDataToSend
+//       });
+      
+//       const data = await res.json();
+      
+//       if (data.success) {
+//         showToast(editingId ? 'Slider updated successfully!' : 'Slider added successfully!', 'success');
+//         fetchSliders();
+//         resetForm();
 //       } else {
-//         // Add new slider
-//         const res = await fetch('/api/adminslider', {
-//           method: 'POST',
-//           headers: { 'Content-Type': 'application/json' },
-//           body: JSON.stringify(formData)
-//         });
-        
-//         const data = await res.json();
-        
-//         if (data.success) {
-//           showToast('Slider added successfully!', 'success');
-//           fetchSliders();
-//           resetForm();
-//         } else {
-//           showToast(data.message || 'Failed to add slider', 'error');
-//         }
+//         showToast(data.message || (editingId ? 'Failed to update slider' : 'Failed to add slider'), 'error');
 //       }
 //     } catch (error) {
 //       console.error('Error saving slider:', error);
@@ -202,9 +208,13 @@
 //       menuName: '',
 //       menuIcon: '',
 //       sliderImage: '',
+//       role: '',
 //       status: 'active'
 //     });
+//     setIconFile(null);
+//     setSliderFile(null);
 //     setEditingId(null);
+    
 //     if (iconFileRef.current) iconFileRef.current.value = '';
 //     if (sliderFileRef.current) sliderFileRef.current.value = '';
 //     showToast('Form cleared', 'info');
@@ -216,12 +226,14 @@
 //       menuName: slider.menuName,
 //       menuIcon: slider.menuIcon,
 //       sliderImage: slider.sliderImage,
+//       role: slider.role,
 //       status: slider.status
 //     });
+//     setIconFile(null); // Reset file since we're using existing URL
+//     setSliderFile(null); // Reset file since we're using existing URL
 //     setEditingId(slider._id);
 //     showToast(`Editing "${slider.menuName}" slider`, 'info');
     
-//     // Scroll to form
 //     setTimeout(() => {
 //       document.getElementById('slider-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 //     }, 100);
@@ -248,7 +260,6 @@
 //         showToast(`"${sliderToDelete.name}" deleted successfully!`, 'success');
 //         fetchSliders();
         
-//         // If we were editing this slider, reset the form
 //         if (editingId === sliderToDelete.id) {
 //           resetForm();
 //         }
@@ -278,13 +289,14 @@
       
 //       const newStatus = slider.status === 'active' ? 'inactive' : 'active';
       
+//       const formData = new FormData();
+//       formData.append('menuName', slider.menuName);
+//       formData.append('role', slider.role);
+//       formData.append('status', newStatus);
+      
 //       const res = await fetch(`/api/adminslider/${id}`, {
 //         method: 'PUT',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({
-//           ...slider,
-//           status: newStatus
-//         })
+//         body: formData
 //       });
       
 //       const data = await res.json();
@@ -459,6 +471,21 @@
 //               </label>
 //             </div>
 
+//             {/* Role */}
+//             <div className="flex flex-col gap-2">
+//               <label className="text-sm font-semibold text-gray-700 flex flex-col gap-1.5">
+//                 Role
+//                 <input
+//                   type="text"
+//                   name="role"
+//                   value={formData.role}
+//                   onChange={handleInputChange}
+//                   placeholder="Enter role (e.g., admin, user, guest)"
+//                   className="px-4 py-3 border-2 border-gray-200 rounded-lg text-sm transition-colors outline-none focus:border-blue-300"
+//                 />
+//               </label>
+//             </div>
+
 //             {/* Status */}
 //             <div className="flex flex-col gap-2">
 //               <label className="text-sm font-semibold text-gray-700 flex flex-col gap-1.5">
@@ -477,7 +504,10 @@
 
 //             {/* Menu Icon Upload */}
 //             <div className="flex flex-col gap-2">
-//               <label className="text-sm font-semibold text-gray-700">Menu Icon {!editingId && '*'}</label>
+//               <label className="text-sm font-semibold text-gray-700">
+//                 Menu Icon {!editingId && '*'}
+//                 {editingId && <span className="text-gray-500 ml-2">(Leave empty to keep current)</span>}
+//               </label>
 //               <div 
 //                 className="border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 text-center cursor-pointer transition-all hover:border-gray-400 min-h-[140px] flex flex-col items-center justify-center gap-2"
 //                 onClick={() => iconFileRef.current?.click()}
@@ -508,7 +538,10 @@
 
 //             {/* Slider Image Upload */}
 //             <div className="flex flex-col gap-2">
-//               <label className="text-sm font-semibold text-gray-700">Slider Image {!editingId && '*'}</label>
+//               <label className="text-sm font-semibold text-gray-700">
+//                 Slider Image {!editingId && '*'}
+//                 {editingId && <span className="text-gray-500 ml-2">(Leave empty to keep current)</span>}
+//               </label>
 //               <div 
 //                 className="border-2 border-dashed border-gray-300 rounded-xl p-8 bg-gray-50 text-center cursor-pointer transition-all hover:border-gray-400 min-h-[140px] flex flex-col items-center justify-center gap-2"
 //                 onClick={() => sliderFileRef.current?.click()}
@@ -590,7 +623,8 @@
 //             <table className="w-full border-collapse">
 //               <thead>
 //                 <tr className="bg-gray-50 border-b-2 border-gray-200">
-//                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">ID</th>
+//                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">SI NO</th>
+//                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Role</th>
 //                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Menu Name</th>
 //                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Icon</th>
 //                   <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Slider Preview</th>
@@ -605,6 +639,17 @@
 //                     <td className="px-4 py-4 text-sm text-gray-800 align-middle">
 //                       <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium font-mono">
 //                         #{index + 1}
+//                       </span>
+//                     </td>
+//                     <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+//                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+//                         slider.role === 'admin' 
+//                           ? 'bg-purple-100 text-purple-800' 
+//                           : slider.role === 'user'
+//                           ? 'bg-blue-100 text-blue-800'
+//                           : 'bg-gray-100 text-gray-800'
+//                       }`}>
+//                         {slider.role || 'Not specified'}
 //                       </span>
 //                     </td>
 //                     <td className="px-4 py-4 text-sm text-gray-800 align-middle">
@@ -634,7 +679,7 @@
 //                           <img 
 //                             src={slider.sliderImage} 
 //                             alt="Slider" 
-//                             className="w-32 h-16 object-cover rounded-md bg-gray-100"
+//                             className="w-20 h-10 object-cover rounded-md bg-gray-100"
 //                             onError={(e) => {
 //                               (e.target as HTMLImageElement).style.display = 'none';
 //                             }}
@@ -703,7 +748,11 @@
 //       </div>
 //     </div>
 //   );
-//   }
+// }
+
+
+
+
 
 
 
@@ -719,6 +768,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { Pagination, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 
 interface Slider {
   _id: string;
@@ -737,12 +787,18 @@ interface Toast {
 }
 
 export default function SliderManagementPage() {
-  const [sliders, setSliders] = useState<Slider[]>([]);
+  const [allSliders, setAllSliders] = useState<Slider[]>([]);
+  const [displayedSliders, setDisplayedSliders] = useState<Slider[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [sliderToDelete, setSliderToDelete] = useState<{id: string, name: string} | null>(null);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   
   const [formData, setFormData] = useState({
     menuName: '',
@@ -783,7 +839,7 @@ export default function SliderManagementPage() {
       const data = await res.json();
       
       if (data.success && data.data) {
-        setSliders(data.data);
+        setAllSliders(data.data);
       } else {
         showToast(data.message || 'Failed to fetch sliders', 'error');
       }
@@ -798,6 +854,53 @@ export default function SliderManagementPage() {
   useEffect(() => {
     fetchSliders();
   }, []);
+
+  // Apply pagination to displayed sliders
+  useEffect(() => {
+    if (allSliders.length === 0) {
+      setDisplayedSliders([]);
+      setTotalPages(1);
+      setCurrentPage(1);
+      return;
+    }
+
+    // Calculate total pages
+    const totalPagesCount = Math.ceil(allSliders.length / itemsPerPage);
+    setTotalPages(totalPagesCount);
+    
+    // Ensure current page is valid
+    if (currentPage > totalPagesCount) {
+      setCurrentPage(1);
+    }
+    
+    // Calculate start and end indices
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    // Get sliders for current page
+    const slidersForPage = allSliders.slice(startIndex, endIndex);
+    setDisplayedSliders(slidersForPage);
+    
+  }, [allSliders, currentPage, itemsPerPage]);
+
+  // Handle page change
+  const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+    setCurrentPage(value);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (event: SelectChangeEvent<number>) => {
+    const newLimit = Number(event.target.value);
+    setItemsPerPage(newLimit);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  // Calculate pagination range
+  const getPaginationRange = () => {
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, allSliders.length);
+    return { startItem, endItem };
+  };
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -999,7 +1102,7 @@ export default function SliderManagementPage() {
   // Toggle status
   const toggleStatus = async (id: string) => {
     try {
-      const slider = sliders.find(s => s._id === id);
+      const slider = allSliders.find(s => s._id === id);
       if (!slider) return;
       
       const newStatus = slider.status === 'active' ? 'inactive' : 'active';
@@ -1028,9 +1131,10 @@ export default function SliderManagementPage() {
     }
   };
 
-  // Statistics
-  const activeCount = sliders.filter(s => s.status === 'active').length;
-  const inactiveCount = sliders.filter(s => s.status === 'inactive').length;
+  // Statistics - use allSliders for accurate counts
+  const activeCount = allSliders.filter(s => s.status === 'active').length;
+  const inactiveCount = allSliders.filter(s => s.status === 'inactive').length;
+  const { startItem, endItem } = getPaginationRange();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 font-sans relative">
@@ -1128,7 +1232,7 @@ export default function SliderManagementPage() {
             📊
           </div>
           <div>
-            <div className="text-2xl font-bold text-blue-500 leading-none">{sliders.length}</div>
+            <div className="text-2xl font-bold text-blue-500 leading-none">{allSliders.length}</div>
             <div className="text-sm text-gray-600 mt-1">Total Sliders</div>
           </div>
         </div>
@@ -1316,7 +1420,7 @@ export default function SliderManagementPage() {
             📋 Sliders List
           </h2>
           <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
-            Showing {sliders.length} slider{sliders.length !== 1 ? 's' : ''}
+            Showing {displayedSliders.length} of {allSliders.length} slider{allSliders.length !== 1 ? 's' : ''}
           </div>
         </div>
 
@@ -1325,7 +1429,7 @@ export default function SliderManagementPage() {
             <div className="text-3xl mb-4 animate-spin">⏳</div>
             <div>Loading sliders...</div>
           </div>
-        ) : sliders.length === 0 ? (
+        ) : allSliders.length === 0 ? (
           <div className="text-center py-16 px-8">
             <div className="text-5xl text-gray-300 mb-4">📄</div>
             <h3 className="text-lg font-semibold text-gray-600 mb-2">No Sliders Found</h3>
@@ -1334,121 +1438,176 @@ export default function SliderManagementPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b-2 border-gray-200">
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">SI NO</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Role</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Menu Name</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Icon</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Slider Preview</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Created</th>
-                  <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sliders.map((slider, index) => (
-                  <tr key={slider._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium font-mono">
-                        #{index + 1}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        slider.role === 'admin' 
-                          ? 'bg-purple-100 text-purple-800' 
-                          : slider.role === 'user'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {slider.role || 'Not specified'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <div className="font-medium text-gray-800">
-                        <strong>{slider.menuName}</strong>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <div className="flex items-center justify-center">
-                        {slider.menuIcon ? (
-                          <img 
-                            src={slider.menuIcon} 
-                            alt="Icon" 
-                            className="w-10 h-10 object-cover rounded-lg bg-gray-100"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-xs text-gray-400 italic px-2 py-2">No icon</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <div className="flex items-center">
-                        {slider.sliderImage ? (
-                          <img 
-                            src={slider.sliderImage} 
-                            alt="Slider" 
-                            className="w-20 h-10 object-cover rounded-md bg-gray-100"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="text-xs text-gray-400 italic px-2 py-2">No image</div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <button
-                        onClick={() => toggleStatus(slider._id)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border-none cursor-pointer transition-all min-w-[80px] ${
-                          slider.status === 'active' 
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        }`}
-                        title="Click to toggle status"
-                      >
-                        {slider.status === 'active' ? '✓ Active' : '✕ Inactive'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <span className="text-xs text-gray-600 whitespace-nowrap">
-                        {new Date(slider.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-gray-800 align-middle">
-                      <div className="flex gap-2 flex-wrap">
-                        <button
-                          onClick={() => handleEdit(slider)}
-                          className="px-3 py-1.5 bg-blue-50 text-blue-700 border-none rounded text-xs font-medium cursor-pointer transition-all hover:bg-blue-100 flex items-center gap-1 min-w-[70px]"
-                          title="Edit this slider"
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(slider._id, slider.menuName)}
-                          className="px-3 py-1.5 bg-red-50 text-red-600 border-none rounded text-xs font-medium cursor-pointer transition-all hover:bg-red-100 flex items-center gap-1 min-w-[70px]"
-                          title="Delete this slider"
-                        >
-                          🗑️ Delete
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b-2 border-gray-200">
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">SI NO</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Role</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Menu Name</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Icon</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Slider Preview</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Status</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Created</th>
+                    <th className="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {displayedSliders.map((slider, index) => {
+                    // Calculate actual index considering pagination
+                    const actualIndex = (currentPage - 1) * itemsPerPage + index;
+                    
+                    return (
+                      <tr key={slider._id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium font-mono">
+                            #{actualIndex + 1}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            slider.role === 'admin' 
+                              ? 'bg-purple-100 text-purple-800' 
+                              : slider.role === 'user'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {slider.role || 'Not specified'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <div className="font-medium text-gray-800">
+                            <strong>{slider.menuName}</strong>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <div className="flex items-center justify-center">
+                            {slider.menuIcon ? (
+                              <img 
+                                src={slider.menuIcon} 
+                                alt="Icon" 
+                                className="w-10 h-10 object-cover rounded-lg bg-gray-100"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="text-xs text-gray-400 italic px-2 py-2">No icon</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <div className="flex items-center">
+                            {slider.sliderImage ? (
+                              <img 
+                                src={slider.sliderImage} 
+                                alt="Slider" 
+                                className="w-20 h-10 object-cover rounded-md bg-gray-100"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="text-xs text-gray-400 italic px-2 py-2">No image</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <button
+                            onClick={() => toggleStatus(slider._id)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border-none cursor-pointer transition-all min-w-[80px] ${
+                              slider.status === 'active' 
+                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' 
+                                : 'bg-red-100 text-red-800 hover:bg-red-200'
+                            }`}
+                            title="Click to toggle status"
+                          >
+                            {slider.status === 'active' ? '✓ Active' : '✕ Inactive'}
+                          </button>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <span className="text-xs text-gray-600 whitespace-nowrap">
+                            {new Date(slider.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-gray-800 align-middle">
+                          <div className="flex gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleEdit(slider)}
+                              className="px-3 py-1.5 bg-blue-50 text-blue-700 border-none rounded text-xs font-medium cursor-pointer transition-all hover:bg-blue-100 flex items-center gap-1 min-w-[70px]"
+                              title="Edit this slider"
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(slider._id, slider.menuName)}
+                              className="px-3 py-1.5 bg-red-50 text-red-600 border-none rounded text-xs font-medium cursor-pointer transition-all hover:bg-red-100 flex items-center gap-1 min-w-[70px]"
+                              title="Delete this slider"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination and Limit Controls - Only show if there are sliders */}
+            {allSliders.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                  {/* Items per page selector */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm text-gray-600">Show</div>
+                    <FormControl size="small" className="w-32">
+                      <Select
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
+                        displayEmpty
+                        className="text-sm"
+                      >
+                        <MenuItem value={5}>5 per page</MenuItem>
+                        <MenuItem value={10}>10 per page</MenuItem>
+                        <MenuItem value={20}>20 per page</MenuItem>
+                        <MenuItem value={50}>50 per page</MenuItem>
+                        <MenuItem value={100}>100 per page</MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    <div className="text-sm text-gray-600">
+                      Showing {startItem} to {endItem} of {allSliders.length} sliders
+                    </div>
+                  </div>
+
+                  {/* Pagination component */}
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-600 hidden md:block">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    <Pagination
+                      count={totalPages}
+                      page={currentPage}
+                      onChange={handlePageChange}
+                      color="primary"
+                      variant="outlined"
+                      shape="rounded"
+                      size="medium"
+                      showFirstButton
+                      showLastButton
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -1458,7 +1617,7 @@ export default function SliderManagementPage() {
           💡 Tip: Upload high-quality images for better slider performance. Keep file sizes under 5MB.
         </p>
         <p className="my-1 text-sm text-gray-600">
-          Total: {sliders.length} sliders • Active: {activeCount} • Inactive: {inactiveCount}
+          Total: {allSliders.length} sliders • Active: {activeCount} • Inactive: {inactiveCount}
         </p>
       </div>
     </div>

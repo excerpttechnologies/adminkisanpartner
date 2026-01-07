@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import  connectDB  from '../../lib/Db';
-import AdminMenuIcon from '../../models/adminmenuicon';
+import  connectDB  from '@/app/lib/Db';
+import AdminMenuIcon from '@/app/models/adminmenuicon';
 
 // GET - Fetch all menu icons
 export async function GET(request: NextRequest) {

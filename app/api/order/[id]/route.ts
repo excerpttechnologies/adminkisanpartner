@@ -52,6 +52,7 @@ export async function DELETE(
 ) {
   await connectDB();
   const { id } = await params;
+  console.log(`order delete ${id}`)
 
   await Order.findByIdAndDelete(id);
 

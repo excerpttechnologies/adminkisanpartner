@@ -1,189 +1,106 @@
 import { NextRequest, NextResponse } from 'next/server';
-import  connectDB  from '../../../lib/Db';
-import AdminMenuIcon from '../../../models/adminmenuicon';
+import { writeFile } from 'fs/promises';
+import { join } from 'path';
+import { mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import connectDB from '@/app/lib/Db';
+import Slider from '@/app/models/adminslider';
 
-// GET - Fetch single menu icon by ID
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { id } = await context.params;
+    const formData = await request.formData();
+    
+    const menuName = formData.get('menuName') as string;
+    const menuIconFile = formData.get('menuIcon') as File;
+    const sliderImageFile = formData.get('sliderImage') as File;
+    const role = formData.get('role') as string;
+    const status = formData.get('status') as 'active' | 'inactive';
 
-    // Validate MongoDB ObjectId
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    // Validate required fields
+    if (!menuName || !menuIconFile || !sliderImageFile) {
       return NextResponse.json(
-        { success: false, error: 'Invalid menu icon ID format' },
+        { success: false, message: 'Menu name, icon, and slider image are required' },
         { status: 400 }
       );
     }
 
-    const menuIcon = await AdminMenuIcon.findById(id);
-
-    if (!menuIcon) {
-      return NextResponse.json(
-        { success: false, error: 'Menu icon not found' },
-        { status: 404 }
-      );
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = join(process.cwd(), 'public', 'uploads');
+    if (!existsSync(uploadsDir)) {
+      await mkdir(uploadsDir, { recursive: true });
     }
 
-    return NextResponse.json({
-      success: true,
-      data: menuIcon
+    // Generate unique filenames
+    const timestamp = Date.now();
+    const iconExt = menuIconFile.name.split('.').pop();
+    const sliderExt = sliderImageFile.name.split('.').pop();
+    
+    const iconFilename = `icon_${timestamp}.${iconExt}`;
+    const sliderFilename = `slider_${timestamp}.${sliderExt}`;
+
+    // Save files to server
+    const iconBytes = await menuIconFile.arrayBuffer();
+    const iconBuffer = Buffer.from(iconBytes);
+    const iconPath = join(uploadsDir, iconFilename);
+    await writeFile(iconPath, iconBuffer);
+
+    const sliderBytes = await sliderImageFile.arrayBuffer();
+    const sliderBuffer = Buffer.from(sliderBytes);
+    const sliderPath = join(uploadsDir, sliderFilename);
+    await writeFile(sliderPath, sliderBuffer);
+
+    // Create URLs for database storage
+    const menuIconUrl = `/uploads/${iconFilename}`;
+    const sliderImageUrl = `/uploads/${sliderFilename}`;
+
+    // Create new slider in database
+    const slider = new Slider({
+      menuName,
+      menuIcon: menuIconUrl,
+      sliderImage: sliderImageUrl,
+      role: role || '',
+      status: status || 'active'
     });
 
-  } catch (error: any) {
-    console.error('GET /api/menuicon/[id] error:', error);
+    await slider.save();
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch menu icon' },
+      { 
+        success: true, 
+        message: 'Slider created successfully',
+        data: slider 
+      },
+      { status: 201 }
+    );
+
+  } catch (error: any) {
+    console.error('Error creating slider:', error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Failed to create slider',
+        error: error.message 
+      },
       { status: 500 }
     );
   }
 }
 
-// PUT - Update menu icon by ID
-export async function PUT(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET() {
   try {
     await connectDB();
-
-    const { id } = await context.params;
-
-    console.log('Updating menu icon with ID:', id);
-
-    // Validate MongoDB ObjectId
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid menu icon ID format' },
-        { status: 400 }
-      );
-    }
-
-    // Find existing menu icon
-    const existingMenuIcon = await AdminMenuIcon.findById(id);
-    if (!existingMenuIcon) {
-      return NextResponse.json(
-        { success: false, error: 'Menu icon not found' },
-        { status: 404 }
-      );
-    }
-
-    const body = await request.json();
-    const updateData: any = {};
-
-    // Update menuName if provided
-    if (body.menuName !== undefined) {
-      if (!body.menuName.trim()) {
-        return NextResponse.json(
-          { success: false, error: 'Menu name cannot be empty' },
-          { status: 400 }
-        );
-      }
-      updateData.menuName = body.menuName;
-    }
-
-    // Update menuIcon if provided
-    if (body.menuIcon !== undefined) {
-      if (!body.menuIcon.startsWith('data:image/')) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid image format' },
-          { status: 400 }
-        );
-      }
-      updateData.menuIcon = body.menuIcon;
-    }
-
-    // Update isActive if provided
-    if (body.isActive !== undefined) {
-      updateData.isActive = body.isActive;
-    }
-
-    console.log('Update data:', { ...updateData, menuIcon: updateData.menuIcon ? 'base64...' : undefined });
-
-    // Update menu icon
-    const updatedMenuIcon = await AdminMenuIcon.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedMenuIcon) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to update menu icon' },
-        { status: 500 }
-      );
-    }
-
-    console.log('Menu icon updated successfully:', updatedMenuIcon.menuName);
-
-    return NextResponse.json({
-      success: true,
-      data: updatedMenuIcon,
-      message: 'Menu icon updated successfully'
-    });
-
-  } catch (error: any) {
-    console.error('PUT /api/menuicon/[id] error:', error);
-    console.error('Error stack:', error.stack);
+    const sliders = await Slider.find({}).sort({ createdAt: -1 });
+    
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update menu icon' },
-      { status: 500 }
+      { success: true, data: sliders },
+      { status: 200 }
     );
-  }
-}
-
-// DELETE - Delete menu icon by ID
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await connectDB();
-
-    const { id } = await context.params;
-
-    console.log('Deleting menu icon with ID:', id);
-
-    // Validate MongoDB ObjectId
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid menu icon ID format' },
-        { status: 400 }
-      );
-    }
-
-    // Find menu icon
-    const menuIcon = await AdminMenuIcon.findById(id);
-
-    if (!menuIcon) {
-      return NextResponse.json(
-        { success: false, error: 'Menu icon not found' },
-        { status: 404 }
-      );
-    }
-
-    console.log('Menu icon found:', menuIcon.menuName);
-
-    // Delete menu icon from database
-    await AdminMenuIcon.findByIdAndDelete(id);
-
-    console.log('Menu icon deleted successfully');
-
-    return NextResponse.json({
-      success: true,
-      message: 'Menu icon deleted successfully',
-      deletedId: id
-    });
-
   } catch (error: any) {
-    console.error('DELETE /api/menuicon/[id] error:', error);
-    console.error('Error stack:', error.stack);
+    console.error('Error fetching sliders:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete menu icon' },
+      { success: false, message: 'Failed to fetch sliders' },
       { status: 500 }
     );
   }
