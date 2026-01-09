@@ -2953,6 +2953,286 @@ interface LabourFormModalProps {
   defaultData?: Labour | null;
 }
 
+// function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormModalProps) {
+//   const [form, setForm] = useState({
+//     name: "",
+//     villageName: "",
+//     contactNumber: "",
+//     email: "",
+//     workTypes: "",
+//     experience: "",
+//     availability: "",
+//     address: "",
+//     maleRequirement: 0,
+//     femaleRequirement: 0,
+//     isActive: true,
+//   });
+
+//   const [errors, setErrors] = useState<Record<string, string>>({});
+
+//   // FIX: Update form when defaultData changes
+//   useEffect(() => {
+//     if (defaultData) {
+//       setForm({
+//         name: defaultData.name || "",
+//         villageName: defaultData.villageName || "",
+//         contactNumber: defaultData.contactNumber || "",
+//         email: defaultData.email || "",
+//         workTypes: defaultData.workTypes?.join(", ") || "",
+//         experience: defaultData.experience || "",
+//         availability: defaultData.availability || "",
+//         address: defaultData.address || "",
+//         maleRequirement: defaultData.maleRequirement || 0,
+//         femaleRequirement: defaultData.femaleRequirement || 0,
+//         isActive: defaultData.isActive ?? true,
+//       });
+//     } else {
+//       // Reset form when adding new labour
+//       setForm({
+//         name: "",
+//         villageName: "",
+//         contactNumber: "",
+//         email: "",
+//         workTypes: "",
+//         experience: "",
+//         availability: "",
+//         address: "",
+//         maleRequirement: 0,
+//         femaleRequirement: 0,
+//         isActive: true,
+//       });
+//     }
+//     // Clear errors when modal opens/closes
+//     setErrors({});
+//   }, [defaultData, open]); // Added open to dependency array
+
+//   const validateForm = () => {
+//     const newErrors: Record<string, string> = {};
+    
+//     if (!form.name.trim()) {
+//       newErrors.name = "Name is required";
+//     }
+    
+//     if (!form.contactNumber.trim()) {
+//       newErrors.contactNumber = "Contact number is required";
+//     } else if (!/^\d{10}$/.test(form.contactNumber.replace(/\D/g, ''))) {
+//       newErrors.contactNumber = "Enter a valid 10-digit phone number";
+//     }
+    
+//     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
+//       newErrors.email = "Invalid email format";
+//     }
+    
+//     if (form.maleRequirement < 0) {
+//       newErrors.maleRequirement = "Cannot be negative";
+//     }
+    
+//     if (form.femaleRequirement < 0) {
+//       newErrors.femaleRequirement = "Cannot be negative";
+//     }
+    
+//     setErrors(newErrors);
+//     return Object.keys(newErrors).length === 0;
+//   };
+
+//   const handleSubmit = () => {
+//     if (!validateForm()) {
+//       toast.error("Please fix the errors in the form");
+//       return;
+//     }
+
+//     const formData = {
+//       ...form,
+//       workTypes: form.workTypes ? form.workTypes.split(",").map(item => item.trim()).filter(item => item) : [],
+//       maleRequirement: Number(form.maleRequirement) || 0,
+//       femaleRequirement: Number(form.femaleRequirement) || 0,
+//     };
+
+//     onSubmit(formData);
+//   };
+
+//   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+//     const { name, value } = e.target;
+    
+//     // Clear error for this field
+//     if (errors[name]) {
+//       setErrors(prev => ({ ...prev, [name]: "" }));
+//     }
+    
+//     setForm(prev => ({
+//       ...prev,
+//       [name]: value
+//     }));
+//   };
+
+//   return (
+//     <Modal open={open} onClose={onClose}>
+//       <Box sx={modalStyle}>
+//         <Typography variant="h6" className="mb-6">
+//           {defaultData ? "Edit Labour" : "Add New Labour"}
+//         </Typography>
+        
+//         <div className="space-y-4">
+//           {/* Name */}
+//           <TextField
+//             label="Full Name *"
+//             name="name"
+//             value={form.name}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//             error={!!errors.name}
+//             helperText={errors.name}
+//           />
+
+//           <div className="grid grid-cols-2 my-2 gap-4">
+//             {/* Contact Number */}
+//             <TextField
+//               label="Contact Number *"
+//               name="contactNumber"
+//               value={form.contactNumber}
+//               onChange={handleChange}
+//               fullWidth
+//               size="small"
+//               error={!!errors.contactNumber}
+//               helperText={errors.contactNumber}
+//             />
+
+//             {/* Email */}
+//             <TextField
+//               label="Email"
+//               name="email"
+//               type="email"
+//               value={form.email}
+//               onChange={handleChange}
+//               fullWidth
+//               size="small"
+//               error={!!errors.email}
+//               helperText={errors.email}
+//             />
+//           </div>
+
+//           {/* Village Name */}
+//          <div>
+//            <TextField
+//             label="Village Name"
+//             name="villageName"
+//             value={form.villageName}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//           />
+//          </div>
+
+//          <div>
+//            {/* Address */}
+//           <TextField
+//             label="Address"
+//             name="address"
+//             value={form.address}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//             multiline
+//             rows={2}
+//           />
+//          </div>
+
+//           <div>
+//             {/* Work Types */}
+//           <TextField
+//             label="Work Types (comma separated)"
+//             name="workTypes"
+//             value={form.workTypes}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//             placeholder="e.g., Planting, Harvesting, Weeding"
+//           />
+//           </div>
+
+//           {/* Requirements */}
+//           <div className="grid grid-cols-2 gap-4">
+//             <TextField
+//               label="Male Requirement"
+//               name="maleRequirement"
+//               type="number"
+//               value={form.maleRequirement}
+//               onChange={handleChange}
+//               fullWidth
+//               size="small"
+//               inputProps={{ min: 0 }}
+//               error={!!errors.maleRequirement}
+//               helperText={errors.maleRequirement}
+//             />
+
+//             <TextField
+//               label="Female Requirement"
+//               name="femaleRequirement"
+//               type="number"
+//               value={form.femaleRequirement}
+//               onChange={handleChange}
+//               fullWidth
+//               size="small"
+//               inputProps={{ min: 0 }}
+//               error={!!errors.femaleRequirement}
+//               helperText={errors.femaleRequirement}
+//             />
+//           </div>
+
+//           {/* Experience */}
+//          <div>
+//            <TextField
+//             label="Experience"
+//             name="experience"
+//             value={form.experience}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//             placeholder="e.g., 5 years in farming"
+//           />
+//          </div>
+
+//           {/* Availability */}
+//           <TextField
+//             label="Availability"
+//             name="availability"
+//             value={form.availability}
+//             onChange={handleChange}
+//             fullWidth
+//             size="small"
+//             placeholder="e.g., Full-time, Part-time, Seasonal"
+//           />
+
+//           {/* Active Status */}
+//           <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+//             <input
+//               type="checkbox"
+//               id="isActive"
+//               name="isActive"
+//               checked={form.isActive}
+//               onChange={(e) => setForm(prev => ({ ...prev, isActive: e.target.checked }))}
+//               className="h-4 w-4 text-blue-600 rounded"
+//             />
+//             <label htmlFor="isActive" className="text-sm text-gray-700">
+//               Active Labour
+//             </label>
+//           </div>
+//         </div>
+
+//         <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
+//           <Button onClick={onClose} variant="outlined">
+//             Cancel
+//           </Button>
+//           <Button onClick={handleSubmit} variant="contained" color="primary">
+//             {defaultData ? "Update" : "Create"}
+//           </Button>
+//         </div>
+//       </Box>
+//     </Modal>
+//   );
+// }
+
 function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormModalProps) {
   const [form, setForm] = useState({
     name: "",
@@ -3087,16 +3367,24 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
 
           <div className="grid grid-cols-2 my-2 gap-4">
             {/* Contact Number */}
-            <TextField
-              label="Contact Number *"
-              name="contactNumber"
-              value={form.contactNumber}
-              onChange={handleChange}
-              fullWidth
-              size="small"
-              error={!!errors.contactNumber}
-              helperText={errors.contactNumber}
-            />
+           <TextField
+  label="Contact Number *"
+  name="contactNumber"
+  value={form.contactNumber}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\D/g, ""); // only digits
+    setForm({ ...form, contactNumber: value });
+  }}
+  fullWidth
+  size="small"
+  inputProps={{
+    inputMode: "numeric",
+    pattern: "[0-9]*",
+    maxLength: 10
+  }}
+  error={!!errors.contactNumber}
+  helperText={errors.contactNumber}
+/>
 
             {/* Email */}
             <TextField
@@ -3232,6 +3520,7 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
     </Modal>
   );
 }
+
 
 /* ================= MAIN COMPONENT ================= */
 
@@ -3838,12 +4127,12 @@ export default function LabourManagementPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {/* <button 
+          <button 
             onClick={() => setAddOpen(true)} 
             className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
           >
             <FaPlus /> Add Labour
-          </button> */}
+          </button>
         </div>
       </div>
 
@@ -4060,7 +4349,8 @@ export default function LabourManagementPage() {
                         </div>
                         <div className="text-center">
                           <div className="font-bold text-green-700">
-                            {labour.maleRequirement + labour.femaleRequirement}
+                            {/* {labour?.maleRequirement + labour?.femaleRequirement} */}
+                            {Number(labour.maleRequirement || 0) + Number(labour.femaleRequirement || 0)}
                           </div>
                           <div className="text-xs text-gray-500">Total</div>
                         </div>

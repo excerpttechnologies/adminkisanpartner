@@ -361,7 +361,7 @@ const Sidebar = () => {
     return MENU_CONFIG.map(section => {
       const filteredItems = section.items.filter(item => {
         // Always show logout and dashboard
-        if (item.name === "Logout" || item.name === "Dashboard") return true;
+        if (item.name === "Logout" || item.name === "Dashboard" ||  item.name === "My Profile") return true;
         
         // Admin can see everything
         if (user.role === "admin") return true;

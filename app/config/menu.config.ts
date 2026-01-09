@@ -194,6 +194,8 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Post Ads", path: "/admin-advertisement", icon: "MdPages" },
       { name: "Add Notes", path: "/adminnotes", icon: "MdMenu" },
       { name: "Menu Icons", path: "/menuicon", icon: "MdMenu" },
+          { name: "Trader Trans Managment", path: "/trader-transport-managment", icon: "MdMenu" },
+
     ],
   },
   {

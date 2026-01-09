@@ -1,21 +1,19 @@
 
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/Db';
 import Advertisement from '@/app/models/AdvertisementModel';
+import { v4 as uuidv4 } from 'uuid';
 
-interface Params {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-// GET single advertisement
-export async function GET(request: NextRequest, { params }: Params) {
+// Helper function to get params
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
     
-    const {id}=await params
-
+    const { id } = await params;
     const ad = await Advertisement.findById(id).lean();
     
     if (!ad) {
@@ -40,10 +38,14 @@ export async function GET(request: NextRequest, { params }: Params) {
 }
 
 // PUT update advertisement
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const {id}=await params
+    
+    const { id } = await params;
     const body = await request.json();
     
     console.log('Updating advertisement:', id, body);
@@ -74,14 +76,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
     // Update call to action
     if (body.callToAction) {
       updateData.callToAction = {
-        ...existingAd.callToAction,
+        ...existingAd.callToAction.toObject(),
         ...body.callToAction
       };
     }
     
     // Update products
     if (body.products !== undefined) {
-      updateData.products = body.products;
+      updateData.products = body.products.map((product: any) => ({
+        ...product,
+        id: product.id || uuidv4()
+      }));
     }
 
     const updatedAd = await Advertisement.findByIdAndUpdate(
@@ -96,6 +101,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
+
+    console.log('Advertisement updated successfully:', id);
 
     return NextResponse.json({
       success: true,
@@ -117,10 +124,17 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE advertisement (soft delete)
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
-    const {id}=await params
+    
+    const { id } = await params;
+    
+    console.log('Deleting advertisement:', id);
+
     const deletedAd = await Advertisement.findByIdAndUpdate(
       id,
       { isActive: false },
@@ -133,6 +147,8 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         { status: 404 }
       );
     }
+
+    console.log('Advertisement deleted successfully:', id);
 
     return NextResponse.json({
       success: true,

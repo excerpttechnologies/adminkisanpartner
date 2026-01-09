@@ -1,3 +1,5 @@
+
+
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../lib/Db';
 import Advertisement from '../../models/AdvertisementModel';
@@ -137,59 +139,6 @@ export async function POST(request: NextRequest) {
         error: 'Failed to create advertisement',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
-      { status: 500 }
-    );
-  }
-}
-
-// PATCH bulk update
-export async function PATCH(request: NextRequest) {
-  try {
-    await connectDB();
-    
-    const { ids, action } = await request.json();
-    
-    if (!ids || !Array.isArray(ids)) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid IDs' },
-        { status: 400 }
-      );
-    }
-
-    let result;
-    
-    switch (action) {
-      case 'delete':
-        result = await Advertisement.updateMany(
-          { _id: { $in: ids } },
-          { isActive: false }
-        );
-        break;
-        
-      case 'activate':
-        result = await Advertisement.updateMany(
-          { _id: { $in: ids } },
-          { isActive: true }
-        );
-        break;
-        
-      default:
-        return NextResponse.json(
-          { success: false, error: 'Invalid action' },
-          { status: 400 }
-        );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `${result.modifiedCount} ads updated`,
-      data: result
-    });
-
-  } catch (error: any) {
-    console.error('Error updating ads:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
       { status: 500 }
     );
   }
