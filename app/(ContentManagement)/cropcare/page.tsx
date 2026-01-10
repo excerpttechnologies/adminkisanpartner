@@ -112,13 +112,13 @@ const CropCare: React.FC = () => {
     return () => {
       if (categoryImagePreview) URL.revokeObjectURL(categoryImagePreview);
       if (subCategoryImagePreview) URL.revokeObjectURL(subCategoryImagePreview);
-      
+
       targetPestsDiseases.forEach(pest => {
         if (pest.image && pest.image.startsWith('blob:')) {
           URL.revokeObjectURL(pest.image);
         }
       });
-      
+
       recommendedSeeds.forEach(seed => {
         if (seed.image && seed.image.startsWith('blob:')) {
           URL.revokeObjectURL(seed.image);
@@ -148,7 +148,7 @@ const CropCare: React.FC = () => {
 
       if (productsRes.data?.success) {
         // Filter out any null products
-        const validProducts = (productsRes.data.data || []).filter((product: Product) => 
+        const validProducts = (productsRes.data.data || []).filter((product: Product) =>
           product && product._id
         );
         setProducts(validProducts);
@@ -508,89 +508,89 @@ const CropCare: React.FC = () => {
 
   // Add/Update Product
   // Add/Update Product
-const handleAddProduct = async () => {
-  if (!productName.trim() || !selectedSubCategory) {
-    alert('Please fill all required fields');
-    return;
-  }
-
-  // Validate target pests/diseases
-  const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
-  if (validPests.length === 0) {
-    alert('Please add at least one target pest/disease');
-    return;
-  }
-
-  // Validate recommended seeds
-  const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
-  if (validSeeds.length === 0) {
-    alert('Please add at least one recommended seed');
-    return;
-  }
-
-  setLoading(true);
-  try {
-    const formData = new FormData();
-    formData.append('name', productName.trim());
-    formData.append('subCategoryId', selectedSubCategory);
-    formData.append('status', 'active');
-
-    // Append pest data with images as files
-    validPests.forEach((pest, index) => {
-      formData.append(`pestName_${index}`, pest.name.trim());
-      
-      if (pest.imageFile) {
-        // New image file
-        formData.append(`pestImage_${index}`, pest.imageFile);
-      } else if (pest.image && !pest.image.startsWith('blob:')) {
-        // Existing image URL (for edit mode)
-        formData.append(`existingPestImage_${index}`, pest.image);
-      }
-    });
-
-    // Append seed data with images as files
-    validSeeds.forEach((seed, index) => {
-      formData.append(`seedName_${index}`, seed.name.trim());
-      formData.append(`seedPrice_${index}`, seed.price.toString());
-      
-      if (seed.imageFile) {
-        // New image file
-        formData.append(`seedImage_${index}`, seed.imageFile);
-      } else if (seed.image && !seed.image.startsWith('blob:')) {
-        // Existing image URL (for edit mode)
-        formData.append(`existingSeedImage_${index}`, seed.image);
-      }
-    });
-
-    let response;
-    if (editMode && currentEditId) {
-      response = await axios.put(`${API_BASE_URL}/products?id=${currentEditId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-    } else {
-      response = await axios.post(`${API_BASE_URL}/products`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+  const handleAddProduct = async () => {
+    if (!productName.trim() || !selectedSubCategory) {
+      alert('Please fill all required fields');
+      return;
     }
 
-    if (response.data.success) {
-      alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
-      clearProductForm();
-      fetchAllData();
-    } else {
-      throw new Error(response.data.message);
+    // Validate target pests/diseases
+    const validPests = targetPestsDiseases.filter(pest => pest.name.trim());
+    if (validPests.length === 0) {
+      alert('Please add at least one target pest/disease');
+      return;
     }
-  } catch (error: any) {
-    console.error('Error saving product:', error);
-    alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
-  } finally {
-    setLoading(false);
-  }
-};
+
+    // Validate recommended seeds
+    const validSeeds = recommendedSeeds.filter(seed => seed.name.trim());
+    if (validSeeds.length === 0) {
+      alert('Please add at least one recommended seed');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', productName.trim());
+      formData.append('subCategoryId', selectedSubCategory);
+      formData.append('status', 'active');
+
+      // Append pest data with images as files
+      validPests.forEach((pest, index) => {
+        formData.append(`pestName_${index}`, pest.name.trim());
+
+        if (pest.imageFile) {
+          // New image file
+          formData.append(`pestImage_${index}`, pest.imageFile);
+        } else if (pest.image && !pest.image.startsWith('blob:')) {
+          // Existing image URL (for edit mode)
+          formData.append(`existingPestImage_${index}`, pest.image);
+        }
+      });
+
+      // Append seed data with images as files
+      validSeeds.forEach((seed, index) => {
+        formData.append(`seedName_${index}`, seed.name.trim());
+        formData.append(`seedPrice_${index}`, seed.price.toString());
+
+        if (seed.imageFile) {
+          // New image file
+          formData.append(`seedImage_${index}`, seed.imageFile);
+        } else if (seed.image && !seed.image.startsWith('blob:')) {
+          // Existing image URL (for edit mode)
+          formData.append(`existingSeedImage_${index}`, seed.image);
+        }
+      });
+
+      let response;
+      if (editMode && currentEditId) {
+        response = await axios.put(`${API_BASE_URL}/products?id=${currentEditId}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        response = await axios.post(`${API_BASE_URL}/products`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      }
+
+      if (response.data.success) {
+        alert(`Product ${editMode ? 'updated' : 'added'} successfully!`);
+        clearProductForm();
+        fetchAllData();
+      } else {
+        throw new Error(response.data.message);
+      }
+    } catch (error: any) {
+      console.error('Error saving product:', error);
+      alert(`Failed to ${editMode ? 'update' : 'add'} product: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get category name by ID
   const getCategoryName = (categoryId: string) => {
@@ -602,11 +602,11 @@ const handleAddProduct = async () => {
   // Get subcategory name by ID
   const getSubCategoryName = (subCategoryId: string) => {
     if (!subCategoryId) return 'Unknown';
-    
+
     // First check in subCategories array
     const subCategory = subCategories.find(sub => sub._id === subCategoryId);
     if (subCategory) return subCategory.name;
-    
+
     // Then check in products (for cases where subCategory might not be loaded separately)
     const product = products.find(prod => {
       if (!prod || !prod.subCategoryId) return false;
@@ -616,19 +616,19 @@ const handleAddProduct = async () => {
         return prod.subCategoryId && prod.subCategoryId._id === subCategoryId;
       }
     });
-    
-    return product && product.subCategoryId && typeof product.subCategoryId !== 'string' 
-      ? product.subCategoryId.name 
+
+    return product && product.subCategoryId && typeof product.subCategoryId !== 'string'
+      ? product.subCategoryId.name
       : 'Unknown';
   };
 
   // Count subcategories for a category
   const countSubCategoriesForCategory = (catId: string) => {
     if (!catId) return 0;
-    
+
     return subCategories.filter(sub => {
       if (!sub || !sub.categoryId) return false;
-      
+
       if (typeof sub.categoryId === 'string') {
         return sub.categoryId === catId;
       } else {
@@ -640,10 +640,10 @@ const handleAddProduct = async () => {
   // Count products for a subcategory - FIXED VERSION
   const countProductsForSubCategory = (subCategoryId: string) => {
     if (!subCategoryId) return 0;
-    
+
     return products.filter(prod => {
       if (!prod || !prod.subCategoryId) return false;
-      
+
       if (typeof prod.subCategoryId === 'string') {
         return prod.subCategoryId === subCategoryId;
       } else {
@@ -1123,16 +1123,25 @@ const handleAddProduct = async () => {
                   </div>
                   <div className="form-group">
                     <label>Image</label>
+
                     <div className="image-upload-container">
                       <input
                         type="file"
-                        ref={el => pestImageInputRefs.current[index] = el}
+                        ref={(el) => {
+                          pestImageInputRefs.current[index] = el;
+                        }}
                         onChange={(e) => handlePestImageUpload(index, e)}
                         accept="image/*"
                         className="file-input"
                         disabled={loading}
                       />
-                      <div className="upload-area small" onClick={() => !loading && pestImageInputRefs.current[index]?.click()}>
+
+                      <div
+                        className="upload-area small"
+                        onClick={() =>
+                          !loading && pestImageInputRefs.current[index]?.click()
+                        }
+                      >
                         {pest.image ? (
                           <div className="image-preview">
                             <img src={pest.image} alt="Preview" />
@@ -1146,6 +1155,7 @@ const handleAddProduct = async () => {
                       </div>
                     </div>
                   </div>
+
                   {targetPestsDiseases.length > 1 && (
                     <button
                       type="button"
@@ -1183,31 +1193,37 @@ const handleAddProduct = async () => {
                       disabled={loading}
                     />
                   </div>
-                  <div className="form-group">
-                    <label>Image</label>
-                    <div className="image-upload-container">
-                      <input
-                        type="file"
-                        ref={el => seedImageInputRefs.current[index] = el}
-                        onChange={(e) => handleSeedImageUpload(index, e)}
-                        accept="image/*"
-                        className="file-input"
-                        disabled={loading}
-                      />
-                      <div className="upload-area small" onClick={() => !loading && seedImageInputRefs.current[index]?.click()}>
-                        {seed.image ? (
-                          <div className="image-preview">
-                            <img src={seed.image} alt="Preview" />
-                          </div>
-                        ) : (
-                          <div className="upload-placeholder">
-                            <div className="upload-icon">🖼️</div>
-                            <p className="upload-hint">Click to upload</p>
-                          </div>
-                        )}
-                      </div>
+                  <div className="image-upload-container">
+                    <input
+                      type="file"
+                      ref={(el) => {
+                        seedImageInputRefs.current[index] = el;
+                      }}
+                      onChange={(e) => handleSeedImageUpload(index, e)}
+                      accept="image/*"
+                      className="file-input"
+                      disabled={loading}
+                    />
+
+                    <div
+                      className="upload-area small"
+                      onClick={() =>
+                        !loading && seedImageInputRefs.current[index]?.click()
+                      }
+                    >
+                      {seed.image ? (
+                        <div className="image-preview">
+                          <img src={seed.image} alt="Preview" />
+                        </div>
+                      ) : (
+                        <div className="upload-placeholder">
+                          <div className="upload-icon">🖼️</div>
+                          <p className="upload-hint">Click to upload</p>
+                        </div>
+                      )}
                     </div>
                   </div>
+
                   <div className="form-group">
                     <label>Price (₹)</label>
                     <input
@@ -1410,7 +1426,7 @@ const handleAddProduct = async () => {
                 {categories.map((category) => {
                   const categorySubCategories = subCategories.filter(sub => {
                     if (!sub || !sub.categoryId) return false;
-                    
+
                     if (typeof sub.categoryId === 'string') {
                       return sub.categoryId === category._id;
                     } else {
@@ -1471,7 +1487,7 @@ const handleAddProduct = async () => {
                             categorySubCategories.map((subCategory) => {
                               const subCategoryProducts = products.filter(prod => {
                                 if (!prod || !prod.subCategoryId) return false;
-                                
+
                                 if (typeof prod.subCategoryId === 'string') {
                                   return prod.subCategoryId === subCategory._id;
                                 } else {
