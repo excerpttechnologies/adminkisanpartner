@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -31,16 +30,29 @@ interface TargetPestDisease {
   imageFile?: File | null;
 }
 
+// Updated RecommendedSeed interface with new fields
 interface RecommendedSeed {
   name: string;
   image: string;
-  price: number;
   imageFile?: File | null;
+  stock: number;
+  unit: string;
+  customUnit?: string;
+  weight: number;
+  weightUnit: string;
+  listPrice: number;
+  discount: number;
+  profit: number;
+  tax: number;
+  customTax?: number;
+  finalPrice: number;
 }
 
 interface Product {
   _id: string;
   name: string;
+  description?: string;
+  video?: string;
   subCategoryId: string | {
     _id: string;
     name: string;
@@ -54,6 +66,19 @@ interface Product {
 }
 
 const API_BASE_URL = '/api/cropcare';
+
+// Constants
+const UNIT_OPTIONS = [
+  'kg', 'pound', 'piece', 'box', 'packet', 'gram', 'liter', 'gallon', 'bottle', 'other'
+];
+
+const TAX_OPTIONS = [
+  { value: 5, label: '5% GST' },
+  { value: 12, label: '12% GST' },
+  { value: 18, label: '18% GST' },
+  { value: 24, label: '24% GST' },
+  { value: 0, label: 'Other (specify)' }
+];
 
 const CropCare: React.FC = () => {
   // State for active tab
@@ -75,7 +100,13 @@ const CropCare: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const [productName, setProductName] = useState('');
+  const [productDescription, setProductDescription] = useState('');
   const [selectedSubCategory, setSelectedSubCategory] = useState('');
+
+  const [productVideo, setProductVideo] = useState<File | null>(null);
+  const [productVideoPreview, setProductVideoPreview] = useState('');
+  const [existingProductVideo, setExistingProductVideo] = useState('');
+  const [videoError, setVideoError] = useState('');
 
   // Arrays for dynamic fields
   const [targetPestsDiseases, setTargetPestsDiseases] = useState<TargetPestDisease[]>([
@@ -83,7 +114,22 @@ const CropCare: React.FC = () => {
   ]);
 
   const [recommendedSeeds, setRecommendedSeeds] = useState<RecommendedSeed[]>([
-    { name: '', image: '', price: 0, imageFile: null }
+    {
+      name: '',
+      image: '',
+      imageFile: null,
+      stock: 0,
+      unit: 'kg',
+      customUnit: '',
+      weight: 0,
+      weightUnit: 'kg',
+      listPrice: 0,
+      discount: 0,
+      profit: 0,
+      tax: 18,
+      customTax: undefined,
+      finalPrice: 0
+    }
   ]);
 
   // Data storage
@@ -101,17 +147,54 @@ const CropCare: React.FC = () => {
   const subCategoryFileInputRef = useRef<HTMLInputElement>(null);
   const pestImageInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const seedImageInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
+  // Collapsible state for view tab
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Fetch data on component mount
   useEffect(() => {
     fetchAllData();
   }, []);
 
+
+  // Handle product video upload
+  // Handle product video upload
+  const handleProductVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file type
+      if (!file.type.startsWith('video/')) {
+        alert('❌ Please upload a valid video file (MP4, WebM, MOV)');
+        if (videoInputRef.current) {
+          videoInputRef.current.value = '';
+        }
+        return;
+      }
+
+      // Check file size (2MB = 2 * 1024 * 1024 bytes)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        alert(`❌ Video file size is ${(file.size / (1024 * 1024)).toFixed(2)} MB. Please upload a video less than 2MB.`);
+        if (videoInputRef.current) {
+          videoInputRef.current.value = '';
+        }
+        return;
+      }
+
+      setProductVideo(file);
+      const previewUrl = URL.createObjectURL(file);
+      setProductVideoPreview(previewUrl);
+    }
+  };
+
+
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
       if (categoryImagePreview) URL.revokeObjectURL(categoryImagePreview);
       if (subCategoryImagePreview) URL.revokeObjectURL(subCategoryImagePreview);
+
 
       targetPestsDiseases.forEach(pest => {
         if (pest.image && pest.image.startsWith('blob:')) {
@@ -244,7 +327,22 @@ const CropCare: React.FC = () => {
   const addRecommendedSeed = () => {
     setRecommendedSeeds([
       ...recommendedSeeds,
-      { name: '', image: '', price: 0, imageFile: null }
+      {
+        name: '',
+        image: '',
+        imageFile: null,
+        stock: 0,
+        unit: 'kg',
+        customUnit: '',
+        weight: 0,
+        weightUnit: 'kg',
+        listPrice: 0,
+        discount: 0,
+        profit: 0,
+        tax: 18,
+        customTax: undefined,
+        finalPrice: 0
+      }
     ]);
   };
 
@@ -257,10 +355,27 @@ const CropCare: React.FC = () => {
     }
   };
 
-  // Handle recommended seed change
+  // Handle recommended seed change with auto-calculation
   const handleRecommendedSeedChange = (index: number, field: keyof RecommendedSeed, value: string | number) => {
     const newSeeds = [...recommendedSeeds];
     newSeeds[index] = { ...newSeeds[index], [field]: value };
+
+    // Auto-calculate final price when pricing fields change
+    if (['listPrice', 'discount', 'profit', 'tax', 'customTax'].includes(field)) {
+      const seed = newSeeds[index];
+      const discountAmount = (seed.listPrice * seed.discount) / 100;
+      const priceAfterDiscount = seed.listPrice - discountAmount;
+      const profitAmount = (priceAfterDiscount * seed.profit) / 100;
+      const basePrice = priceAfterDiscount + profitAmount;
+
+      // Use custom tax if tax is 0 (other option)
+      const taxRate = seed.tax === 0 ? (seed.customTax || 0) : seed.tax;
+      const taxAmount = (basePrice * taxRate) / 100;
+
+      const finalPrice = basePrice + taxAmount;
+      newSeeds[index].finalPrice = parseFloat(finalPrice.toFixed(2));
+    }
+
     setRecommendedSeeds(newSeeds);
   };
 
@@ -294,11 +409,35 @@ const CropCare: React.FC = () => {
   // Clear product form
   const clearProductForm = () => {
     setProductName('');
+    setProductDescription('');
+    setProductVideo(null); // Add this
+    setProductVideoPreview(''); // Add this
+    setExistingProductVideo(''); // Add this
+    setVideoError('');
     setSelectedSubCategory('');
     setTargetPestsDiseases([{ name: '', image: '', imageFile: null }]);
-    setRecommendedSeeds([{ name: '', image: '', price: 0, imageFile: null }]);
+    setRecommendedSeeds([{
+      name: '',
+      image: '',
+      imageFile: null,
+      stock: 0,
+      unit: 'kg',
+      customUnit: '',
+      weight: 0,
+      weightUnit: 'kg',
+      listPrice: 0,
+      discount: 0,
+      profit: 0,
+      tax: 18,
+      customTax: undefined,
+      finalPrice: 0
+    }]);
     setEditMode(false);
     setCurrentEditId('');
+
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
   };
 
   // Handle edit category
@@ -325,9 +464,44 @@ const CropCare: React.FC = () => {
   // Handle edit product
   const handleEditProduct = (product: Product) => {
     setProductName(product.name);
+    setProductDescription(product.description || '');
+    setProductVideoPreview(product.video || ''); // Add this
+    setExistingProductVideo(product.video || ''); // Add this
     setSelectedSubCategory(typeof product.subCategoryId === 'string' ? product.subCategoryId : product.subCategoryId._id);
     setTargetPestsDiseases(product.targetPestsDiseases.length > 0 ? product.targetPestsDiseases.map(p => ({ ...p, imageFile: null })) : [{ name: '', image: '', imageFile: null }]);
-    setRecommendedSeeds(product.recommendedSeeds.length > 0 ? product.recommendedSeeds.map(s => ({ ...s, imageFile: null })) : [{ name: '', image: '', price: 0, imageFile: null }]);
+
+    // Update recommended seeds mapping
+    setRecommendedSeeds(product.recommendedSeeds.length > 0 ? product.recommendedSeeds.map(s => ({
+      ...s,
+      imageFile: null,
+      stock: s.stock || 0,
+      unit: s.unit || 'kg',
+      customUnit: s.customUnit || '',
+      weight: s.weight || 0,
+      weightUnit: s.weightUnit || 'kg',
+      listPrice: s.listPrice || 0,
+      discount: s.discount || 0,
+      profit: s.profit || 0,
+      tax: s.tax || 18,
+      customTax: s.customTax || undefined,
+      finalPrice: s.finalPrice || 0
+    })) : [{
+      name: '',
+      image: '',
+      imageFile: null,
+      stock: 0,
+      unit: 'kg',
+      customUnit: '',
+      weight: 0,
+      weightUnit: 'kg',
+      listPrice: 0,
+      discount: 0,
+      profit: 0,
+      tax: 18,
+      customTax: undefined,
+      finalPrice: 0
+    }]);
+
     setEditMode(true);
     setCurrentEditId(product._id);
     setActiveTab('product');
@@ -391,16 +565,6 @@ const CropCare: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to convert file to base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
   };
 
   // Add/Update Category
@@ -507,7 +671,6 @@ const CropCare: React.FC = () => {
   };
 
   // Add/Update Product
-  // Add/Update Product
   const handleAddProduct = async () => {
     if (!productName.trim() || !selectedSubCategory) {
       alert('Please fill all required fields');
@@ -532,8 +695,18 @@ const CropCare: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append('name', productName.trim());
+      formData.append('description', productDescription.trim());
       formData.append('subCategoryId', selectedSubCategory);
       formData.append('status', 'active');
+
+      // Add video to formData - THIS WAS MISSING!
+      if (productVideo) {
+        formData.append('video', productVideo);
+      }
+
+      if (editMode && existingProductVideo) {
+        formData.append('existingVideo', existingProductVideo);
+      }
 
       // Append pest data with images as files
       validPests.forEach((pest, index) => {
@@ -548,16 +721,28 @@ const CropCare: React.FC = () => {
         }
       });
 
-      // Append seed data with images as files
+      // Append seed data with new fields
       validSeeds.forEach((seed, index) => {
         formData.append(`seedName_${index}`, seed.name.trim());
-        formData.append(`seedPrice_${index}`, seed.price.toString());
+        formData.append(`stock_${index}`, seed.stock.toString());
+        formData.append(`unit_${index}`, seed.unit);
+        if (seed.customUnit) {
+          formData.append(`customUnit_${index}`, seed.customUnit);
+        }
+        formData.append(`weight_${index}`, seed.weight.toString());
+        formData.append(`weightUnit_${index}`, seed.weightUnit);
+        formData.append(`listPrice_${index}`, seed.listPrice.toString());
+        formData.append(`discount_${index}`, seed.discount.toString());
+        formData.append(`profit_${index}`, seed.profit.toString());
+        formData.append(`tax_${index}`, seed.tax.toString());
+        if (seed.customTax !== undefined) {
+          formData.append(`customTax_${index}`, seed.customTax.toString());
+        }
+        formData.append(`finalPrice_${index}`, seed.finalPrice.toString());
 
         if (seed.imageFile) {
-          // New image file
           formData.append(`seedImage_${index}`, seed.imageFile);
         } else if (seed.image && !seed.image.startsWith('blob:')) {
-          // Existing image URL (for edit mode)
           formData.append(`existingSeedImage_${index}`, seed.image);
         }
       });
@@ -637,7 +822,7 @@ const CropCare: React.FC = () => {
     }).length;
   };
 
-  // Count products for a subcategory - FIXED VERSION
+  // Count products for a subcategory
   const countProductsForSubCategory = (subCategoryId: string) => {
     if (!subCategoryId) return 0;
 
@@ -647,7 +832,6 @@ const CropCare: React.FC = () => {
       if (typeof prod.subCategoryId === 'string') {
         return prod.subCategoryId === subCategoryId;
       } else {
-        // Check if subCategoryId is an object and has _id property
         return prod.subCategoryId && prod.subCategoryId._id === subCategoryId;
       }
     }).length;
@@ -671,9 +855,6 @@ const CropCare: React.FC = () => {
       default: return '#6c757d';
     }
   };
-
-  // Collapsible state for view tab
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -729,7 +910,7 @@ const CropCare: React.FC = () => {
         </button>
       </div>
 
-      {/* Category Tab */}
+      {/* Category Tab (Unchanged) */}
       {activeTab === 'category' && (
         <div className="tab-content">
           <h2>{editMode ? 'Edit' : 'Add New'} Category</h2>
@@ -884,7 +1065,7 @@ const CropCare: React.FC = () => {
         </div>
       )}
 
-      {/* Sub Category Tab */}
+      {/* Sub Category Tab (Unchanged) */}
       {activeTab === 'subCategory' && (
         <div className="tab-content">
           <h2>{editMode ? 'Edit' : 'Add New'} Sub Category</h2>
@@ -1066,11 +1247,91 @@ const CropCare: React.FC = () => {
         </div>
       )}
 
-      {/* Product Tab */}
+      {/* UPDATED: Product Tab with new fields */}
       {activeTab === 'product' && (
         <div className="tab-content">
           <h2>{editMode ? 'Edit' : 'Add New'} Product</h2>
           <div className="form-card">
+            <div className="form-group">
+              <label htmlFor="productName">Product Name *</label>
+              <input
+                type="text"
+                id="productName"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                placeholder="e.g., Neem Oil, NPK Fertilizer, etc."
+                disabled={loading}
+              />
+            </div>
+
+            {/* NEW: Product Description Field */}
+            <div className="form-group">
+              <label htmlFor="productDescription">Product Description</label>
+              <textarea
+                id="productDescription"
+                value={productDescription}
+                onChange={(e) => setProductDescription(e.target.value)}
+                placeholder="Enter detailed description about the product..."
+                rows={4}
+                disabled={loading}
+              />
+            </div>
+
+
+
+
+            {/* Product Video Upload Field - SIMPLIFIED VERSION */}
+            <div className="form-group">
+              <label htmlFor="productVideo">Product Video (Max 2MB)</label>
+              <div className="image-upload-container">
+                <input
+                  type="file"
+                  id="productVideo"
+                  ref={videoInputRef}
+                  onChange={handleProductVideoUpload}
+                  accept="video/*"
+                  className="file-input"
+                  disabled={loading}
+                />
+                <div className="upload-area" onClick={() => !loading && videoInputRef.current?.click()}>
+                  {productVideoPreview || existingProductVideo ? (
+                    <div className="image-preview">
+                      <div className="selected-file">
+                        <div className="file-icon">🎬</div>
+                        <div className="file-info">
+                          <p className="file-name">
+                            {productVideo?.name || 'Video selected'}
+                          </p>
+                          <p className="file-size">
+                            {productVideo?.size ? `Size: ${(productVideo.size / (1024 * 1024)).toFixed(2)} MB` : 'Video ready'}
+                          </p>
+                          <p className="upload-hint">Click to change video</p>
+                        </div>
+                        <div className="checkmark">✓</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="upload-placeholder">
+                      <div className="upload-icon">🎬</div>
+                      <p>Click to upload video</p>
+                      <p className="upload-hint">Max size: 2MB | Supports: MP4, WebM, MOV</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
             <div className="form-group">
               <label htmlFor="subCategorySelect">Select Sub Category *</label>
               <select
@@ -1094,18 +1355,6 @@ const CropCare: React.FC = () => {
               )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="productName">Product Name *</label>
-              <input
-                type="text"
-                id="productName"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g., Neem Oil, NPK Fertilizer, etc."
-                disabled={loading}
-              />
-            </div>
-
             {/* Target Pests/Diseases Section */}
             <div className="dynamic-section">
               <h3>Target Pests/Diseases *</h3>
@@ -1123,7 +1372,6 @@ const CropCare: React.FC = () => {
                   </div>
                   <div className="form-group">
                     <label>Image</label>
-
                     <div className="image-upload-container">
                       <input
                         type="file"
@@ -1135,7 +1383,6 @@ const CropCare: React.FC = () => {
                         className="file-input"
                         disabled={loading}
                       />
-
                       <div
                         className="upload-area small"
                         onClick={() =>
@@ -1155,7 +1402,6 @@ const CropCare: React.FC = () => {
                       </div>
                     </div>
                   </div>
-
                   {targetPestsDiseases.length > 1 && (
                     <button
                       type="button"
@@ -1178,74 +1424,220 @@ const CropCare: React.FC = () => {
               </button>
             </div>
 
-            {/* Recommended Seeds Section */}
+            {/* UPDATED: Recommended Seeds Section with new fields */}
             <div className="dynamic-section">
               <h3>Recommended Seeds *</h3>
               {recommendedSeeds.map((seed, index) => (
                 <div key={index} className="dynamic-field-group">
-                  <div className="form-group">
-                    <label>Seed Name</label>
-                    <input
-                      type="text"
-                      value={seed.name}
-                      onChange={(e) => handleRecommendedSeedChange(index, 'name', e.target.value)}
-                      placeholder="e.g., Hybrid Maize, Bt Cotton"
-                      disabled={loading}
-                    />
+                  <div className="seed-section-header">
+                    <h4>Seed #{index + 1}</h4>
+                    {recommendedSeeds.length > 1 && (
+                      <button
+                        type="button"
+                        className="remove-btn"
+                        onClick={() => removeRecommendedSeed(index)}
+                        disabled={loading}
+                      >
+                        🗑️ Remove Seed
+                      </button>
+                    )}
                   </div>
-                  <div className="image-upload-container">
-                    <input
-                      type="file"
-                      ref={(el) => {
-                        seedImageInputRefs.current[index] = el;
-                      }}
-                      onChange={(e) => handleSeedImageUpload(index, e)}
-                      accept="image/*"
-                      className="file-input"
-                      disabled={loading}
-                    />
 
-                    <div
-                      className="upload-area small"
-                      onClick={() =>
-                        !loading && seedImageInputRefs.current[index]?.click()
-                      }
-                    >
-                      {seed.image ? (
-                        <div className="image-preview">
-                          <img src={seed.image} alt="Preview" />
-                        </div>
-                      ) : (
-                        <div className="upload-placeholder">
-                          <div className="upload-icon">🖼️</div>
-                          <p className="upload-hint">Click to upload</p>
-                        </div>
+                  <div className="grid-container">
+                    {/* Row 1: Basic Info */}
+                    <div className="form-group">
+                      <label>Seed Name *</label>
+                      <input
+                        type="text"
+                        value={seed.name}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'name', e.target.value)}
+                        placeholder="e.g., Hybrid Maize, Bt Cotton"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Stock Quantity</label>
+                      <input
+                        type="number"
+                        value={seed.stock}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'stock', parseInt(e.target.value) || 0)}
+                        placeholder="0"
+                        min="0"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Unit *</label>
+                      <select
+                        value={seed.unit}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'unit', e.target.value)}
+                        disabled={loading}
+                      >
+                        {UNIT_OPTIONS.map(unit => (
+                          <option key={unit} value={unit}>
+                            {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                      {seed.unit === 'other' && (
+                        <input
+                          type="text"
+                          value={seed.customUnit || ''}
+                          onChange={(e) => handleRecommendedSeedChange(index, 'customUnit', e.target.value)}
+                          placeholder="Enter custom unit"
+                          className="custom-unit-input"
+                          disabled={loading}
+                        />
                       )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Image</label>
+                      <div className="image-upload-container">
+                        <input
+                          type="file"
+                          ref={(el) => {
+                            seedImageInputRefs.current[index] = el;
+                          }}
+                          onChange={(e) => handleSeedImageUpload(index, e)}
+                          accept="image/*"
+                          className="file-input"
+                          disabled={loading}
+                        />
+                        <div
+                          className="upload-area small"
+                          onClick={() =>
+                            !loading && seedImageInputRefs.current[index]?.click()
+                          }
+                        >
+                          {seed.image ? (
+                            <div className="image-preview">
+                              <img src={seed.image} alt="Preview" />
+                            </div>
+                          ) : (
+                            <div className="upload-placeholder">
+                              <div className="upload-icon">🖼️</div>
+                              <p className="upload-hint">Click to upload</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label>Price (₹)</label>
-                    <input
-                      type="number"
-                      value={seed.price}
-                      onChange={(e) => handleRecommendedSeedChange(index, 'price', parseFloat(e.target.value) || 0)}
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      disabled={loading}
-                    />
+                  <div className="grid-container">
+                    {/* Row 2: Weight */}
+                    <div className="form-group">
+                      <label>Weight</label>
+                      <div className="weight-input-group">
+                        <input
+                          type="number"
+                          value={seed.weight}
+                          onChange={(e) => handleRecommendedSeedChange(index, 'weight', parseFloat(e.target.value) || 0)}
+                          placeholder="0"
+                          min="0"
+                          step="0.01"
+                          disabled={loading}
+                        />
+                        <select
+                          value={seed.weightUnit}
+                          onChange={(e) => handleRecommendedSeedChange(index, 'weightUnit', e.target.value)}
+                          disabled={loading}
+                          className="weight-unit-select"
+                        >
+                          <option value="kg">kg</option>
+                          <option value="gram">gram</option>
+                          <option value="pound">pound</option>
+                          <option value="liter">liter</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>List Price (₹) *</label>
+                      <input
+                        type="number"
+                        value={seed.listPrice}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'listPrice', parseFloat(e.target.value) || 0)}
+                        placeholder="0.00"
+                        min="0"
+                        step="0.01"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Discount (%)</label>
+                      <input
+                        type="number"
+                        value={seed.discount}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'discount', parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        min="0"
+                        max="100"
+                        disabled={loading}
+                      />
+                    </div>
                   </div>
-                  {recommendedSeeds.length > 1 && (
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      onClick={() => removeRecommendedSeed(index)}
-                      disabled={loading}
-                    >
-                      🗑️ Remove
-                    </button>
-                  )}
+
+                  <div className="grid-container">
+                    {/* Row 3: Profit & Tax */}
+                    <div className="form-group">
+                      <label>Profit (%)</label>
+                      <input
+                        type="number"
+                        value={seed.profit}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'profit', parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        min="0"
+                        disabled={loading}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Tax (%) *</label>
+                      <select
+                        value={seed.tax}
+                        onChange={(e) => handleRecommendedSeedChange(index, 'tax', parseInt(e.target.value) || 0)}
+                        disabled={loading}
+                      >
+                        {TAX_OPTIONS.map(tax => (
+                          <option key={tax.value} value={tax.value}>
+                            {tax.label}
+                          </option>
+                        ))}
+                      </select>
+                      {seed.tax === 0 && (
+                        <input
+                          type="number"
+                          value={seed.customTax || ''}
+                          onChange={(e) => handleRecommendedSeedChange(index, 'customTax', parseFloat(e.target.value) || 0)}
+                          placeholder="Enter tax percentage"
+                          min="0"
+                          step="0.01"
+                          className="custom-tax-input"
+                          disabled={loading}
+                        />
+                      )}
+                    </div>
+
+                    <div className="form-group">
+                      <label>Final Price (₹)</label>
+                      <div className="final-price-display">
+                        ₹ {seed.finalPrice.toFixed(2)}
+                        <div className="price-breakdown">
+                          <small>
+                            List: ₹{seed.listPrice.toFixed(2)} |
+                            After {seed.discount}% Discount: ₹{(seed.listPrice - (seed.listPrice * seed.discount / 100)).toFixed(2)} |
+                            After {seed.profit}% Profit: ₹{((seed.listPrice - (seed.listPrice * seed.discount / 100)) + ((seed.listPrice - (seed.listPrice * seed.discount / 100)) * seed.profit / 100)).toFixed(2)} |
+                            Tax: {(seed.tax === 0 ? seed.customTax || 0 : seed.tax)}%
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
               <button
@@ -1297,6 +1689,7 @@ const CropCare: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Name</th>
+                      <th>Description</th>
                       <th>Sub Category</th>
                       <th>Pests/Diseases</th>
                       <th>Recommended Seeds</th>
@@ -1310,6 +1703,17 @@ const CropCare: React.FC = () => {
                       <tr key={product._id}>
                         <td>
                           <div className="item-name">{product.name}</div>
+                        </td>
+                        <td>
+                          <div className="item-description">
+                            {product.description ? (
+                              product.description.length > 50
+                                ? `${product.description.substring(0, 50)}...`
+                                : product.description
+                            ) : (
+                              <span className="no-data">No description</span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           {product.subCategoryId ? (
@@ -1374,7 +1778,7 @@ const CropCare: React.FC = () => {
         </div>
       )}
 
-      {/* View Data Tab */}
+      {/* View Data Tab (Unchanged) */}
       {activeTab === 'view' && (
         <div className="tab-content">
           <div className="section-header">
@@ -1561,6 +1965,14 @@ const CropCare: React.FC = () => {
                                           </div>
 
                                           <div className="product-details">
+                                            {product.description && (
+                                              <div className="detail-section">
+                                                <strong>📝 Description:</strong>
+                                                <div className="detail-item">
+                                                  {product.description}
+                                                </div>
+                                              </div>
+                                            )}
                                             <div className="detail-section">
                                               <strong>🎯 Target Pests/Diseases:</strong>
                                               {product.targetPestsDiseases && product.targetPestsDiseases.map((pest, idx) => (
@@ -1587,7 +1999,21 @@ const CropCare: React.FC = () => {
                                                       style={{ width: '30px', height: '30px', marginRight: '10px', borderRadius: '4px' }}
                                                     />
                                                   )}
-                                                  {seed.name} - ₹{seed.price.toFixed(2)}
+                                                  <div>
+                                                    <strong>{seed.name}</strong>
+                                                    <div>
+                                                      Stock: {seed.stock} | Unit: {seed.unit} {seed.customUnit && `(${seed.customUnit})`}
+                                                    </div>
+                                                    <div>
+                                                      Weight: {seed.weight} {seed.weightUnit} | List Price: ₹{seed.listPrice.toFixed(2)}
+                                                    </div>
+                                                    <div>
+                                                      Discount: {seed.discount}% | Profit: {seed.profit}% | Tax: {seed.tax}%
+                                                    </div>
+                                                    <div>
+                                                      <strong>Final Price: ₹{seed.finalPrice.toFixed(2)}</strong>
+                                                    </div>
+                                                  </div>
                                                 </div>
                                               ))}
                                             </div>
@@ -1773,7 +2199,8 @@ const CropCare: React.FC = () => {
         }
 
         .form-group input,
-        .form-group select {
+        .form-group select,
+        .form-group textarea {
           width: 100%;
           padding: 12px;
           border: 2px solid #dee2e6;
@@ -1783,13 +2210,15 @@ const CropCare: React.FC = () => {
         }
 
         .form-group input:focus,
-        .form-group select:focus {
+        .form-group select:focus,
+        .form-group textarea:focus {
           outline: none;
           border-color: #3498db;
         }
 
         .form-group input:disabled,
-        .form-group select:disabled {
+        .form-group select:disabled,
+        .form-group textarea:disabled {
           background: #e9ecef;
           cursor: not-allowed;
         }
@@ -1949,6 +2378,75 @@ const CropCare: React.FC = () => {
           border: 1px solid #e9ecef;
         }
 
+        /* NEW STYLES FOR RECOMMENDED SEEDS */
+        .seed-section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 15px;
+          padding-bottom: 10px;
+          border-bottom: 2px solid #e9ecef;
+        }
+
+        .seed-section-header h4 {
+          margin: 0;
+          color: #2c3e50;
+        }
+
+        .grid-container {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        .weight-input-group {
+          display: flex;
+          gap: 10px;
+        }
+
+        .weight-input-group input {
+          flex: 3;
+        }
+
+        .weight-unit-select {
+          flex: 1;
+          min-width: 80px;
+        }
+
+        .custom-unit-input,
+        .custom-tax-input {
+          margin-top: 8px;
+          width: 100%;
+          padding: 8px 12px;
+          border: 1px solid #ced4da;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+
+        .custom-unit-input:focus,
+        .custom-tax-input:focus {
+          outline: none;
+          border-color: #3498db;
+        }
+
+        .final-price-display {
+          padding: 12px;
+          background: #e8f4f8;
+          border-radius: 6px;
+          border: 2px solid #3498db;
+          font-weight: bold;
+          font-size: 18px;
+          color: #2c3e50;
+          text-align: center;
+        }
+
+        .price-breakdown {
+          margin-top: 8px;
+          color: #6c757d;
+          font-size: 12px;
+        }
+
         .add-btn {
           background: #28a745;
           color: white;
@@ -2035,6 +2533,13 @@ const CropCare: React.FC = () => {
         .item-name {
           font-weight: 600;
           color: #2c3e50;
+        }
+
+        .item-description {
+          max-width: 200px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .table-image {
@@ -2355,6 +2860,232 @@ const CropCare: React.FC = () => {
           .node-actions {
             align-self: flex-end;
           }
+          
+          .grid-container {
+            grid-template-columns: 1fr;
+          }
+          
+          .weight-input-group {
+            flex-direction: column;
+          }
+          
+          .weight-unit-select {
+            min-width: 100%;
+          }
+          
+          .seed-section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+          }
+            /* Video Upload Styles */
+.video-upload-container {
+  position: relative;
+  width: 100%;
+}
+
+.video-upload-area {
+  width: 100%;
+  height: 200px;
+  border: 3px dashed #dee2e6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: #f8f9fa;
+  overflow: hidden;
+}
+
+.video-upload-area:hover:not(:disabled) {
+  border-color: #3498db;
+  background: #e8f4f8;
+}
+
+.video-upload-area:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.video-upload-placeholder {
+  text-align: center;
+  color: #6c757d;
+}
+
+.video-upload-placeholder .upload-icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.video-preview {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.video-player {
+  max-width: 100%;
+  max-height: 140px;
+  border-radius: 6px;
+  background: #000;
+}
+
+.video-info {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.video-info p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #dc3545 !important;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.success-message {
+  color: #28a745 !important;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+/* Update table to show video */
+.table-video {
+  width: 80px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+}
+
+.video-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.video-modal-content {
+  max-width: 90%;
+  max-height: 90%;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.video-modal-content video {
+  max-width: 100%;
+  max-height: 70vh;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 2001;
+}
+
+@media (max-width: 768px) {
+  .video-upload-area {
+    height: 150px;
+  }
+  
+  .video-player {
+    max-height: 100px;
+  }
+    /* Add these styles to your existing CSS */
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #e8f5e9;
+  border-radius: 6px;
+  border: 2px solid #4caf50;
+  width: 100%;
+}
+
+.file-icon {
+  font-size: 2.5rem;
+  margin-right: 15px;
+  color: #4caf50;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 5px 0;
+  word-break: break-word;
+}
+
+.file-size {
+  color: #6c757d;
+  font-size: 14px;
+  margin: 0 0 5px 0;
+}
+
+.checkmark {
+  color: #4caf50;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+/* Make video upload area match image upload area */
+.video-upload-area {
+  width: 100%;
+  height: 200px;
+  border: 3px dashed #dee2e6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: white;
+  overflow: hidden;
+}
+
+.video-upload-area:hover:not(:disabled) {
+  border-color: #3498db;
+  background: #f8f9fa;
+}
+
+/* Remove old video styles */
+.video-preview, .video-player, .video-info {
+  display: none;
+}
+
+.error-message, .success-message {
+  display: none;
+}
+}
         }
       `}</style>
     </div>

@@ -1,9 +1,5 @@
 
 
-//updating this 
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/Db';
 import { Category } from '@/app/models/cropcare';

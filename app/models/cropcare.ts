@@ -1,8 +1,5 @@
 
 
-//updating this 
-
-
 import mongoose, { Schema, Document } from 'mongoose';
 
 // ============ CropCareCategory Schema ============
@@ -75,14 +72,27 @@ export interface ITargetPestDisease {
   image: string;
 }
 
+// UPDATED: RecommendedSeed interface with new fields
 export interface IRecommendedSeed {
   name: string;
   image: string;
-  price: number;
+  stock: number;
+  unit: string;
+  customUnit?: string;
+  weight: number;
+  weightUnit: string;
+  listPrice: number;
+  discount: number;
+  profit: number;
+  tax: number;
+  customTax?: number;
+  finalPrice: number;
 }
 
 export interface ICropCareProduct extends Document {
   name: string;
+  description?: string;
+   video?: string;
   subCategoryId: mongoose.Types.ObjectId;
   targetPestsDiseases: ITargetPestDisease[];
   recommendedSeeds: IRecommendedSeed[];
@@ -91,11 +101,20 @@ export interface ICropCareProduct extends Document {
   updatedAt: Date;
 }
 
+// UPDATED: CropCareProductSchema with new fields
 const CropCareProductSchema = new Schema<ICropCareProduct>({
   name: {
     type: String,
     required: [true, 'Product name is required'],
     trim: true
+  },
+  description: {
+    type: String,
+    default: ''
+  },
+   video: {
+    type: String,
+    default: ''
   },
   subCategoryId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -122,11 +141,56 @@ const CropCareProductSchema = new Schema<ICropCareProduct>({
       type: String,
       default: ''
     },
-    price: {
+    stock: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    unit: {
+      type: String,
+      default: 'kg'
+    },
+    customUnit: {
+      type: String,
+      default: ''
+    },
+    weight: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    weightUnit: {
+      type: String,
+      default: 'kg'
+    },
+    listPrice: {
       type: Number,
       required: true,
       default: 0,
       min: 0
+    },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100
+    },
+    profit: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    tax: {
+      type: Number,
+      default: 18
+    },
+    customTax: {
+      type: Number,
+      default: 0
+    },
+    finalPrice: {
+      type: Number,
+      default: 0
     }
   }],
   status: {

@@ -1,8 +1,4 @@
 
-
-//updating ths 
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '../../../lib/Db';
 import { SubCategory, Category } from '@/app/models/cropcare';
