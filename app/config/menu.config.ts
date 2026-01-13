@@ -82,7 +82,7 @@
 // // Helper function to get all module names (excluding logout and dashboard)
 // export const getAllMenuModules = (): string[] => {
 //   const modules = new Set<string>();
-  
+
 //   MENU_CONFIG.forEach(section => {
 //     section.items.forEach(item => {
 //       // Skip logout, dashboard and other special items
@@ -96,14 +96,14 @@
 //       }
 //     });
 //   });
-  
+
 //   return Array.from(modules);
 // };
 
 // // Optional: Get modules grouped by section
 // export const getMenuModulesBySection = (): Record<string, string[]> => {
 //   const modulesBySection: Record<string, string[]> = {};
-  
+
 //   MENU_CONFIG.forEach(section => {
 //     const sectionModules = section.items
 //       .filter(item => 
@@ -113,12 +113,12 @@
 //         item.name !== "My Profile"
 //       )
 //       .map(item => item.name);
-    
+
 //     if (sectionModules.length > 0) {
 //       modulesBySection[section.section] = sectionModules;
 //     }
 //   });
-  
+
 //   return modulesBySection;
 // };
 
@@ -166,38 +166,108 @@ export const MENU_CONFIG: MenuSection[] = [
     section: "Main",
     items: [{ name: "Dashboard", path: "/dashboard", icon: "MdDashboard" }],
   },
+  // {
+  //   section: "Marketplace Management",
+  //   items: [
+  //     { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
+  //           { name: "Crop Care Orders", path: "/cropcare-orders", icon: "MdShoppingCart" },
+
+  //     { name: "Labours", path: "/labours", icon: "MdPeople" },
+  //     { name: "Agent Req", path: "/agent-requirements", icon: "MdGroup" },
+  //     { name: "Crop Postings", path: "/postings", icon: "MdAdminPanelSettings" },
+  //   ],
+  // },
+
   {
     section: "Marketplace Management",
     items: [
-      { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
-      { name: "Labours", path: "/labours", icon: "MdPeople" },
-      { name: "Agent Req", path: "/agent-requirements", icon: "MdGroup" },
-      { name: "Crop Postings", path: "/postings", icon: "MdAdminPanelSettings" },
+        { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
+        { name: "Crop Care Orders", path: "/cropcare-orders", icon: "MdLocalHospital" },
+        { name: "Labours", path: "/labours", icon: "MdHandyman" },
+        { name: "Agent Req", path: "/agent-requirements", icon: "MdAssignmentTurnedIn" },
+        { name: "Crop Postings", path: "/postings", icon: "MdPostAdd" },
     ],
-  },
+},
+  // {
+  //   section: "User Management",
+  //   items: [
+  //     { name: "Farmers", path: "/farmers", icon: "MdPeople" },
+  //     { name: "Agents", path: "/agents", icon: "MdGroup" },
+  //     { name: "Sub Admins", path: "/sub-admins", icon: "MdAdminPanelSettings" },
+  //     //  { name: "Transporters", path: "/transporters", icon: "" },
+
+  //   ],
+  // },
+
   {
     section: "User Management",
     items: [
-      { name: "Farmers", path: "/farmers", icon: "MdPeople" },
-      { name: "Agents", path: "/agents", icon: "MdGroup" },
-      { name: "Sub Admins", path: "/sub-admins", icon: "MdAdminPanelSettings" },
-      //  { name: "Transporters", path: "/transporters", icon: "" },
-
+        { name: "Farmers", path: "/farmers", icon: "MdAgriculture" },
+        { name: "Agents", path: "/agents", icon: "MdBadge" },
+        { name: "Sub Admins", path: "/sub-admins", icon: "MdSecurity" },
     ],
-  },
-  {
+},
+  // {
+  //   section: "Content Management",
+  //   items: [
+  //     { name: "Slider", path: "/slider", icon: "MdPages" },
+  //     { name: "Categories", path: "/categories", icon: "MdCategory" },
+  //     { name: "Crop Care", path: "/cropcare", icon: "MdMenu" },
+  //     { name: "Post Ads", path: "/admin-advertisement", icon: "MdPages" },
+  //     { name: "Add Notes", path: "/adminnotes", icon: "MdMenu" },
+  //     { name: "Menu Icons", path: "/menuicon", icon: "MdMenu" },
+  //     { name: "Trader Trans Managment", path: "/trader-transport-managment", icon: "MdMenu" },
+ 
+  // { name: "Order Details", path: "/orders-details", icon: "MdMenu" },
+
+  //   ],
+  // },
+{
     section: "Content Management",
     items: [
-      { name: "Slider", path: "/slider", icon: "MdPages" },
-      { name: "Categories", path: "/categories", icon: "MdCategory" },
-      { name: "Crop Care", path: "/cropcare", icon: "MdMenu" },
-      { name: "Post Ads", path: "/admin-advertisement", icon: "MdPages" },
-      { name: "Add Notes", path: "/adminnotes", icon: "MdMenu" },
-      { name: "Menu Icons", path: "/menuicon", icon: "MdMenu" },
-          { name: "Trader Trans Managment", path: "/trader-transport-managment", icon: "MdMenu" },
-
+        { name: "Slider", path: "/slider", icon: "MdSlideshow" },
+        { name: "Categories", path: "/categories", icon: "MdCategory" },
+        { name: "Crop Care", path: "/cropcare", icon: "MdSpa" },
+        { name: "Post Ads", path: "/admin-advertisement", icon: "MdCampaign" },
+        { name: "Add Notes", path: "/adminnotes", icon: "MdNoteAdd" },
+        { name: "Menu Icons", path: "/menuicon", icon: "MdIcon" },
+        { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
+        { name: "Order Details", path: "/orders-details", icon: "MdReceiptLong" },
     ],
-  },
+},
+
+
+// {
+//     section: "Reports",
+//     items: [
+//      { name: "Trader Payments ", path: "/order-payments", icon: "MdMenu" },
+//            { name: "Trader Bids", path: "/trader-bids", icon: "MdMenu" },
+//       { name: "Trader Payment Clearence ", path: "/payment-clearance", icon: "MdMenu" },
+
+//   { name: "Farmer accept ", path: "/farmer-accept-report", icon: "MdMenu" },
+//       { name: "Transporter Details", path: "/transporterDetails", icon: "MdMenu" },
+
+//         { name: "Crop Sales ", path: "/crop-sales-report", icon: "MdMenu" },
+//       { name: "Admin To Farmer Payment ", path: "/adminToFarmerPayment-report", icon: "MdMenu" },
+//     ],
+//   },
+
+
+
+{
+    section: "Reports",
+    items: [
+        { name: "Trader Payments", path: "/order-payments", icon: "MdPayments" },
+        { name: "Trader Bids", path: "/trader-bids", icon: "MdGavel" },
+        { name: "Trader Payment Clearance", path: "/payment-clearance", icon: "MdVerified" },
+        { name: "Farmer Accept", path: "/farmer-accept-report", icon: "MdCheckCircle" },
+        { name: "Transporter Details", path: "/transporterDetails", icon: "MdLocalShipping" },
+        { name: "Crop Sales", path: "/crop-sales-report", icon: "MdSell" },
+        { name: "Admin To Farmer Payment", path: "/adminToFarmerPayment-report", icon: "MdAccountBalance" },
+    ],
+},
+
+
   {
     section: "Options & Settings",
     items: [
@@ -207,9 +277,9 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Acres", path: "/acres", icon: "MdLandscape" },
       { name: "Seeds", path: "/seeds", icon: "MdEco" },
       { name: "Settings", path: "/settings", icon: "MdSettings" },
-       { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
+      { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
       { name: "Market", path: "/market", icon: "MdStore" },
-       { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten" },
+      { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten" },
     ],
   },
   {
@@ -227,12 +297,12 @@ export const MENU_CONFIG: MenuSection[] = [
 // Helper function to get all module names (INCLUDING Dashboard now)
 export const getAllMenuModules = (): string[] => {
   const modules = new Set<string>();
-  
+
   MENU_CONFIG.forEach(section => {
     section.items.forEach(item => {
       // Skip only logout and My Profile
       if (
-        item.moduleId !== "logout" && 
+        item.moduleId !== "logout" &&
         item.name !== "Logout" &&
         item.name !== "My Profile"
       ) {
@@ -240,28 +310,28 @@ export const getAllMenuModules = (): string[] => {
       }
     });
   });
-  
+
   return Array.from(modules);
 };
 
 // Updated: Get modules grouped by section (INCLUDING Dashboard now)
 export const getMenuModulesBySection = (): Record<string, string[]> => {
   const modulesBySection: Record<string, string[]> = {};
-  
+
   MENU_CONFIG.forEach(section => {
     const sectionModules = section.items
-      .filter(item => 
-        item.moduleId !== "logout" && 
+      .filter(item =>
+        item.moduleId !== "logout" &&
         item.name !== "Logout" &&
         item.name !== "My Profile"
       )
       .map(item => item.name);
-    
+
     if (sectionModules.length > 0) {
       modulesBySection[section.section] = sectionModules;
     }
   });
-  
+
   return modulesBySection;
 };
 
@@ -271,3 +341,23 @@ export const getIconComponent = (iconName: string) => {
   const IconComponent = Icons[iconName as keyof typeof Icons];
   return IconComponent || Icons.MdDashboard;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

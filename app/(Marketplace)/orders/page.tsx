@@ -1,10 +1,23 @@
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 // 'use client';
 
 // import React, { useEffect, useState, useCallback, useRef } from 'react';
 // import axios from 'axios';
-// import { Dialog } from '@mui/material';
+// import { Dialog, Pagination, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 // import { utils, writeFile } from 'xlsx';
 // import jsPDF from 'jspdf';
 // import autoTable from 'jspdf-autotable';
@@ -126,12 +139,19 @@
 // }
 
 // const AdminOrdersRedesign: React.FC = () => {
-//   const [orders, setOrders] = useState<Order[]>([]);
+//   const [allOrders, setAllOrders] = useState<Order[]>([]);
+//   const [displayedOrders, setDisplayedOrders] = useState<Order[]>([]);
 //   const [loading, setLoading] = useState<boolean>(true);
 //   const [statusFilter, setStatusFilter] = useState<string>('');
 //   const [transporterStatusFilter, setTransporterStatusFilter] = useState<string>('');
 //   const [searchInput, setSearchInput] = useState<string>('');
 //   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+  
+//   // Pagination states
+//   const [currentPage, setCurrentPage] = useState<number>(1);
+//   const [totalPages, setTotalPages] = useState<number>(1);
+//   const [totalItems, setTotalItems] = useState<number>(0);
+//   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
   
 //   // Dialog states
 //   const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
@@ -153,7 +173,7 @@
 //   const API_BASE = 'https://kisan.etpl.ai/api/admin';
 //   const tableRef = useRef<HTMLDivElement>(null);
 
-//   // Fetch orders function
+//   // Fetch all orders function
 //   const fetchOrders = useCallback(async () => {
 //     setLoading(true);
 //     let url = `${API_BASE}/orders`;
@@ -174,7 +194,8 @@
 //       const data = await response.json();
 
 //       if (data.success) {
-//         setOrders(data.data || []);
+//         setAllOrders(data.data || []);
+//         setTotalItems(data.data?.length || 0);
 //         // toast.success(`Loaded ${data.data?.length || 0} orders`);
 //       } else {
 //         toast.error('Failed to fetch orders');
@@ -190,6 +211,57 @@
 //   useEffect(() => {
 //     fetchOrders();
 //   }, [fetchOrders]);
+
+//   // Apply pagination to displayed orders
+//   useEffect(() => {
+//     if (allOrders.length === 0) {
+//       setDisplayedOrders([]);
+//       setTotalPages(1);
+//       setCurrentPage(1);
+//       return;
+//     }
+
+//     // Calculate total pages
+//     const totalPagesCount = Math.ceil(allOrders.length / itemsPerPage);
+//     setTotalPages(totalPagesCount);
+    
+//     // Ensure current page is valid
+//     if (currentPage > totalPagesCount) {
+//       setCurrentPage(1);
+//     }
+    
+//     // Calculate start and end indices
+//     const startIndex = (currentPage - 1) * itemsPerPage;
+//     const endIndex = startIndex + itemsPerPage;
+    
+//     // Get orders for current page
+//     const ordersForPage = allOrders.slice(startIndex, endIndex);
+//     setDisplayedOrders(ordersForPage);
+    
+//   }, [allOrders, currentPage, itemsPerPage]);
+
+//   // Handle page change
+//   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+//     setCurrentPage(value);
+//     // Scroll to top of table on page change
+//     if (tableRef.current) {
+//       tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+//     }
+//   };
+
+//   // Handle items per page change
+//   const handleItemsPerPageChange = (event: SelectChangeEvent<number>) => {
+//     const newLimit = Number(event.target.value);
+//     setItemsPerPage(newLimit);
+//     setCurrentPage(1); // Reset to first page when changing items per page
+//   };
+
+//   // Calculate pagination range
+//   const getPaginationRange = () => {
+//     const startItem = (currentPage - 1) * itemsPerPage + 1;
+//     const endItem = Math.min(currentPage * itemsPerPage, allOrders.length);
+//     return { startItem, endItem };
+//   };
 
 //   // Invoice generation functions
 //   const generateFarmerInvoice = (order: Order) => {
@@ -381,13 +453,13 @@
 //     toast.success(`Trader invoice generated for order: ${order.orderId}`);
 //   };
 
-//   // Export functions
+//   // Export functions - use allOrders for exports
 //   const handleCopyToClipboard = async () => {
 //     const headers = ["Order ID", "Date", "Trader", "Farmer", "Items", "Total Amount", "Order Status", "Verification", "Trader Payment", "Farmer Payment"];
     
 //     const csvContent = [
 //       headers.join("\t"),
-//       ...orders.map((order) => {
+//       ...allOrders.map((order) => {
 //         const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
 //         const verificationStatus = getVerificationStatus(order);
 //         return [
@@ -415,7 +487,7 @@
 //   };
 
 //   const handleExportExcel = () => {
-//     const data = orders.map((order) => {
+//     const data = allOrders.map((order) => {
 //       const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
 //       const verificationStatus = getVerificationStatus(order);
 //       return {
@@ -450,7 +522,7 @@
     
 //     const csvContent = [
 //       headers.join(","),
-//       ...orders.map((order) => {
+//       ...allOrders.map((order) => {
 //         const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
 //         const verificationStatus = getVerificationStatus(order);
 //         return [
@@ -481,7 +553,7 @@
 //     doc.text("Orders Management Report", 14, 16);
     
 //     const tableColumn = ["Order ID", "Trader", "Farmer", "Items", "Total Amount", "Status", "Verification"];
-//     const tableRows: any = orders.map((order) => {
+//     const tableRows: any = allOrders.map((order) => {
 //       const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
 //       const verificationStatus = getVerificationStatus(order);
 //       return [
@@ -538,7 +610,7 @@
 //             </tr>
 //           </thead>
 //           <tbody>
-//             ${orders.map((order) => {
+//             ${allOrders.map((order) => {
 //               const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
 //               const verificationStatus = getVerificationStatus(order);
 //               return `
@@ -763,7 +835,7 @@
 //     setExpandedOrder(expandedOrder === orderId ? null : orderId);
 //   };
 
-//   if (loading && orders.length === 0) {
+//   if (loading && allOrders.length === 0) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gray-50">
 //         <div className="text-center">
@@ -773,6 +845,8 @@
 //       </div>
 //     );
 //   }
+
+//   const { startItem, endItem } = getPaginationRange();
 
 //   return (
 //     <div className="min-h-screen bg-gray-50 p-4 ">
@@ -832,7 +906,7 @@
 //           <div className="flex items-center justify-between">
 //             <div>
 //               <p className="text-gray-500 text-sm">Total Orders</p>
-//               <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+//               <p className="text-2xl font-bold text-gray-900">{allOrders.length}</p>
 //             </div>
 //             <FaShoppingCart className="text-blue-500 text-2xl" />
 //           </div>
@@ -842,7 +916,7 @@
 //             <div>
 //               <p className="text-gray-500 text-sm">Completed</p>
 //               <p className="text-2xl font-bold text-gray-900">
-//                 {orders.filter(o => o.orderStatus === 'completed').length}
+//                 {allOrders.filter(o => o.orderStatus === 'completed').length}
 //               </p>
 //             </div>
 //             <FaCheckCircle className="text-green-500 text-2xl" />
@@ -853,7 +927,7 @@
 //             <div>
 //               <p className="text-gray-500 text-sm">Pending</p>
 //               <p className="text-2xl font-bold text-gray-900">
-//                 {orders.filter(o => o.orderStatus === 'pending').length}
+//                 {allOrders.filter(o => o.orderStatus === 'pending').length}
 //               </p>
 //             </div>
 //             <FaTimesCircle className="text-yellow-500 text-2xl" />
@@ -864,7 +938,7 @@
 //             <div>
 //               <p className="text-gray-500 text-sm">Total Value</p>
 //               <p className="text-2xl font-bold text-gray-900">
-//                 {formatCurrency(orders.reduce((sum, order) => sum + calculateOrderTotal(order), 0))}
+//                 {formatCurrency(allOrders.reduce((sum, order) => sum + calculateOrderTotal(order), 0))}
 //               </p>
 //             </div>
 //             <FaRupeeSign className="text-purple-500 text-2xl" />
@@ -899,7 +973,7 @@
 //               value={statusFilter}
 //               onChange={(e) => setStatusFilter(e.target.value)}
 //             >
-//               <option value="">All Status</option>
+//               <option value="">All Order Status</option>
 //               <option value="pending">Pending</option>
 //               <option value="processing">Processing</option>
 //               <option value="in_transit">In Transit</option>
@@ -940,6 +1014,7 @@
 //                 setStatusFilter('');
 //                 setTransporterStatusFilter('');
 //                 setSearchInput('');
+//                 setCurrentPage(1);
 //               }}
 //               className="flex-1 flex items-center justify-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
 //             >
@@ -961,13 +1036,13 @@
 //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
 //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
 //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-//                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+//                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Status</th>
 //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification</th>
 //                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
 //               </tr>
 //             </thead>
 //             <tbody className="bg-white divide-y divide-gray-200">
-//               {orders.map((order) => (
+//               {displayedOrders.map((order) => (
 //                 <tr key={order._id} className="hover:bg-gray-50 transition-colors">
 //                   {/* Order ID */}
 //                   <td className="px-6 py-3 whitespace-nowrap">
@@ -1102,7 +1177,7 @@
 //         </div>
 
 //         {/* No Orders State */}
-//         {orders.length === 0 && !loading && (
+//         {allOrders.length === 0 && !loading && (
 //           <div className="text-center py-12">
 //             <div className="text-gray-400 text-6xl mb-4">
 //               <FaShoppingCart />
@@ -1115,7 +1190,7 @@
 
 //       {/* Mobile Cards (visible only on mobile) */}
 //       <div className="lg:hidden space-y-4">
-//         {orders.map((order) => (
+//         {displayedOrders.map((order) => (
 //           <div key={order._id} className="bg-white rounded shadow p-4">
 //             <div className="flex justify-between items-start mb-3">
 //               <div>
@@ -1274,6 +1349,55 @@
 //           </div>
 //         ))}
 //       </div>
+
+//       {/* Pagination and Limit Controls */}
+//       {allOrders.length > 0 && (
+//         <div className="flex flex-col sm:flex-row justify-between items-center gap-4  p-4 bg-white rounded shadow">
+//           {/* Items per page selector */}
+//           <div className="flex items-center gap-3">
+            
+            
+//             <div className="text-sm text-gray-600">
+//               Showing {startItem} to {endItem} of {allOrders.length} orders
+//             </div>
+//             <FormControl size="small" className="min-w-[120px]">
+//               <InputLabel id="items-per-page-label">Show</InputLabel>
+//               <Select
+//                 labelId="items-per-page-label"
+//                 value={itemsPerPage}
+//                 label="Show"
+//                 onChange={handleItemsPerPageChange}
+//               >
+//                 <MenuItem value={5}>5</MenuItem>
+//                 <MenuItem value={10}>10</MenuItem>
+//                 <MenuItem value={20}>20</MenuItem>
+//                 <MenuItem value={50}>50</MenuItem>
+//                 <MenuItem value={100}>100</MenuItem>
+//               </Select>
+//             </FormControl>
+//           </div>
+
+//           {/* Pagination component */}
+//           <div className="flex flex-col sm:flex-row items-center gap-3">
+//             <div className="text-sm text-gray-600">
+//               Page {currentPage} of {totalPages}
+//             </div>
+//             <Pagination
+//               count={totalPages}
+//               page={currentPage}
+//               onChange={handlePageChange}
+//               color="primary"
+              
+//               shape="rounded"
+//               size="small"
+//               showFirstButton
+//               showLastButton
+//               siblingCount={1}
+//               boundaryCount={1}
+//             />
+//           </div>
+//         </div>
+//       )}
 
 //       {/* Order Details Dialog */}
 //       <Dialog
@@ -1790,14 +1914,9 @@
 
 
 
-
-
-
-
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import axios from 'axios';
 import { Dialog, Pagination, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
 import { utils, writeFile } from 'xlsx';
 import jsPDF from 'jspdf';
@@ -1806,7 +1925,6 @@ import {
   FaEye,
   FaEdit,
   FaTrash,
-  FaDownload,
   FaSearch,
   FaFilter,
   FaShoppingCart,
@@ -1824,24 +1942,45 @@ import {
   FaCopy,
   FaTimes,
   FaSave,
-  FaFileAlt,
-  FaPhone,
-  FaEnvelope,
-  FaCalendarAlt,
   FaBox,
-  FaTags,
-  FaMapMarkerAlt,
   FaCheck,
   FaBoxes,
   FaFileCsv,
   FaChevronDown,
   FaChevronUp,
-  FaCreditCard,
-  FaInfoCircle,
-  FaFileInvoiceDollar
+  FaFileInvoiceDollar,
+  FaSpinner,
+  FaExclamationCircle,
+  FaClipboardCheck,
+  FaMoneyBillWave,
+  FaCalendarAlt,
+  FaFileInvoice,
+  FaUserTie,
+  FaWeightHanging
 } from 'react-icons/fa';
+import { AiOutlineFileSearch } from 'react-icons/ai';
 import toast from 'react-hot-toast';
+import AdminFarmerPaymentModal from '../FarmerPaymentModal/page';
 import OrderEditModal from '../OrderEditModal/page';
+
+
+// Define the interface for farmer payment modal data
+export interface FarmerPaymentModalData {
+  orderId: string;
+  farmerName: string;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  onPaymentSuccess?: () => void;
+}
+
+// Declare global window properties
+declare global {
+  interface Window {
+    openEditOrderModal?: (orderId: string) => void;
+    openFarmerPaymentModal?: (data: FarmerPaymentModalData) => void;
+  }
+}
 
 // Interfaces
 interface MarketDetails {
@@ -1871,6 +2010,7 @@ interface PaymentRecord {
   paidDate: string;
   razorpayPaymentId?: string;
   razorpayOrderId?: string;
+  paymentMethod?: string;
 }
 
 interface PaymentDetails {
@@ -1936,7 +2076,6 @@ const AdminOrdersRedesign: React.FC = () => {
   
   // Dialog states
   const [detailsDialogOpen, setDetailsDialogOpen] = useState<boolean>(false);
-  const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   
@@ -2034,7 +2173,7 @@ const AdminOrdersRedesign: React.FC = () => {
   const handleItemsPerPageChange = (event: SelectChangeEvent<number>) => {
     const newLimit = Number(event.target.value);
     setItemsPerPage(newLimit);
-    setCurrentPage(1); // Reset to first page when changing items per page
+    setCurrentPage(1);
   };
 
   // Calculate pagination range
@@ -2042,6 +2181,23 @@ const AdminOrdersRedesign: React.FC = () => {
     const startItem = (currentPage - 1) * itemsPerPage + 1;
     const endItem = Math.min(currentPage * itemsPerPage, allOrders.length);
     return { startItem, endItem };
+  };
+
+  // Status badge configuration
+  const getStatusBadge = (status: string) => {
+    const statusConfig: { [key: string]: { color: string; bg: string; icon: any } } = {
+      pending: { color: 'text-yellow-800', bg: 'bg-yellow-100', icon: FaExclamationCircle },
+      processing: { color: 'text-blue-800', bg: 'bg-blue-100', icon: FaSpinner },
+      in_transit: { color: 'text-indigo-800', bg: 'bg-indigo-100', icon: FaTruck },
+      completed: { color: 'text-green-800', bg: 'bg-green-100', icon: FaCheckCircle },
+      cancelled: { color: 'text-red-800', bg: 'bg-red-100', icon: FaTimesCircle },
+      accepted: { color: 'text-green-800', bg: 'bg-green-100', icon: FaCheckCircle },
+      rejected: { color: 'text-red-800', bg: 'bg-red-100', icon: FaTimesCircle },
+      partial: { color: 'text-orange-800', bg: 'bg-orange-100', icon: FaExclamationCircle },
+      paid: { color: 'text-emerald-800', bg: 'bg-emerald-100', icon: FaCheckCircle },
+    };
+    
+    return statusConfig[status] || { color: 'text-gray-800', bg: 'bg-gray-100', icon: FaExclamationCircle };
   };
 
   // Invoice generation functions
@@ -2234,7 +2390,7 @@ const AdminOrdersRedesign: React.FC = () => {
     toast.success(`Trader invoice generated for order: ${order.orderId}`);
   };
 
-  // Export functions - use allOrders for exports
+  // Export functions
   const handleCopyToClipboard = async () => {
     const headers = ["Order ID", "Date", "Trader", "Farmer", "Items", "Total Amount", "Order Status", "Verification", "Trader Payment", "Farmer Payment"];
     
@@ -2420,76 +2576,13 @@ const AdminOrdersRedesign: React.FC = () => {
     toast.success("Printing orders...");
   };
 
-  // Status badge colors
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'pending':
-      case 'partial':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'processing':
-      case 'accepted':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed':
-      case 'paid':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'cancelled':
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'in_transit':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  // Verification status badge colors
-  const getVerificationColor = (order: Order) => {
-    const details = order.transporterDetails;
-    
-    if (!details) {
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-    
-    const { transporterReached, goodsConditionCorrect, quantityCorrect } = details;
-    
-    if (transporterReached && goodsConditionCorrect && quantityCorrect) {
-      return 'bg-green-100 text-green-800 border-green-200';
-    } else if (transporterReached || goodsConditionCorrect || quantityCorrect) {
-      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    } else if (details.verifiedAt) {
-      return 'bg-red-100 text-red-800 border-red-200';
-    } else {
-      return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  // Get verification status text
-  const getVerificationStatus = (order: Order) => {
-    const details = order.transporterDetails;
-    
-    if (!details) {
-      return 'Not Available';
-    }
-    
-    const { transporterReached, goodsConditionCorrect, quantityCorrect } = details;
-    
-    if (transporterReached && goodsConditionCorrect && quantityCorrect) {
-      return 'Verified';
-    } else if (transporterReached || goodsConditionCorrect || quantityCorrect) {
-      return 'Partial';
-    } else if (details.verifiedAt) {
-      return 'Pending';
-    } else {
-      return 'Not Verified';
-    }
-  };
-
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -2513,6 +2606,48 @@ const AdminOrdersRedesign: React.FC = () => {
     });
   };
 
+  // Get verification status
+  const getVerificationStatus = (order: Order) => {
+    const details = order.transporterDetails;
+    
+    if (!details) {
+      return 'Not Available';
+    }
+    
+    const { transporterReached, goodsConditionCorrect, quantityCorrect } = details;
+    
+    if (transporterReached && goodsConditionCorrect && quantityCorrect) {
+      return 'Verified';
+    } else if (transporterReached || goodsConditionCorrect || quantityCorrect) {
+      return 'Partial';
+    } else if (details.verifiedAt) {
+      return 'Pending';
+    } else {
+      return 'Not Verified';
+    }
+  };
+
+  // Get verification color
+  const getVerificationColor = (order: Order) => {
+    const details = order.transporterDetails;
+    
+    if (!details) {
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+    
+    const { transporterReached, goodsConditionCorrect, quantityCorrect } = details;
+    
+    if (transporterReached && goodsConditionCorrect && quantityCorrect) {
+      return 'bg-green-100 text-green-800 border-green-200';
+    } else if (transporterReached || goodsConditionCorrect || quantityCorrect) {
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    } else if (details.verifiedAt) {
+      return 'bg-red-100 text-red-800 border-red-200';
+    } else {
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   // Open details dialog
   const openDetailsDialog = (order: Order) => {
     setCurrentOrder(order);
@@ -2525,7 +2660,7 @@ const AdminOrdersRedesign: React.FC = () => {
     setDetailsDialogOpen(true);
   };
 
-  // Open edit dialog - UPDATED TO USE OrderEditModal
+  // Open edit dialog
   const openEditDialog = (order: Order) => {
     if (window.openEditOrderModal) {
       window.openEditOrderModal(order.orderId);
@@ -2544,23 +2679,41 @@ const AdminOrdersRedesign: React.FC = () => {
     setVerificationDialogOpen(true);
   };
 
+  // Open farmer payment modal
+  const openFarmerPaymentModal = (order: Order) => {
+    if (window.openFarmerPaymentModal && order.adminToFarmerPayment) {
+      window.openFarmerPaymentModal({
+        orderId: order.orderId,
+        farmerName: order.farmerName || 'N/A',
+        totalAmount: order.adminToFarmerPayment.totalAmount,
+        paidAmount: order.adminToFarmerPayment.paidAmount,
+        remainingAmount: order.adminToFarmerPayment.remainingAmount,
+        onPaymentSuccess: fetchOrders
+      });
+    }
+  };
+
   // Delete order
   const handleDeleteOrder = async () => {
     if (!currentOrder) return;
-    console.log(currentOrder._id)
+    
     try {
       const response = await fetch(`/api/order/${currentOrder._id}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
       
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success('Order deleted successfully!');
         setDeleteDialogOpen(false);
         fetchOrders();
       } else {
-        toast.error('Failed to delete order');
+        toast.error(result.message || 'Failed to delete order');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -2582,12 +2735,16 @@ const AdminOrdersRedesign: React.FC = () => {
       ...verificationData,
       adminId,
       adminName,
+      verificationDate: new Date().toISOString()
     };
 
     try {
       const response = await fetch(`${API_BASE}/orders/${currentOrder.orderId}/verification`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify(data),
       });
 
@@ -2616,6 +2773,12 @@ const AdminOrdersRedesign: React.FC = () => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
+  // Calculate payment percentage
+  const getPaymentPercentage = (paid: number, total: number) => {
+    if (total === 0) return 0;
+    return Math.round((paid / total) * 100);
+  };
+
   if (loading && allOrders.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -2630,555 +2793,582 @@ const AdminOrdersRedesign: React.FC = () => {
   const { startItem, endItem } = getPaginationRange();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 ">
-      {/* Header */}
-      <div className="lg:mb-0 mb-3">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <FaShoppingCart className="text-blue-600" />
-          Order Management
-        </h1>
-        <p className="text-gray-600 mt-2">Manage and monitor all marketplace orders</p>
-      </div>
-
-      {/* Export Buttons - Desktop */}
-      <div className="hidden lg:flex justify-end ml-auto flex-wrap gap-2  p-3 rounded  mb-1">
-        {[
-          { label: "Copy", icon: FaCopy, onClick: handleCopyToClipboard, color: "bg-gray-100 hover:bg-gray-200 text-gray-800" },
-          { label: "Excel", icon: FaFileExcel, onClick: handleExportExcel, color: "bg-green-100 hover:bg-green-200 text-green-800" },
-          { label: "CSV", icon: FaFileCsv, onClick: handleExportCSV, color: "bg-blue-100 hover:bg-blue-200 text-blue-800" },
-          { label: "PDF", icon: FaFilePdf, onClick: handleExportPDF, color: "bg-red-100 hover:bg-red-200 text-red-800" },
-          { label: "Print", icon: FaPrint, onClick: handlePrint, color: "bg-purple-100 hover:bg-purple-200 text-purple-800" },
-        ].map((btn, i) => (
-          <button
-            key={i}
-            onClick={btn.onClick}
-            className={`flex items-center gap-2 px-4 py-2 rounded transition-all duration-200 shadow-sm hover:shadow-md ${btn.color} font-medium`}
-          >
-            <btn.icon className="text-sm" />
-  
-          </button>
-        ))}
-      </div>
-
-      {/* Export Buttons - Mobile */}
-      <div className="lg:hidden flex flex-wrap gap-2 mb-3">
-        {[
-          { label: "Copy", icon: FaCopy, onClick: handleCopyToClipboard, color: "bg-gray-100 hover:bg-gray-200 text-gray-800" },
-          { label: "Excel", icon: FaFileExcel, onClick: handleExportExcel, color: "bg-green-100 hover:bg-green-200 text-green-800" },
-          { label: "CSV", icon: FaFileCsv, onClick: handleExportCSV, color: "bg-blue-100 hover:bg-blue-200 text-blue-800" },
-          { label: "PDF", icon: FaFilePdf, onClick: handleExportPDF, color: "bg-red-100 hover:bg-red-200 text-red-800" },
-          { label: "Print", icon: FaPrint, onClick: handlePrint, color: "bg-purple-100 hover:bg-purple-200 text-purple-800" },
-        ].map((btn, i) => (
-          <button
-            key={i}
-            onClick={btn.onClick}
-            className={`flex items-center justify-center gap-1 p-2 rounded transition-all duration-200 shadow-sm hover:shadow-md ${btn.color} font-medium flex-1 min-w-[60px]`}
-           
-          >
-            <btn.icon className="text-sm" />
-           
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-        <div className="bg-white rounded shadow p-4 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-900">{allOrders.length}</p>
-            </div>
-            <FaShoppingCart className="text-blue-500 text-2xl" />
-          </div>
+    <>
+      <div className="min-h-screen xl:w-[83vw] lg:w-[75vw] overflow-x-scroll bg-gray-50 p-4">
+        {/* Header */}
+        <div className="lg:mb-0 mb-3">
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <FaShoppingCart className="text-blue-600" />
+            Order Management
+          </h1>
+          <p className="text-gray-600 mt-2">Manage and monitor all marketplace orders</p>
         </div>
-        <div className="bg-white rounded shadow p-4 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Completed</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {allOrders.filter(o => o.orderStatus === 'completed').length}
-              </p>
-            </div>
-            <FaCheckCircle className="text-green-500 text-2xl" />
-          </div>
-        </div>
-        <div className="bg-white rounded shadow p-4 border-l-4 border-yellow-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {allOrders.filter(o => o.orderStatus === 'pending').length}
-              </p>
-            </div>
-            <FaTimesCircle className="text-yellow-500 text-2xl" />
-          </div>
-        </div>
-        <div className="bg-white rounded shadow p-4 border-l-4 border-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm">Total Value</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(allOrders.reduce((sum, order) => sum + calculateOrderTotal(order), 0))}
-              </p>
-            </div>
-            <FaRupeeSign className="text-purple-500 text-2xl" />
-          </div>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded shadow mb-6 p-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="Search orders..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaFilter className="text-gray-400" />
-            </div>
-            <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Order Status</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="in_transit">In Transit</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          {/* Transporter Status Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaTruck className="text-gray-400" />
-            </div>
-            <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
-              value={transporterStatusFilter}
-              onChange={(e) => setTransporterStatusFilter(e.target.value)}
-            >
-              <option value="">All Transporter Status</option>
-              <option value="pending">Pending</option>
-              <option value="accepted">Accepted</option>
-              <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
+        {/* Export Buttons - Desktop */}
+        <div className="hidden lg:flex justify-end ml-auto flex-wrap gap-2 p-3 rounded mb-1">
+          {[
+            { label: "Copy", icon: FaCopy, onClick: handleCopyToClipboard, color: "bg-gray-100 hover:bg-gray-200 text-gray-800" },
+            { label: "Excel", icon: FaFileExcel, onClick: handleExportExcel, color: "bg-green-100 hover:bg-green-200 text-green-800" },
+            { label: "CSV", icon: FaFileCsv, onClick: handleExportCSV, color: "bg-blue-100 hover:bg-blue-200 text-blue-800" },
+            { label: "PDF", icon: FaFilePdf, onClick: handleExportPDF, color: "bg-red-100 hover:bg-red-200 text-red-800" },
+            { label: "Print", icon: FaPrint, onClick: handlePrint, color: "bg-purple-100 hover:bg-purple-200 text-purple-800" },
+          ].map((btn, i) => (
             <button
-              onClick={fetchOrders}
-              className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              key={i}
+              onClick={btn.onClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded transition-all duration-200 shadow-sm hover:shadow-md ${btn.color} font-medium`}
             >
-              <FaSearch />
-              Search
+              <btn.icon className="text-sm" />
             </button>
+          ))}
+        </div>
+
+        {/* Export Buttons - Mobile */}
+        <div className="lg:hidden flex flex-wrap gap-2 mb-3">
+          {[
+            { label: "Copy", icon: FaCopy, onClick: handleCopyToClipboard, color: "bg-gray-100 hover:bg-gray-200 text-gray-800" },
+            { label: "Excel", icon: FaFileExcel, onClick: handleExportExcel, color: "bg-green-100 hover:bg-green-200 text-green-800" },
+            { label: "CSV", icon: FaFileCsv, onClick: handleExportCSV, color: "bg-blue-100 hover:bg-blue-200 text-blue-800" },
+            { label: "PDF", icon: FaFilePdf, onClick: handleExportPDF, color: "bg-red-100 hover:bg-red-200 text-red-800" },
+            { label: "Print", icon: FaPrint, onClick: handlePrint, color: "bg-purple-100 hover:bg-purple-200 text-purple-800" },
+          ].map((btn, i) => (
             <button
-              onClick={() => {
-                setStatusFilter('');
-                setTransporterStatusFilter('');
-                setSearchInput('');
-                setCurrentPage(1);
-              }}
-              className="flex-1 flex items-center justify-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
+              key={i}
+              onClick={btn.onClick}
+              className={`flex items-center justify-center gap-1 p-2 rounded transition-all duration-200 shadow-sm hover:shadow-md ${btn.color} font-medium flex-1 min-w-[60px]`}
             >
-              <FaSync />
-              Reset
+              <btn.icon className="text-sm" />
             </button>
+          ))}
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-3">
+          <div className="bg-white rounded shadow p-4 border-l-4 border-blue-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Total Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{allOrders.length}</p>
+              </div>
+              <FaShoppingCart className="text-blue-500 text-2xl" />
+            </div>
+          </div>
+          <div className="bg-white rounded shadow p-4 border-l-4 border-green-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Completed</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {allOrders.filter(o => o.orderStatus === 'completed').length}
+                </p>
+              </div>
+              <FaCheckCircle className="text-green-500 text-2xl" />
+            </div>
+          </div>
+          <div className="bg-white rounded shadow p-4 border-l-4 border-yellow-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Pending</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {allOrders.filter(o => o.orderStatus === 'pending').length}
+                </p>
+              </div>
+              <FaTimesCircle className="text-yellow-500 text-2xl" />
+            </div>
+          </div>
+          <div className="bg-white rounded shadow p-4 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Total Value</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(allOrders.reduce((sum, order) => sum + calculateOrderTotal(order), 0))}
+                </p>
+              </div>
+              <FaRupeeSign className="text-purple-500 text-2xl" />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Desktop Table (hidden on mobile) */}
-      <div className="hidden lg:block bg-white rounded shadow overflow-hidden" ref={tableRef}>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trader</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {displayedOrders.map((order) => (
-                <tr key={order._id} className="hover:bg-gray-50 transition-colors">
-                  {/* Order ID */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-blue-600">{order.orderId}</div>
-                      <div className="text-xs text-gray-500">{formatDate(order.createdAt)}</div>
-                    </div>
-                  </td>
+        {/* Filters */}
+        <div className="bg-white rounded shadow mb-6 p-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                placeholder="Search orders..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
 
-                  {/* Trader */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FaStore className="text-gray-400 mr-2" />
+            {/* Status Filter */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaFilter className="text-gray-400" />
+              </div>
+              <select
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">All Order Status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="in_transit">In Transit</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Transporter Status Filter */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaTruck className="text-gray-400" />
+              </div>
+              <select
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+                value={transporterStatusFilter}
+                onChange={(e) => setTransporterStatusFilter(e.target.value)}
+              >
+                <option value="">All Transporter Status</option>
+                <option value="pending">Pending</option>
+                <option value="accepted">Accepted</option>
+                <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex xl:gap-2 gap-1 overflow-x-scroll">
+              <button
+                onClick={fetchOrders}
+                className="flex-1  w-fit flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                <FaSearch />
+                Search
+              </button>
+              <button
+                onClick={() => {
+                  setStatusFilter('');
+                  setTransporterStatusFilter('');
+                  setSearchInput('');
+                  setCurrentPage(1);
+                }}
+                className="flex-1 flex w-fit items-center justify-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
+              >
+                <FaSync />
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Table (hidden on mobile) */}
+        <div className="hidden lg:block bg-white rounded shadow overflow-hidden" ref={tableRef}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trader</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Farmer</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verification</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {displayedOrders.map((order) => (
+                  <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                    {/* Order ID */}
+                    <td className="px-6 py-3 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{order.traderName}</div>
-                        {order.traderMobile && (
-                          <div className="text-xs text-gray-500">{order.traderMobile}</div>
-                        )}
+                        <div className="text-sm font-medium text-blue-600">{order.orderId}</div>
+                        <div className="text-xs text-gray-500">{formatDate(order.createdAt)}</div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Farmer */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FaUser className="text-gray-400 mr-2" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{order.farmerName || 'N/A'}</div>
-                        {order.farmerMobile && (
-                          <div className="text-xs text-gray-500">{order.farmerMobile}</div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Products */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <FaBox className="text-gray-400 mr-2" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{order.productItems.length} items</div>
-                        <div className="text-xs text-gray-500">
-                          {order.productItems.reduce((sum, item) => sum + item.quantity, 0)} units
+                    {/* Trader */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FaStore className="text-gray-400 mr-2" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{order.traderName}</div>
+                          {order.traderMobile && (
+                            <div className="text-xs text-gray-500">{order.traderMobile}</div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Total */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="text-sm font-bold text-green-700">
-                      <FaRupeeSign className="inline mr-1" />
-                      {calculateOrderTotal(order).toLocaleString()}
-                    </div>
-                  </td>
+                    {/* Farmer */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FaUser className="text-gray-400 mr-2" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{order.farmerName || 'N/A'}</div>
+                          {order.farmerMobile && (
+                            <div className="text-xs text-gray-500">{order.farmerMobile}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
 
-                  {/* Status */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
-                      {order.orderStatus}
-                    </span>
-                  </td>
+                    {/* Products */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <FaBox className="text-gray-400 mr-2" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{order.productItems.length} items</div>
+                          <div className="text-xs text-gray-500">
+                            {order.productItems.reduce((sum, item) => sum + item.quantity, 0)} units
+                          </div>
+                        </div>
+                      </div>
+                    </td>
 
-                  {/* Verification Status - NEW FIELD */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getVerificationColor(order)}`}>
-                      {getVerificationStatus(order)}
-                    </span>
-                  </td>
+                    {/* Total */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="text-sm font-bold text-green-700">
+                        <FaRupeeSign className="inline mr-1" />
+                        {calculateOrderTotal(order).toLocaleString()}
+                      </div>
+                    </td>
 
-                  {/* Actions - UPDATED WITH INVOICE DOWNLOAD ICON */}
-                  <td className="px-6 py-3 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => openDetailsDialog(order)}
-                        className="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50 transition-colors"
-                        title="View Details"
-                      >
-                        <FaEye />
-                      </button>
-                      <button
-                        onClick={() => openEditDialog(order)}
-                        className="text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50 transition-colors"
-                        title="Edit Order"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setCurrentOrder(order);
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="text-red-600 hover:text-red-900 p-2 rounded hover:bg-red-50 transition-colors"
-                        title="Delete Order"
-                      >
-                        <FaTrash />
-                      </button>
-                      {order.transporterDetails && (
+                    {/* Status */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.orderStatus).bg} ${getStatusBadge(order.orderStatus).color}`}>
+                        {React.createElement(getStatusBadge(order.orderStatus).icon, { className: "h-3 w-3 mr-1" })}
+                        {order.orderStatus}
+                      </span>
+                    </td>
+
+                    {/* Verification Status */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getVerificationColor(order)}`}>
+                        {getVerificationStatus(order)}
+                      </span>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-6 py-3 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => openVerificationDialog(order)}
-                          className="text-purple-600 hover:text-purple-900 p-2 rounded hover:bg-purple-50 transition-colors"
-                          title="Verification"
+                          onClick={() => openDetailsDialog(order)}
+                          className="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50 transition-colors"
+                          title="View Details"
                         >
-                          <FaCheck />
+                          <FaEye />
                         </button>
-                      )}
-                      {/* INVOICE DOWNLOAD BUTTON */}
-                      {order.traderToAdminPayment && (
                         <button
-                          onClick={() => generateTraderInvoice(order)}
-                          className="text-yellow-600 hover:text-yellow-900 p-2 rounded hover:bg-yellow-50 transition-colors"
-                          title="Download Trader Invoice"
+                          onClick={() => openEditDialog(order)}
+                          className="text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50 transition-colors"
+                          title="Edit Order"
                         >
-                          <FaFileInvoiceDollar />
+                          <FaEdit />
                         </button>
-                      )}
-                      {order.adminToFarmerPayment && (
-                        <button
-                          onClick={() => generateFarmerInvoice(order)}
-                          className="text-indigo-600 hover:text-indigo-900 p-2 rounded hover:bg-indigo-50 transition-colors"
-                          title="Download Farmer Invoice"
+                        {/* <button
+                          onClick={() => {
+                            setCurrentOrder(order);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-red-600 hover:text-red-900 p-2 rounded hover:bg-red-50 transition-colors"
+                          title="Delete Order"
                         >
-                          <FaReceipt />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                          <FaTrash />
+                        </button> */}
+                        {order.transporterDetails && (
+                          <button
+                            onClick={() => openVerificationDialog(order)}
+                            className="text-purple-600 hover:text-purple-900 p-2 rounded hover:bg-purple-50 transition-colors"
+                            title="Verification"
+                          >
+                            <FaCheck />
+                          </button>
+                        )}
+                        {/* INVOICE DOWNLOAD BUTTON */}
+                        {order.traderToAdminPayment && (
+                          <button
+                            onClick={() => generateTraderInvoice(order)}
+                            className="text-yellow-600 hover:text-yellow-900 p-2 rounded hover:bg-yellow-50 transition-colors"
+                            title="Download Trader Invoice"
+                          >
+                            <FaFileInvoiceDollar />
+                          </button>
+                        )}
+                        {order.adminToFarmerPayment && (
+                          <button
+                            onClick={() => generateFarmerInvoice(order)}
+                            className="text-indigo-600 hover:text-indigo-900 p-2 rounded hover:bg-indigo-50 transition-colors"
+                            title="Download Farmer Invoice"
+                          >
+                            <FaReceipt />
+                          </button>
+                        )}
+                        {/* PAYMENT BUTTON */}
+                        {order.adminToFarmerPayment && order.adminToFarmerPayment.remainingAmount > 0 && (
+                          <button
+                            onClick={() => openFarmerPaymentModal(order)}
+                            className="text-emerald-600 hover:text-emerald-900 p-2 rounded hover:bg-emerald-50 transition-colors"
+                            title="Make Payment to Farmer"
+                          >
+                            <FaMoneyBillWave />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* No Orders State */}
+          {allOrders.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-6xl mb-4 flex justify-center items-center">
+                <AiOutlineFileSearch />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+              <p className="text-gray-500">Try adjusting your search or filters</p>
+            </div>
+          )}
         </div>
 
-        {/* No Orders State */}
-        {allOrders.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">
-              <FaShoppingCart />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
-            <p className="text-gray-500">Try adjusting your search or filters</p>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile Cards (visible only on mobile) */}
-      <div className="lg:hidden space-y-4">
-        {displayedOrders.map((order) => (
-          <div key={order._id} className="bg-white rounded shadow p-4">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <div className="font-bold text-blue-600">{order.orderId}</div>
-                <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => openDetailsDialog(order)}
-                  className="text-blue-600 p-1"
-                >
-                  <FaEye />
-                </button>
-                <button
-                  onClick={() => toggleMobileCard(order._id)}
-                  className="text-gray-500 p-1"
-                >
-                  {expandedOrder === order._id ? <FaChevronUp /> : <FaChevronDown />}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <div className="text-xs text-gray-500">Trader</div>
-                <div className="font-medium text-sm">{order.traderName}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Farmer</div>
-                <div className="font-medium text-sm">{order.farmerName || 'N/A'}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Items</div>
-                <div className="font-medium text-sm">{order.productItems.length}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Total</div>
-                <div className="font-bold text-green-700 text-sm">
-                  <FaRupeeSign className="inline mr-1" />
-                  {calculateOrderTotal(order).toLocaleString()}
+        {/* Mobile Cards (visible only on mobile) */}
+        <div className="lg:hidden space-y-4">
+          {displayedOrders.map((order) => (
+            <div key={order._id} className="bg-white rounded shadow p-4">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="font-bold text-blue-600">{order.orderId}</div>
+                  <div className="text-sm text-gray-500">{formatDate(order.createdAt)}</div>
                 </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <div className="text-xs text-gray-500">Status</div>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.orderStatus)}`}>
-                  {order.orderStatus}
-                </span>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Verification</div>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getVerificationColor(order)}`}>
-                  {getVerificationStatus(order)}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => openEditDialog(order)}
-                  className="text-green-600 p-1"
-                >
-                  <FaEdit />
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentOrder(order);
-                    setDeleteDialogOpen(true);
-                  }}
-                  className="text-red-600 p-1"
-                >
-                  <FaTrash />
-                </button>
-                {/* INVOICE DOWNLOAD BUTTON FOR MOBILE */}
-                {order.traderToAdminPayment && (
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => generateTraderInvoice(order)}
-                    className="text-yellow-600 p-1"
-                    title="Trader Invoice"
+                    onClick={() => openDetailsDialog(order)}
+                    className="text-blue-600 p-1"
                   >
-                    <FaFileInvoiceDollar />
+                    <FaEye />
                   </button>
-                )}
+                  <button
+                    onClick={() => toggleMobileCard(order._id)}
+                    className="text-gray-500 p-1"
+                  >
+                    {expandedOrder === order._id ? <FaChevronUp /> : <FaChevronDown />}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Expanded Content */}
-            {expandedOrder === order._id && (
-              <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-xs text-gray-500">Trader Mobile</div>
-                    <div className="text-sm">{order.traderMobile || 'N/A'}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500">Farmer Mobile</div>
-                    <div className="text-sm">{order.farmerMobile || 'N/A'}</div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <div className="text-xs text-gray-500">Trader</div>
+                  <div className="font-medium text-sm">{order.traderName}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Farmer</div>
+                  <div className="font-medium text-sm">{order.farmerName || 'N/A'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Items</div>
+                  <div className="font-medium text-sm">{order.productItems.length}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Total</div>
+                  <div className="font-bold text-green-700 text-sm">
+                    <FaRupeeSign className="inline mr-1" />
+                    {calculateOrderTotal(order).toLocaleString()}
                   </div>
                 </div>
-                
-                {order.traderToAdminPayment && (
-                  <div>
-                    <div className="text-xs text-gray-500">Trader Payment</div>
-                    <div className="text-sm font-medium">
-                      {order.traderToAdminPayment.paymentStatus} - 
-                      <span className="text-green-700 ml-1">
-                        ₹{order.traderToAdminPayment.paidAmount} paid
-                      </span>
-                    </div>
-                  </div>
-                )}
+              </div>
 
-                {order.adminToFarmerPayment && (
-                  <div>
-                    <div className="text-xs text-gray-500">Farmer Payment</div>
-                    <div className="text-sm font-medium">
-                      {order.adminToFarmerPayment.paymentStatus} - 
-                      <span className="text-green-700 ml-1">
-                        ₹{order.adminToFarmerPayment.paidAmount} paid
-                      </span>
-                    </div>
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <div className="text-xs text-gray-500">Status</div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(order.orderStatus).bg} ${getStatusBadge(order.orderStatus).color}`}>
+                    {React.createElement(getStatusBadge(order.orderStatus).icon, { className: "h-3 w-3 mr-1" })}
+                    {order.orderStatus}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">Verification</div>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getVerificationColor(order)}`}>
+                    {getVerificationStatus(order)}
+                  </span>
+                </div>
+              </div>
 
-                <div className="flex gap-2 pt-2">
-                  {order.transporterDetails && (
-                    <button
-                      onClick={() => openVerificationDialog(order)}
-                      className="flex-1 bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm font-medium"
-                    >
-                      Verification
-                    </button>
-                  )}
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => openEditDialog(order)}
+                    className="text-green-600 p-1"
+                  >
+                    <FaEdit />
+                  </button>
+                  {/* <button
+                    onClick={() => {
+                      setCurrentOrder(order);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="text-red-600 p-1"
+                  >
+                    <FaTrash />
+                  </button> */}
+                  {/* INVOICE DOWNLOAD BUTTON FOR MOBILE */}
                   {order.traderToAdminPayment && (
                     <button
                       onClick={() => generateTraderInvoice(order)}
-                      className="flex-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-medium"
+                      className="text-yellow-600 p-1"
+                      title="Trader Invoice"
                     >
-                      Trader Invoice
+                      <FaFileInvoiceDollar />
                     </button>
                   )}
-                  {order.adminToFarmerPayment && (
+                  {order.adminToFarmerPayment && order.adminToFarmerPayment.remainingAmount > 0 && (
                     <button
-                      onClick={() => generateFarmerInvoice(order)}
-                      className="flex-1 bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-medium"
+                      onClick={() => openFarmerPaymentModal(order)}
+                      className="text-emerald-600 p-1"
+                      title="Make Payment to Farmer"
                     >
-                      Farmer Invoice
+                      <FaMoneyBillWave />
                     </button>
                   )}
                 </div>
               </div>
-            )}
-          </div>
-        ))}
-      </div>
 
-      {/* Pagination and Limit Controls */}
-      {allOrders.length > 0 && (
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4  p-4 bg-white rounded shadow">
-          {/* Items per page selector */}
-          <div className="flex items-center gap-3">
-            
-            
-            <div className="text-sm text-gray-600">
-              Showing {startItem} to {endItem} of {allOrders.length} orders
-            </div>
-            <FormControl size="small" className="min-w-[120px]">
-              <InputLabel id="items-per-page-label">Show</InputLabel>
-              <Select
-                labelId="items-per-page-label"
-                value={itemsPerPage}
-                label="Show"
-                onChange={handleItemsPerPageChange}
-              >
-                <MenuItem value={5}>5</MenuItem>
-                <MenuItem value={10}>10</MenuItem>
-                <MenuItem value={20}>20</MenuItem>
-                <MenuItem value={50}>50</MenuItem>
-                <MenuItem value={100}>100</MenuItem>
-              </Select>
-            </FormControl>
-          </div>
+              {/* Expanded Content */}
+              {expandedOrder === order._id && (
+                <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-gray-500">Trader Mobile</div>
+                      <div className="text-sm">{order.traderMobile || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Farmer Mobile</div>
+                      <div className="text-sm">{order.farmerMobile || 'N/A'}</div>
+                    </div>
+                  </div>
+                  
+                  {order.traderToAdminPayment && (
+                    <div>
+                      <div className="text-xs text-gray-500">Trader Payment</div>
+                      <div className="text-sm font-medium">
+                        {order.traderToAdminPayment.paymentStatus} - 
+                        <span className="text-green-700 ml-1">
+                          ₹{order.traderToAdminPayment.paidAmount} paid
+                        </span>
+                      </div>
+                      {order.traderToAdminPayment.remainingAmount > 0 && (
+                        <div className="text-xs text-red-600">
+                          ₹{order.traderToAdminPayment.remainingAmount} remaining
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-          {/* Pagination component */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
-            <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
+                  {order.adminToFarmerPayment && (
+                    <div>
+                      <div className="text-xs text-gray-500">Farmer Payment</div>
+                      <div className="text-sm font-medium">
+                        {order.adminToFarmerPayment.paymentStatus} - 
+                        <span className="text-green-700 ml-1">
+                          ₹{order.adminToFarmerPayment.paidAmount} paid
+                        </span>
+                      </div>
+                      {order.adminToFarmerPayment.remainingAmount > 0 && (
+                        <div className="text-xs text-red-600">
+                          ₹{order.adminToFarmerPayment.remainingAmount} remaining
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    {order.transporterDetails && (
+                      <button
+                        onClick={() => openVerificationDialog(order)}
+                        className="flex-1 bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm font-medium"
+                      >
+                        Verification
+                      </button>
+                    )}
+                    {order.traderToAdminPayment && (
+                      <button
+                        onClick={() => generateTraderInvoice(order)}
+                        className="flex-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-medium"
+                      >
+                        Trader Invoice
+                      </button>
+                    )}
+                    {order.adminToFarmerPayment && (
+                      <button
+                        onClick={() => generateFarmerInvoice(order)}
+                        className="flex-1 bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-medium"
+                      >
+                        Farmer Invoice
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-            <Pagination
-              count={totalPages}
-              page={currentPage}
-              onChange={handlePageChange}
-              color="primary"
-              
-              shape="rounded"
-              size="small"
-              showFirstButton
-              showLastButton
-              siblingCount={1}
-              boundaryCount={1}
-            />
-          </div>
+          ))}
         </div>
-      )}
+
+        {/* Pagination and Limit Controls */}
+        {allOrders.length > 0 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-white rounded shadow">
+            {/* Items per page selector */}
+            <div className="flex items-center gap-3">
+              <div className="text-sm text-gray-600">
+                Showing {startItem} to {endItem} of {allOrders.length} orders
+              </div>
+              <FormControl size="small" className="min-w-[120px]">
+                <InputLabel id="items-per-page-label">Show</InputLabel>
+                <Select
+                  labelId="items-per-page-label"
+                  value={itemsPerPage}
+                  label="Show"
+                  onChange={handleItemsPerPageChange}
+                >
+                  <MenuItem value={5}>5</MenuItem>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                  <MenuItem value={100}>100</MenuItem>
+                </Select>
+              </FormControl>
+            </div>
+
+            {/* Pagination component */}
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                color="primary"
+                shape="rounded"
+                size="small"
+                showFirstButton
+                showLastButton
+                siblingCount={1}
+                boundaryCount={1}
+              />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Order Details Dialog */}
       <Dialog
@@ -3255,13 +3445,15 @@ const AdminOrdersRedesign: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-gray-50 p-4 rounded">
                   <h4 className="font-semibold mb-2">Order Status</h4>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(currentOrder.orderStatus)}`}>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadge(currentOrder.orderStatus).bg} ${getStatusBadge(currentOrder.orderStatus).color}`}>
+                    {React.createElement(getStatusBadge(currentOrder.orderStatus).icon, { className: "h-3 w-3 mr-1" })}
                     {currentOrder.orderStatus}
                   </span>
                 </div>
                 <div className="bg-gray-50 p-4 rounded">
                   <h4 className="font-semibold mb-2">Transporter Status</h4>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(currentOrder.transporterStatus || 'pending')}`}>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusBadge(currentOrder.transporterStatus || 'pending').bg} ${getStatusBadge(currentOrder.transporterStatus || 'pending').color}`}>
+                    {React.createElement(getStatusBadge(currentOrder.transporterStatus || 'pending').icon, { className: "h-3 w-3 mr-1" })}
                     {currentOrder.transporterStatus || 'pending'}
                   </span>
                 </div>
@@ -3337,10 +3529,27 @@ const AdminOrdersRedesign: React.FC = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Status:</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(currentOrder.traderToAdminPayment.paymentStatus)}`}>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(currentOrder.traderToAdminPayment.paymentStatus).bg} ${getStatusBadge(currentOrder.traderToAdminPayment.paymentStatus).color}`}>
                           {currentOrder.traderToAdminPayment.paymentStatus}
                         </span>
                       </div>
+                      {currentOrder.traderToAdminPayment.paymentHistory && currentOrder.traderToAdminPayment.paymentHistory.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Payment History:</p>
+                          <div className="space-y-2">
+                            {currentOrder.traderToAdminPayment.paymentHistory.map((payment, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                  {formatDate(payment.paidDate)} - {payment.paymentMethod || 'Payment'}
+                                </span>
+                                <span className="font-medium text-green-600">
+                                  {formatCurrency(payment.amount)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -3363,11 +3572,40 @@ const AdminOrdersRedesign: React.FC = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">Status:</span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(currentOrder.adminToFarmerPayment.paymentStatus)}`}>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(currentOrder.adminToFarmerPayment.paymentStatus).bg} ${getStatusBadge(currentOrder.adminToFarmerPayment.paymentStatus).color}`}>
                           {currentOrder.adminToFarmerPayment.paymentStatus}
                         </span>
                       </div>
+                      {currentOrder.adminToFarmerPayment.paymentHistory && currentOrder.adminToFarmerPayment.paymentHistory.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Payment History:</p>
+                          <div className="space-y-2">
+                            {currentOrder.adminToFarmerPayment.paymentHistory.map((payment, index) => (
+                              <div key={index} className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                  {formatDate(payment.paidDate)} - {payment.paymentMethod || 'Payment'}
+                                </span>
+                                <span className="font-medium text-green-600">
+                                  {formatCurrency(payment.amount)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
+                    {currentOrder.adminToFarmerPayment.remainingAmount > 0 && (
+                      <button
+                        onClick={() => {
+                          setDetailsDialogOpen(false);
+                          openFarmerPaymentModal(currentOrder);
+                        }}
+                        className="mt-4 w-full px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500 text-white rounded hover:from-emerald-600 hover:to-green-600 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <FaMoneyBillWave />
+                        Make Payment to Farmer
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -3493,8 +3731,6 @@ const AdminOrdersRedesign: React.FC = () => {
           </div>
         </div>
       </Dialog>
-
-      {/* Edit Order Dialog - REMOVED and replaced with OrderEditModal */}
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -3667,9 +3903,10 @@ const AdminOrdersRedesign: React.FC = () => {
         </div>
       </Dialog>
 
-      {/* Order Edit Modal */}
+      {/* External Modals */}
+      <AdminFarmerPaymentModal />
       <OrderEditModal />
-    </div>
+    </>
   );
 };
 

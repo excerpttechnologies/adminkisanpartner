@@ -316,7 +316,7 @@ export default function DashboardPage() {
       const dashboardData = dashboardRes.data.data;
 
       // 2️⃣ Fetch transporters
-      const transportRes = await axios.get("https://kisan.etpl.ai/transport/all");
+      const transportRes = await axios.get("https://kisan.etpl.ai/api/transporter/all");
 
       const transporters = Array.isArray(transportRes.data)
         ? transportRes.data
