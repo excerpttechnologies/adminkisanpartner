@@ -88,7 +88,7 @@ const FarmerPaymentsReport: React.FC = () => {
   // Mobile view state
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
+  const API_BASE ='/api';
   const tableRef = useRef<HTMLDivElement>(null);
 
   // Fetch payments data with server-side pagination and sorting

@@ -1464,7 +1464,7 @@ const CropCareOrders: React.FC = () => {
   // Mobile view state
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3000/api';
+  const API_BASE = '/api';
   const tableRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 

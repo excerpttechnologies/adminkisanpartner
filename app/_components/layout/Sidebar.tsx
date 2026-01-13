@@ -420,7 +420,7 @@ const Sidebar = () => {
         {/* User Info */}
         <div className="h-16 flex items-center px-5 border-b border-gray-400">
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex ml-12 lg:ml-1 items-center gap-3">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-green-600 font-semibold">
                   {user.name.charAt(0).toUpperCase()}
