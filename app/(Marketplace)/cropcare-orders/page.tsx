@@ -1614,41 +1614,159 @@ const CropCareOrders: React.FC = () => {
     return { startItem, endItem };
   };
 
-  // Export functions
-  const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "User ID", "Customer Name", "Mobile", "State", "District", "Taluk", "Items Count", "Subtotal", "GST", "Shipping", "Total", "Payment Status", "Order Status", "Date"];
+  // // Export functions
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "User ID", "Customer Name", "Mobile", "State", "District", "Taluk", "Items Count", "Subtotal", "GST", "Shipping", "Total", "Payment Status", "Order Status", "Date"];
     
-    const csvContent = [
-      headers.join("\t"),
-      ...allOrders.map((order) => {
-        return [
-          order.orderId,
-          order.userId,
-          order.shippingAddress.name,
-          order.shippingAddress.mobileNo,
-          order.shippingAddress.state,
-          order.shippingAddress.district,
-          order.shippingAddress.taluk,
-          order.items.length,
-          order.subtotal,
-          order.gst,
-          order.shipping,
-          order.total,
-          order.payment.status,
-          order.orderStatus,
-          new Date(order.createdAt).toLocaleDateString()
-        ].join("\t");
-      })
-    ].join("\n");
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allOrders.map((order) => {
+  //       return [
+  //         order.orderId,
+  //         order.userId,
+  //         order.shippingAddress.name,
+  //         order.shippingAddress.mobileNo,
+  //         order.shippingAddress.state,
+  //         order.shippingAddress.district,
+  //         order.shippingAddress.taluk,
+  //         order.items.length,
+  //         order.subtotal,
+  //         order.gst,
+  //         order.shipping,
+  //         order.total,
+  //         order.payment.status,
+  //         order.orderStatus,
+  //         new Date(order.createdAt).toLocaleDateString()
+  //       ].join("\t");
+  //     })
+  //   ].join("\n");
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+
+
+  const handleCopyToClipboard = async (): Promise<void> => {
+  if (allOrders.length === 0) {
+    toast.error("No orders to copy");
+    return;
+  }
+
+  // Define headers with desired widths
+  const headers = [
+    { name: "Order ID", width: 15 },
+    { name: "Customer", width: 20 },
+    { name: "Mobile", width: 15 },
+    { name: "Location", width: 25 },
+    { name: "Items", width: 8 },
+    { name: "Amount", width: 12 },
+    { name: "Payment", width: 12 },
+    { name: "Status", width: 15 },
+    { name: "Date", width: 12 }
+  ];
+  
+  // Create header row
+  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+  const separator = "─".repeat(headerRow.length);
+  
+  // Format each order row
+  const orderRows = allOrders.map((order: any) => {
+    // Format customer name (truncate if too long)
+    const customerName = order.shippingAddress?.name || "N/A";
+    const formattedCustomer = customerName.length > 18 
+      ? customerName.substring(0, 15) + "..." 
+      : customerName;
+    
+    // Format location
+    const locationParts = [
+      order.shippingAddress?.taluk,
+      order.shippingAddress?.district,
+      order.shippingAddress?.state
+    ].filter(Boolean);
+    const location = locationParts.join(", ") || "N/A";
+    const formattedLocation = location.length > 23 
+      ? location.substring(0, 20) + "..." 
+      : location;
+    
+    // Format payment status with emoji
+    const paymentStatus = order.payment?.status || "N/A";
+    const paymentEmoji = paymentStatus === "completed" ? "✅" : 
+                        paymentStatus === "pending" ? "⏳" : 
+                        paymentStatus === "failed" ? "❌" : "";
+    
+    // Format order status with emoji
+    const orderStatus = order.orderStatus || "N/A";
+    const statusEmoji = orderStatus === "delivered" ? "📦" : 
+                       orderStatus === "shipped" ? "🚚" : 
+                       orderStatus === "processing" ? "🔄" : 
+                       orderStatus === "cancelled" ? "❌" : "📝";
+    
+    // Create row values with padding
+    const rowValues = [
+      (order.orderId || "").padEnd(headers[0].width),
+      formattedCustomer.padEnd(headers[1].width),
+      (order.shippingAddress?.mobileNo || "N/A").padEnd(headers[2].width),
+      formattedLocation.padEnd(headers[3].width),
+      (order.items?.length || 0).toString().padEnd(headers[4].width),
+      `₹${(order.total || 0).toLocaleString()}`.padEnd(headers[5].width),
+      `${paymentEmoji} ${paymentStatus}`.padEnd(headers[6].width),
+      `${statusEmoji} ${orderStatus}`.padEnd(headers[7].width),
+      (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A").padEnd(headers[8].width)
+    ];
+    
+    return rowValues.join(" │ ");
+  });
+  
+  // Calculate totals
+  const totalAmount = allOrders.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+  const totalItems = allOrders.reduce((sum: number, order: any) => sum + (order.items?.length || 0), 0);
+  const completedPayments = allOrders.filter((order: any) => 
+    order.payment?.status === "completed"
+  ).length;
+  
+  // Build complete table
+  const tableContent = [
+    "🛒 ORDER SUMMARY",
+    "=".repeat(headerRow.length),
+    headerRow,
+    separator,
+    ...orderRows,
+    separator,
+    "",
+    "📊 ORDER STATISTICS",
+    `• Total Orders: ${allOrders.length}`,
+    `• Total Items: ${totalItems}`,
+    `• Total Amount: ₹${totalAmount.toLocaleString()}`,
+    `• Completed Payments: ${completedPayments} (${Math.round(completedPayments/allOrders.length*100)}%)`,
+    `• Average Order Value: ₹${Math.round(totalAmount/allOrders.length)}`,
+    "",
+    "💰 PAYMENT STATUS",
+    `• Completed: ${allOrders.filter(o => o.payment?.status === "completed").length}`,
+    `• Pending: ${allOrders.filter(o => o.payment?.status === "pending").length}`,
+    `• Failed: ${allOrders.filter(o => o.payment?.status === "failed").length}`,
+    "",
+    "📦 ORDER STATUS",
+    `• Delivered: ${allOrders.filter(o => o.orderStatus === "delivered").length}`,
+    `• Shipped: ${allOrders.filter(o => o.orderStatus === "shipped").length}`,
+    `• Processing: ${allOrders.filter(o => o.orderStatus === "processing").length}`,
+    `• Cancelled: ${allOrders.filter(o => o.orderStatus === "cancelled").length}`,
+    "",
+    `📅 Report Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success(`Copied ${allOrders.length} orders to clipboard!`);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     const data = allOrders.map((order) => {

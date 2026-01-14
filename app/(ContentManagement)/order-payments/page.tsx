@@ -463,34 +463,157 @@ const TestOrderPayments: React.FC = () => {
   };
 
   // Export functions
-  const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "Trader ID", "Trader Name", "Total Amount", "Paid Amount", "Remaining Amount", "Payment Status", "Payment History Count", "Created At"];
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "Trader ID", "Trader Name", "Total Amount", "Paid Amount", "Remaining Amount", "Payment Status", "Payment History Count", "Created At"];
     
-    const csvContent = [
-      headers.join("\t"),
-      ...allOrders.map((order) => {
-        return [
-          order.orderId,
-          order.traderId,
-          order.traderName,
-          order.traderToAdminPayment.totalAmount,
-          order.traderToAdminPayment.paidAmount,
-          order.traderToAdminPayment.remainingAmount,
-          order.traderToAdminPayment.paymentStatus,
-          order.traderToAdminPayment.paymentHistory.length,
-          new Date(order.createdAt).toLocaleDateString()
-        ].join("\t");
-      })
-    ].join("\n");
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allOrders.map((order) => {
+  //       return [
+  //         order.orderId,
+  //         order.traderId,
+  //         order.traderName,
+  //         order.traderToAdminPayment.totalAmount,
+  //         order.traderToAdminPayment.paidAmount,
+  //         order.traderToAdminPayment.remainingAmount,
+  //         order.traderToAdminPayment.paymentStatus,
+  //         order.traderToAdminPayment.paymentHistory.length,
+  //         new Date(order.createdAt).toLocaleDateString()
+  //       ].join("\t");
+  //     })
+  //   ].join("\n");
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+
+
+   const handleCopyToClipboard = async (): Promise<void> => {
+  if (!allOrders || allOrders.length === 0) {
+    toast.error("No orders to copy");
+    return;
+  }
+
+  // Define headers with widths
+  const headers = [
+    { name: "Order ID", width: 12 },
+    { name: "Trader", width: 20 },
+    { name: "Amount", width: 15 },
+    { name: "Paid", width: 12 },
+    { name: "Due", width: 12 },
+    { name: "Status", width: 15 },
+    { name: "History", width: 10 },
+    { name: "Date", width: 12 }
+  ];
+  
+  // Create header row
+  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+  const separator = "─".repeat(headerRow.length);
+  
+  // Format each payment row
+  const paymentRows = allOrders.map((order: any) => {
+    const payment = order.traderToAdminPayment || {};
+    
+    // Format trader name with ID
+    const traderInfo = `${order.traderName || "N/A"} (${order.traderId || "N/A"})`;
+    const formattedTrader = traderInfo.length > 18 
+      ? traderInfo.substring(0, 15) + "..." 
+      : traderInfo;
+    
+    // Format amounts with ₹ symbol and thousands separator
+    const formatCurrency = (amount: number) => 
+      `₹${(amount || 0).toLocaleString('en-IN')}`;
+    
+    const totalAmount = formatCurrency(payment.totalAmount || 0);
+    const paidAmount = formatCurrency(payment.paidAmount || 0);
+    const dueAmount = formatCurrency(payment.remainingAmount || 0);
+    
+    // Format payment status with emoji
+    const paymentStatus = payment.paymentStatus || "N/A";
+    const statusEmoji = paymentStatus === "completed" ? "✅" : 
+                       paymentStatus === "partially_paid" ? "💰" : 
+                       paymentStatus === "pending" ? "⏳" : 
+                       paymentStatus === "failed" ? "❌" : "";
+    
+    // Get payment history count
+    const historyCount = payment.paymentHistory?.length || 0;
+    const historyText = historyCount > 0 ? `${historyCount} 📋` : "0";
+    
+    // Create row values with padding
+    const rowValues = [
+      (order.orderId || "").padEnd(headers[0].width),
+      formattedTrader.padEnd(headers[1].width),
+      totalAmount.padEnd(headers[2].width),
+      paidAmount.padEnd(headers[3].width),
+      dueAmount.padEnd(headers[4].width),
+      `${statusEmoji} ${paymentStatus}`.padEnd(headers[5].width),
+      historyText.padEnd(headers[6].width),
+      (order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "N/A").padEnd(headers[7].width)
+    ];
+    
+    return rowValues.join(" │ ");
+  });
+  
+  // Calculate financial statistics
+  const totals = allOrders.reduce((acc: any, order: any) => {
+    const payment = order.traderToAdminPayment || {};
+    acc.totalAmount += payment.totalAmount || 0;
+    acc.paidAmount += payment.paidAmount || 0;
+    acc.dueAmount += payment.remainingAmount || 0;
+    return acc;
+  }, { totalAmount: 0, paidAmount: 0, dueAmount: 0 });
+  
+  const statusCounts = allOrders.reduce((acc: any, order: any) => {
+    const status = order.traderToAdminPayment?.paymentStatus || "unknown";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+  
+  // Build complete table with summary
+  const tableContent = [
+    "💰 TRADER PAYMENTS SUMMARY",
+    "=".repeat(headerRow.length),
+    headerRow,
+    separator,
+    ...paymentRows,
+    separator,
+    "",
+    "📊 FINANCIAL SUMMARY",
+    `• Total Orders: ${allOrders.length}`,
+    `• Total Billed Amount: ₹${totals.totalAmount.toLocaleString('en-IN')}`,
+    `• Total Paid Amount: ₹${totals.paidAmount.toLocaleString('en-IN')}`,
+    `• Total Due Amount: ₹${totals.dueAmount.toLocaleString('en-IN')}`,
+    `• Collection Rate: ${totals.totalAmount > 0 ? Math.round((totals.paidAmount / totals.totalAmount) * 100) : 0}%`,
+    "",
+    "📈 PAYMENT STATUS DISTRIBUTION",
+    ...Object.entries(statusCounts).map(([status, count]: [string, any]) => 
+      `• ${status}: ${count} (${Math.round((count / allOrders.length) * 100)}%)`
+    ),
+    "",
+    "💳 PAYMENT HISTORY",
+    `• Total Transactions: ${allOrders.reduce((sum: number, order: any) => 
+      sum + (order.traderToAdminPayment?.paymentHistory?.length || 0), 0)}`,
+    `• Average Transactions per Order: ${Math.round(
+      allOrders.reduce((sum: number, order: any) => 
+        sum + (order.traderToAdminPayment?.paymentHistory?.length || 0), 0) / allOrders.length
+    )}`,
+    "",
+    `📅 Report Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success(`Copied ${allOrders.length} payment records!`);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     const data = allOrders.map((order) => {
@@ -995,32 +1118,9 @@ const TestOrderPayments: React.FC = () => {
           </div>
 
           {/* Min Amount Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaRupeeSign className="text-gray-400" />
-            </div>
-            <input
-              type="number"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-              placeholder="Min Amount"
-              value={minAmountFilter}
-              onChange={(e) => setMinAmountFilter(e.target.value)}
-            />
-          </div>
-
+        
           {/* Max Amount Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaRupeeSign className="text-gray-400" />
-            </div>
-            <input
-              type="number"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-              placeholder="Max Amount"
-              value={maxAmountFilter}
-              onChange={(e) => setMaxAmountFilter(e.target.value)}
-            />
-          </div>
+         
         </div>
 
         {/* Action Buttons */}
@@ -1081,12 +1181,12 @@ const TestOrderPayments: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => {
+              {orders.map((order,i) => {
                 const payment = order.traderToAdminPayment;
                 const paymentPercentage = calculatePaymentPercentage(payment.paidAmount, payment.totalAmount);
                 
                 return (
-                  <tr key={order.orderId} className="hover:bg-gray-50 transition-colors">
+                  <tr key={i} className="hover:bg-gray-50 transition-colors">
                     {/* Order ID */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm font-medium text-blue-600">{order.orderId}</div>
@@ -1204,12 +1304,12 @@ const TestOrderPayments: React.FC = () => {
 
       {/* Mobile Cards (visible only on mobile) */}
       <div className="lg:hidden space-y-3">
-        {orders.map((order) => {
+        {orders.map((order,i) => {
           const payment = order.traderToAdminPayment;
           const paymentPercentage = calculatePaymentPercentage(payment.paidAmount, payment.totalAmount);
           
           return (
-            <div key={order.orderId} className="bg-white rounded-lg shadow p-3">
+            <div key={i} className="bg-white rounded-lg shadow p-3">
               <div className="flex justify-between items-start mb-3">
                 <div className="min-w-0 flex-1">
                   <div className="font-bold text-blue-600 text-sm truncate">{order.orderId}</div>

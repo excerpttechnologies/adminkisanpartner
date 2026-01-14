@@ -2391,37 +2391,84 @@ const AdminOrdersRedesign: React.FC = () => {
   };
 
   // Export functions
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "Date", "Trader", "Farmer", "Items", "Total Amount", "Order Status", "Verification", "Trader Payment", "Farmer Payment"];
+    
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allOrders.map((order) => {
+  //       const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
+  //       const verificationStatus = getVerificationStatus(order);
+  //       return [
+  //         order.orderId,
+  //         new Date(order.createdAt).toLocaleDateString(),
+  //         order.traderName,
+  //         order.farmerName || "N/A",
+  //         order.productItems.length,
+  //         totalAmount,
+  //         order.orderStatus,
+  //         verificationStatus,
+  //         order.traderToAdminPayment?.paymentStatus || "N/A",
+  //         order.adminToFarmerPayment?.paymentStatus || "N/A"
+  //       ].join("\t");
+  //     })
+  //   ].join("\n");
+    
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Orders copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+
   const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "Date", "Trader", "Farmer", "Items", "Total Amount", "Order Status", "Verification", "Trader Payment", "Farmer Payment"];
-    
-    const csvContent = [
-      headers.join("\t"),
-      ...allOrders.map((order) => {
-        const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
-        const verificationStatus = getVerificationStatus(order);
-        return [
-          order.orderId,
-          new Date(order.createdAt).toLocaleDateString(),
-          order.traderName,
-          order.farmerName || "N/A",
-          order.productItems.length,
-          totalAmount,
-          order.orderStatus,
-          verificationStatus,
-          order.traderToAdminPayment?.paymentStatus || "N/A",
-          order.adminToFarmerPayment?.paymentStatus || "N/A"
-        ].join("\t");
-      })
-    ].join("\n");
-    
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Orders copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
+  const headers = ["Order ID", "Date", "Trader", "Farmer", "Items", "Total Amount", "Order Status", "Verification", "Trader Payment", "Farmer Payment"];
+  
+  // Create separator line
+  const separator = "─".repeat(100);
+  
+  // Format each cell with padding
+  const formatCell = (value:any) => {
+    const strValue = String(value || "");
+    return strValue.padEnd(15).substring(0, 15);
   };
+  
+  const tableContent = [
+    // Headers row
+    headers.map(header => formatCell(header)).join(" │ "),
+    separator,
+    
+    // Data rows
+    ...allOrders.map((order) => {
+      const totalAmount = order.productItems.reduce((sum, item) => sum + item.totalAmount, 0);
+      const verificationStatus = getVerificationStatus(order);
+      
+      return [
+        formatCell(order.orderId),
+        formatCell(new Date(order.createdAt).toLocaleDateString()),
+        formatCell(order.traderName),
+        formatCell(order.farmerName || "N/A"),
+        formatCell(order.productItems.length),
+        formatCell(totalAmount),
+        formatCell(order.orderStatus),
+        formatCell(verificationStatus),
+        formatCell(order.traderToAdminPayment?.paymentStatus || "N/A"),
+        formatCell(order.adminToFarmerPayment?.paymentStatus || "N/A")
+      ].join(" │ ");
+    })
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success("Orders copied to clipboard in table format!");
+  } catch (err) {
+    console.error("Failed to copy: ", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
+
 
   const handleExportExcel = () => {
     const data = allOrders.map((order) => {

@@ -1078,19 +1078,56 @@ export default function DistrictsPage() {
   };
 
   /* ---------- EXPORT FUNCTIONS ---------- */
-  const handleCopy = async () => {
-    const text = districts.map((district, index) => 
-      `${index + 1}\t${district.name}\t${district.stateName}`
-    ).join("\n");
+  // const handleCopy = async () => {
+  //   const text = districts.map((district, index) => 
+  //     `${index + 1}\t${district.name}\t${district.stateName}`
+  //   ).join("\n");
     
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Districts data copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy to clipboard");
-    }
-  };
-
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     toast.success("Districts data copied to clipboard!");
+  //   } catch (err) {
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+const handleCopy = async () => {
+  // Calculate column widths
+  const maxIndexLength = districts.length.toString().length + 1;
+  const maxDistrictLength = Math.max(8, ...districts.map(d => d.name.length));
+  const maxStateLength = Math.max(5, ...districts.map(d => d.stateName?.length || 0));
+  
+  // Create table
+  const header = 
+    "No.".padEnd(maxIndexLength) + "\t" +
+    "District".padEnd(maxDistrictLength) + "\t" +
+    "State".padEnd(maxStateLength);
+  
+  const separator = 
+    "-".repeat(maxIndexLength) + "\t" +
+    "-".repeat(maxDistrictLength) + "\t" +
+    "-".repeat(maxStateLength);
+  
+  const rows = districts.map((district, index) =>
+    (index + 1).toString().padEnd(maxIndexLength) + "\t" +
+    district.name.padEnd(maxDistrictLength) + "\t" +
+    (district.stateName || "").padEnd(maxStateLength)
+  ).join("\n");
+  
+  // Add summary statistics
+  const stateCount = [...new Set(districts.map(d => d.stateName))].length;
+  const summary = `\n\n=== Summary ===\n` +
+    `Total Districts: ${districts.length}\n` +
+    `Unique States: ${stateCount}`;
+  
+  const text = `${header}\n${separator}\n${rows}${summary}`;
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Districts data with summary copied!");
+  } catch (err) {
+    toast.error("Failed to copy to clipboard");
+  }
+};
   const handleExportExcel = () => {
     if (districts.length === 0) {
       toast.error("No districts to export");

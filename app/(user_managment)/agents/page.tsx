@@ -7251,24 +7251,82 @@ export default function AgentsPage() {
     printWindow.document.close();
   };
 
-  const handleCopy = async () => {
-    if (agents.length === 0) {
-      toast.error("No agents to copy");
-      return;
-    }
+  // const handleCopy = async () => {
+  //   if (agents.length === 0) {
+  //     toast.error("No agents to copy");
+  //     return;
+  //   }
 
-    const text = exportData.map(f => 
-      `${f["Sr."]}\t${f.Name}\t${f.Mobile}\t${f.Email}\t${f.Role}\t${f.Village}\t${f.District}\t${f.State}\t${f["Registration Status"]}\t${f.Status}\t${f.Registered}`
-    ).join("\n");
+  //   const text = exportData.map(f => 
+  //     `${f["Sr."]}\t${f.Name}\t${f.Mobile}\t${f.Email}\t${f.Role}\t${f.Village}\t${f.District}\t${f.State}\t${f["Registration Status"]}\t${f.Status}\t${f.Registered}`
+  //   ).join("\n");
     
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Agents data copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     toast.success("Agents data copied to clipboard!");
+  //   } catch (err) {
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
 
+  const handleCopy = async (): Promise<void> => {
+  if (agents.length === 0) {
+    toast.error("No agents to copy");
+    return;
+  }
+
+  const headers = ["#", "Name", "Mobile", "Email", "Role", "Village", "District", "State", "Reg Status", "Status", "Registered"];
+  
+  // Column widths
+  const colWidths = [4, 20, 15, 25, 12, 15, 15, 12, 12, 12, 12];
+  
+  // Format header
+  const headerRow = headers.map((h, i) => h.padEnd(colWidths[i])).join(" │ ");
+  
+  // Format data rows
+  const dataRows = exportData.map(f => [
+    (f["Sr."] || "").toString().padEnd(colWidths[0]),
+    (f.Name || "N/A").padEnd(colWidths[1]),
+    (f.Mobile || "N/A").padEnd(colWidths[2]),
+    (f.Email || "N/A").padEnd(colWidths[3]),
+    (f.Role || "N/A").padEnd(colWidths[4]),
+    (f.Village || "N/A").padEnd(colWidths[5]),
+    (f.District || "N/A").padEnd(colWidths[6]),
+    (f.State || "N/A").padEnd(colWidths[7]),
+    (f["Registration Status"] || "N/A").padEnd(colWidths[8]),
+    (f.Status || "N/A").padEnd(colWidths[9]),
+    (f.Registered || "N/A").padEnd(colWidths[10])
+  ].join(" │ "));
+
+  const separator = "─".repeat(headerRow.length);
+  
+  const text = [
+    "AGENTS DIRECTORY",
+    separator,
+    headerRow,
+    separator,
+    ...dataRows,
+    separator,
+    "",
+    `📊 SUMMARY:`,
+    `• Total Agents: ${agents.length}`,
+    `• Active: ${exportData.filter(a => a.Status === "Active").length}`,
+    `• By Role: ${Object.entries(
+      exportData.reduce((acc: Record<string, number>, agent) => {
+        acc[agent.Role] = (acc[agent.Role] || 0) + 1;
+        return acc;
+      }, {})
+    ).map(([role, count]) => `${role}: ${count}`).join(', ')}`,
+    `• Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Agents table copied to clipboard!");
+  } catch (err) {
+    toast.error("Failed to copy to clipboard");
+  }
+};
   const handleExcel = () => {
     if (agents.length === 0) {
       toast.error("No agents to export");
@@ -7927,7 +7985,7 @@ export default function AgentsPage() {
           </div>
 
           {/* District Filter */}
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <select
               className="w-full border border-gray-300 rounded px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-colors"
               value={disName}
@@ -7949,7 +8007,7 @@ export default function AgentsPage() {
                 </>
               )}
             </select>
-          </div>
+          </div> */}
 
           {/* Registration Status Filter */}
           <div className="md:col-span-2">
@@ -8197,7 +8255,7 @@ export default function AgentsPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500">Role</div>
+                      <div className="text-xs text-gray-500 mb-2">Role</div>
                       <div className="text-xs">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadge(agent.role)}`}>
                           {getRoleIcon(agent.role)}
@@ -8207,7 +8265,7 @@ export default function AgentsPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-[.6rem] text-xs">
                       <div>
-                        <div className="text-xs text-gray-500">Registration Status</div>
+                        <div className="text-xs text-gray-500 mb-2">Registration Status</div>
                         <div className="text-xs">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getRegistrationStatusBadge(agent.registrationStatus)}`}>
                             {getRegistrationStatusIcon(agent.registrationStatus)}
@@ -8216,7 +8274,7 @@ export default function AgentsPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500">Status</div>
+                        <div className="text-xs text-gray-500 mb-2">Status</div>
                         <div className="text-xs">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${agent?.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                             {agent?.isActive ? "Active" : "Inactive"}

@@ -301,14 +301,55 @@ export default function CattleOptionsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const copyData = () => {
-    const text = [
-      "Sr\tCattle Option\tSort Order",
-      ...exportRows.map((r) => `${r.Sr}\t${r.Name}\t${r["Sort Order"]}`),
-    ].join("\n");
-    navigator.clipboard.writeText(text);
-    showSuccess("Copied to clipboard");
-  };
+  // const copyData = () => {
+  //   const text = [
+  //     "Sr\tCattle Option\tSort Order",
+  //     ...exportRows.map((r) => `${r.Sr}\t${r.Name}\t${r["Sort Order"]}`),
+  //   ].join("\n");
+  //   navigator.clipboard.writeText(text);
+  //   showSuccess("Copied to clipboard");
+  // };
+ const copyData = async () => {
+  try {
+    if (!exportRows || exportRows.length === 0) {
+      showError("No data available to copy");
+      return;
+    }
+
+    // Calculate dynamic column widths for better alignment
+    const maxSrLength = Math.max(2, Math.max(...exportRows.map(r => String(r.Sr).length)));
+    const maxNameLength = Math.max("Cattle Option".length, ...exportRows.map(r => String(r.Name).length));
+    const maxSortLength = Math.max("Sort Order".length, ...exportRows.map(r => String(r["Sort Order"]).length));
+
+    // Create formatted table with proper alignment
+    const headers = [
+      "Sr".padEnd(maxSrLength),
+      "Cattle Option".padEnd(maxNameLength),
+      "Sort Order".padEnd(maxSortLength)
+    ].join("\t");
+
+    const separator = [
+      "-".repeat(maxSrLength),
+      "-".repeat(maxNameLength),
+      "-".repeat(maxSortLength)
+    ].join("\t");
+
+    const rows = exportRows.map(row => [
+      String(row.Sr).padEnd(maxSrLength),
+      String(row.Name).padEnd(maxNameLength),
+      String(row["Sort Order"]).padEnd(maxSortLength)
+    ].join("\t")).join("\n");
+
+    const text = `${headers}\n${separator}\n${rows}`;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(text);
+    showSuccess(`✅ Copied ${exportRows.length} row${exportRows.length !== 1 ? 's' : ''} to clipboard`);
+  } catch (error) {
+    console.error("Failed to copy data:", error);
+    showError("Failed to copy to clipboard");
+  }
+};
 
   const downloadCSV = () => {
     const csv =

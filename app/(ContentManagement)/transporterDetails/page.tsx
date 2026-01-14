@@ -203,30 +203,182 @@ const ShipmentReport: React.FC = () => {
   };
 
   // Export functions
-  const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "Farmer ID", "Trader", "Status", "Transporter", "Vehicle", "Created Date"];
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "Farmer ID", "Trader", "Status", "Transporter", "Vehicle", "Created Date"];
     
-    const csvContent = [
-      headers.join("\t"),
-      ...allShipmentData.map((item) => [
-        item.orderId,
-        item.farmerId,
-        item.traderName,
-        formatStatus(item.transporterStatus),
-        item.transporterDetails?.transporterName || 'N/A',
-        item.transporterDetails?.vehicleNumber || 'N/A',
-        new Date(item.createdAt).toLocaleDateString()
-      ].join("\t"))
-    ].join("\n");
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allShipmentData.map((item) => [
+  //       item.orderId,
+  //       item.farmerId,
+  //       item.traderName,
+  //       formatStatus(item.transporterStatus),
+  //       item.transporterDetails?.transporterName || 'N/A',
+  //       item.transporterDetails?.vehicleNumber || 'N/A',
+  //       new Date(item.createdAt).toLocaleDateString()
+  //     ].join("\t"))
+  //   ].join("\n");
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+ const handleCopyToClipboard = async (): Promise<void> => {
+  if (!allShipmentData || allShipmentData.length === 0) {
+    toast.error("No shipment data to copy");
+    return;
+  }
+
+  // Define headers with optimal widths
+  const headers = [
+    { name: "Order ID", width: 14 },
+    { name: "Farmer ID", width: 12 },
+    { name: "Trader", width: 18 },
+    { name: "Status", width: 16 },
+    { name: "Transporter", width: 20 },
+    { name: "Vehicle", width: 15 },
+    { name: "Date", width: 12 }
+  ];
+  
+  // Create header row
+  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+  const separator = "─".repeat(headerRow.length);
+  
+  // Format each shipment row
+  const shipmentRows = allShipmentData.map((item: any) => {
+    // Format farmer ID (truncate if long)
+    const farmerId = item.farmerId || "N/A";
+    const formattedFarmerId = farmerId.length > 10 
+      ? farmerId.substring(0, 8) + "..." 
+      : farmerId;
+    
+    // Format trader name
+    const traderName = item.traderName || "N/A";
+    const formattedTrader = traderName.length > 16 
+      ? traderName.substring(0, 13) + "..." 
+      : traderName;
+    
+    // Format status with emoji
+    const status = formatStatus(item.transporterStatus) || "N/A";
+    const statusEmoji = status.toLowerCase().includes("assigned") ? "🚚" : 
+                       status.toLowerCase().includes("picked") ? "📦" : 
+                       status.toLowerCase().includes("delivered") ? "✅" : 
+                       status.toLowerCase().includes("pending") ? "⏳" : 
+                       status.toLowerCase().includes("cancelled") ? "❌" : "📋";
+    
+    // Format transporter details
+    const transporter = item.transporterDetails?.transporterName || "N/A";
+    const formattedTransporter = transporter.length > 18 
+      ? transporter.substring(0, 15) + "..." 
+      : transporter;
+    
+    // Format vehicle number (clean up)
+    const vehicle = item.transporterDetails?.vehicleNumber || "N/A";
+    const formattedVehicle = vehicle.toUpperCase().replace(/\s+/g, "");
+    
+    // Format date
+    const date = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A";
+    
+    // Create row values with padding
+    const rowValues = [
+      (item.orderId || "N/A").padEnd(headers[0].width),
+      formattedFarmerId.padEnd(headers[1].width),
+      formattedTrader.padEnd(headers[2].width),
+      `${statusEmoji} ${status}`.padEnd(headers[3].width),
+      formattedTransporter.padEnd(headers[4].width),
+      formattedVehicle.padEnd(headers[5].width),
+      date.padEnd(headers[6].width)
+    ];
+    
+    return rowValues.join(" │ ");
+  });
+  
+  // Calculate shipment analytics
+  const analytics = allShipmentData.reduce((acc: any, item: any) => {
+    const status = formatStatus(item.transporterStatus) || "unknown";
+    acc.byStatus[status] = (acc.byStatus[status] || 0) + 1;
+    
+    // Count assigned transporters
+    if (item.transporterDetails?.transporterName) {
+      acc.withTransporter++;
     }
-  };
+    
+    // Count with vehicle numbers
+    if (item.transporterDetails?.vehicleNumber) {
+      acc.withVehicle++;
+    }
+    
+    return acc;
+  }, {
+    byStatus: {},
+    withTransporter: 0,
+    withVehicle: 0
+  });
+  
+  // Get unique transporters
+  const uniqueTransporters = new Set(
+    allShipmentData
+      .map((item: any) => item.transporterDetails?.transporterName)
+      .filter(Boolean)
+  );
+  
+  // Build complete table with analytics
+  const tableContent = [
+    "🚚 SHIPMENT & LOGISTICS REPORT",
+    "=".repeat(headerRow.length),
+    headerRow,
+    separator,
+    ...shipmentRows,
+    separator,
+    "",
+    "📊 SHIPMENT ANALYTICS",
+    `• Total Shipments: ${allShipmentData.length}`,
+    `• With Transporter Assigned: ${analytics.withTransporter} (${Math.round(analytics.withTransporter/allShipmentData.length*100)}%)`,
+    `• With Vehicle Details: ${analytics.withVehicle} (${Math.round(analytics.withVehicle/allShipmentData.length*100)}%)`,
+    `• Unique Transporters: ${uniqueTransporters.size}`,
+    "",
+    "📈 SHIPMENT STATUS DISTRIBUTION",
+    ...Object.entries(analytics.byStatus).map(([status, count]: [string, any]) => 
+      `• ${status}: ${count} shipments (${Math.round((count / allShipmentData.length) * 100)}%)`
+    ),
+    "",
+    "👥 ENTITY STATISTICS",
+    `• Unique Farmers: ${new Set(allShipmentData.map((item: any) => item.farmerId)).size}`,
+    `• Unique Traders: ${new Set(allShipmentData.map((item: any) => item.traderName)).size}`,
+    `• Unique Orders: ${new Set(allShipmentData.map((item: any) => item.orderId)).size}`,
+    "",
+    "📅 TIMELINE INSIGHTS",
+    `• Earliest Shipment: ${allShipmentData.length > 0 ? new Date(Math.min(...allShipmentData.map((item: any) => new Date(item.createdAt).getTime()))).toLocaleDateString() : "N/A"}`,
+    `• Latest Shipment: ${allShipmentData.length > 0 ? new Date(Math.max(...allShipmentData.map((item: any) => new Date(item.createdAt).getTime()))).toLocaleDateString() : "N/A"}`,
+    `• Average Shipments per Day: ${calculateAveragePerDay()}`,
+    "",
+    `🔍 Report Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  // Helper function to calculate average shipments per day
+  function calculateAveragePerDay(): string {
+    if (allShipmentData.length === 0) return "0";
+    
+    const dates = allShipmentData.map((item: any) => 
+      new Date(item.createdAt).toDateString()
+    );
+    const uniqueDays = new Set(dates).size;
+    
+    return (allShipmentData.length / uniqueDays).toFixed(1);
+  }
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success(`Copied ${allShipmentData.length} shipment records!`);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     const data = allShipmentData.map((item) => ({

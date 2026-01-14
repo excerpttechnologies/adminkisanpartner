@@ -184,7 +184,7 @@ export const MENU_CONFIG: MenuSection[] = [
         { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
         { name: "Crop Care Orders", path: "/cropcare-orders", icon: "MdLocalHospital" },
         { name: "Labours", path: "/labours", icon: "MdHandyman" },
-        { name: "Agent Req", path: "/agent-requirements", icon: "MdAssignmentTurnedIn" },
+        { name: "Agent Requirement", path: "/agent-requirements", icon: "MdAssignmentTurnedIn" },
         { name: "Crop Postings", path: "/postings", icon: "MdPostAdd" },
     ],
 },
@@ -231,8 +231,9 @@ export const MENU_CONFIG: MenuSection[] = [
         { name: "Post Ads", path: "/admin-advertisement", icon: "MdCampaign" },
         { name: "Add Notes", path: "/adminnotes", icon: "MdNoteAdd" },
         { name: "Menu Icons", path: "/menuicon", icon: "MdIcon" },
-        { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
-        { name: "Order Details", path: "/orders-details", icon: "MdReceiptLong" },
+       
+        { name: "Farmer Trans Management", path: "/orders-details", icon: "MdReceiptLong" },
+         { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
     ],
 },
 
@@ -263,7 +264,7 @@ export const MENU_CONFIG: MenuSection[] = [
         { name: "Farmer Accept", path: "/farmer-accept-report", icon: "MdCheckCircle" },
         { name: "Transporter Details", path: "/transporterDetails", icon: "MdLocalShipping" },
         { name: "Crop Sales", path: "/crop-sales-report", icon: "MdSell" },
-        { name: "Admin To Farmer Payment", path: "/adminToFarmerPayment-report", icon: "MdAccountBalance" },
+        { name: "Admin To Farmer Payment", path: "/admintofarmerpayment-report", icon: "MdAccountBalance" },
     ],
 },
 
@@ -276,7 +277,7 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Quantity Options", path: "/quantity-options", icon: "MdScale" },
       { name: "Acres", path: "/acres", icon: "MdLandscape" },
       { name: "Seeds", path: "/seeds", icon: "MdEco" },
-      { name: "Settings", path: "/settings", icon: "MdSettings" },
+      // { name: "Settings", path: "/settings", icon: "MdSettings" },
       { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
       { name: "Market", path: "/market", icon: "MdStore" },
       { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten" },
@@ -287,7 +288,7 @@ export const MENU_CONFIG: MenuSection[] = [
     items: [
       { name: "States", path: "/states", icon: "MdOutlineLocationCity" },
       { name: "District", path: "/district", icon: "MdOutlineMap" },
-      { name: "Taluka", path: "/taluka", icon: "MdOutlinePlace" },
+      { name: "Taluk ", path: "/taluka", icon: "MdOutlinePlace" },
       { name: "My Profile", path: "/my-profile", icon: "MdPersonOutline" },
       { name: "Logout", path: "/logout", icon: "MdLogout", moduleId: "logout" },
     ],

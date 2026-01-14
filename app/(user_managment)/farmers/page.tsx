@@ -9168,24 +9168,70 @@ export default function FarmersPage() {
     printWindow.document.close();
   };
 
-  const handleCopy = async () => {
-    if (farmers.length === 0) {
-      toast.error("No farmers to copy");
-      return;
-    }
+  // const handleCopy = async () => {
+  //   if (farmers.length === 0) {
+  //     toast.error("No farmers to copy");
+  //     return;
+  //   }
 
-    const text = exportData.map(f => 
-      `${f["Sr."]}\t${f.Name}\t${f.Mobile}\t${f.Email}\t${f.Village}\t${f.District}\t${f.State}\t${f["Registration Status"]}\t${f.Status}\t${f.Registered}`
-    ).join("\n");
+  //   const text = exportData.map(f => 
+  //     `${f["Sr."]}\t${f.Name}\t${f.Mobile}\t${f.Email}\t${f.Village}\t${f.District}\t${f.State}\t${f["Registration Status"]}\t${f.Status}\t${f.Registered}`
+  //   ).join("\n");
     
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Farmers data copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy to clipboard");
-    }
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     toast.success("Farmers data copied to clipboard!");
+  //   } catch (err) {
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+const handleCopy = async (): Promise<void> => {
+  if (farmers.length === 0) {
+    toast.error("No farmers to copy");
+    return;
+  }
+
+  const headers = ["Sr.", "Name", "Mobile", "Email", "Village", "District", "State", "Reg. Status", "Status", "Registered"];
+  
+  // Define column widths
+  const colWidths = [6, 20, 15, 25, 15, 15, 15, 15, 12, 12];
+  
+  // Format a row with padding
+  const formatRow = (data: any, isHeader = false): string => {
+    const values = isHeader ? headers : [
+      data["Sr."] || "",
+      data.Name || "",
+      data.Mobile || "",
+      data.Email || "",
+      data.Village || "",
+      data.District || "",
+      data.State || "",
+      data["Registration Status"] || "",
+      data.Status || "",
+      data.Registered || ""
+    ];
+    
+    return values.map((val: string, i: number) => 
+      String(val).padEnd(colWidths[i])
+    ).join(" | ");
   };
 
+  const text = [
+    formatRow(headers, true),
+    "-".repeat(150),
+    ...exportData.map((f: any) => formatRow(f, false)),
+    "",
+    `TOTAL: ${farmers.length} farmers`,
+    `EXPORTED: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Farmers table copied to clipboard!");
+  } catch (err) {
+    toast.error("Failed to copy to clipboard");
+  }
+};
   const handleExcel = () => {
     if (farmers.length === 0) {
       toast.error("No farmers to export");
@@ -9909,7 +9955,7 @@ export default function FarmersPage() {
           </div>
 
           {/* District Filter */}
-          <div className="md:col-span-2">
+          {/* <div className="md:col-span-2">
             <select
               className="w-full border border-gray-300 rounded px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-colors"
               value={disName}
@@ -9931,7 +9977,7 @@ export default function FarmersPage() {
                 </>
               )}
             </select>
-          </div>
+          </div> */}
 
           {/* Registration Status Filter */}
           <div className="md:col-span-2">
@@ -10195,7 +10241,7 @@ export default function FarmersPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-gray-500">Role</div>
+                      <div className="text-xs text-gray-500 mb-2">Role</div>
                       <div className="text-xs">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getRoleBadge()}`}>
                           {getRoleIcon()}
@@ -10206,7 +10252,7 @@ export default function FarmersPage() {
                     <div className="grid grid-cols-2 gap-[.6rem] text-xs">
                       <div>
                         <div className="text-xs text-gray-500">Registration Status</div>
-                        <div className="text-xs">
+                        <div className="text-xs mt-2">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getRegistrationStatusBadge(farmer.registrationStatus)}`}>
                             {getRegistrationStatusIcon(farmer.registrationStatus)}
                             {farmer.registrationStatus || 'Pending'}
@@ -10214,7 +10260,7 @@ export default function FarmersPage() {
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-500">Status</div>
+                        <div className="text-xs mb-2 text-gray-500">Status</div>
                         <div className="text-xs">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${farmer?.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
                             {farmer?.isActive ? "Active" : "Inactive"}

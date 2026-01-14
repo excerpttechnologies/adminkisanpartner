@@ -224,31 +224,103 @@ export default function QuantityOptionsPage() {
 
   /* ================= EXPORT FUNCTIONS ================= */
 
-  const handleCopyToClipboard = async () => {
+  // const handleCopyToClipboard = async () => {
+  //   if (options.length === 0) {
+  //     toast.error("No data to copy");
+  //     return;
+  //   }
+
+  //   const headers = ["Sr.", "Quantity Option Name", "Sort", "Created Date"];
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...options.map((option, index) => [
+  //       index + 1 + (page - 1) * rowsPerPage,
+  //       option.name,
+  //       option.sort,
+  //       new Date(option.createdAt).toLocaleDateString(),
+  //     ].join("\t"))
+  //   ].join("\n");
+    
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+const handleCopyToClipboard = async () => {
+  try {
     if (options.length === 0) {
       toast.error("No data to copy");
       return;
     }
 
-    const headers = ["Sr.", "Quantity Option Name", "Sort", "Created Date"];
-    const csvContent = [
-      headers.join("\t"),
-      ...options.map((option, index) => [
-        index + 1 + (page - 1) * rowsPerPage,
-        option.name,
-        option.sort,
-        new Date(option.createdAt).toLocaleDateString(),
-      ].join("\t"))
-    ].join("\n");
+    // Calculate dynamic column widths for better alignment
+    const maxSrLength = Math.max(3, 
+      Math.max(...options.map((_, index) => 
+        String(index + 1 + (page - 1) * rowsPerPage).length
+      ))
+    );
+    const maxNameLength = Math.max("Quantity Option Name".length, 
+      Math.max(...options.map(option => option.name?.length || 0))
+    );
+    const maxSortLength = Math.max(4, 
+      Math.max(...options.map(option => String(option.sort || "").length))
+    );
+    const maxDateLength = Math.max("Created Date".length, 10);
+
+    // Create formatted table with headers
+    const headers = [
+      "Sr.".padEnd(maxSrLength),
+      "Quantity Option Name".padEnd(maxNameLength),
+      "Sort".padEnd(maxSortLength),
+      "Created Date".padEnd(maxDateLength)
+    ].join("\t");
+
+    // Add separator line
+    const separator = [
+      "-".repeat(maxSrLength),
+      "-".repeat(maxNameLength),
+      "-".repeat(maxSortLength),
+      "-".repeat(maxDateLength)
+    ].join("\t");
+
+    // Create rows with proper formatting
+    const rows = options.map((option, index) => {
+      const rowNumber = index + 1 + (page - 1) * rowsPerPage;
+      const formattedDate = option.createdAt 
+        ? new Date(option.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
+        : "N/A";
+
+      return [
+        String(rowNumber).padEnd(maxSrLength),
+        (option.name || "").padEnd(maxNameLength),
+        String(option.sort || "").padEnd(maxSortLength),
+        formattedDate.padEnd(maxDateLength)
+      ].join("\t");
+    }).join("\n");
+
+    // Combine everything
+    const tableContent = `${headers}\n${separator}\n${rows}`;
+
+    // Add metadata if needed
+    const metadata = `\n\nPage: ${page}, Items per page: ${rowsPerPage}\nTotal items in view: ${options.length}`;
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+    const finalContent = tableContent + metadata;
+
+    await navigator.clipboard.writeText(finalContent);
+    toast.success(`✅ Copied ${options.length} option${options.length !== 1 ? 's' : ''} to clipboard`);
+    
+  } catch (err) {
+    console.error("Failed to copy: ", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     if (options.length === 0) {

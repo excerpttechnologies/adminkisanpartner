@@ -1571,18 +1571,53 @@ export default function TalukaPage() {
   };
 
   /* ---------- EXPORT FUNCTIONS ---------- */
-  const handleCopy = async () => {
-    const text = talukas.map((taluka, index) => 
-      `${index + 1}\t${taluka.name}\t${taluka.districtName}`
-    ).join("\n");
+  // const handleCopy = async () => {
+  //   const text = talukas.map((taluka, index) => 
+  //     `${index + 1}\t${taluka.name}\t${taluka.districtName}`
+  //   ).join("\n");
     
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Talukas data copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     toast.success("Talukas data copied to clipboard!");
+  //   } catch (err) {
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+ const handleCopy = async () => {
+  // Calculate column widths based on content
+  const maxIndexLength = Math.max(3, talukas.length.toString().length + 1);
+  const maxTalukaLength = Math.max(7, ...talukas.map(t => t.name.length));
+  const maxDistrictLength = Math.max(9, ...talukas.map(t => t.districtName?.length || 0));
+  
+  // Create table header with proper padding
+  const headerNo = "No.".padEnd(maxIndexLength);
+  const headerTaluka = "Taluka".padEnd(maxTalukaLength);
+  const headerDistrict = "District".padEnd(maxDistrictLength);
+  const tableHeader = `${headerNo}\t${headerTaluka}\t${headerDistrict}`;
+  
+  // Create separator line
+  const separator = 
+    "-".repeat(maxIndexLength) + "\t" +
+    "-".repeat(maxTalukaLength) + "\t" +
+    "-".repeat(maxDistrictLength);
+  
+  // Create table rows
+  const tableRows = talukas.map((taluka, index) => {
+    const number = (index + 1).toString().padEnd(maxIndexLength);
+    const talukaName = (taluka.name || "").padEnd(maxTalukaLength);
+    const districtName = (taluka.districtName || "").padEnd(maxDistrictLength);
+    return `${number}\t${talukaName}\t${districtName}`;
+  }).join("\n");
+  
+  const text = `${tableHeader}\n${separator}\n${tableRows}`;
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("Talukas table copied to clipboard!");
+  } catch (err) {
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     if (talukas.length === 0) {
@@ -1849,9 +1884,9 @@ export default function TalukaPage() {
       {/* Header Section */}
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl md:text-2xl font-bold text-gray-800">Talukas Management</h1>
+          <h1 className="text-2xl md:text-2xl font-bold text-gray-800">Taluk Management</h1>
           <p className="text-gray-600 mt-2">
-            Overview and detailed management of all talukas. {pagination.total} talukas found.
+            Overview and detailed management of all taluk. {pagination.total} taluk found.
           </p>
         </div>
       </div>
@@ -2006,7 +2041,7 @@ export default function TalukaPage() {
                     />
                   </th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Sr.</th>
-                  <th className="p-[.6rem] text-sm text-left font-semibold">Taluka Name</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">Taluk Name</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">District</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Created At</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Updated At</th>

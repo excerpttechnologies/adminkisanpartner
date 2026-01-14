@@ -1612,32 +1612,155 @@ const TradersPaymentClearanceReport: React.FC = () => {
   };
 
   // Export functions
-  const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "Trader ID", "Trader Name", "Total Amount", "Paid Amount", "Remaining Amount", "Payment Status"];
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "Trader ID", "Trader Name", "Total Amount", "Paid Amount", "Remaining Amount", "Payment Status"];
     
-    const csvContent = [
-      headers.join("\t"),
-      ...allPaymentRecords.map((record) => {
-        return [
-          record.orderId,
-          record.traderId,
-          record.traderName,
-          record.totalAmount,
-          record.paidAmount,
-          record.remainingAmount,
-          record.paymentStatus
-        ].join("\t");
-      })
-    ].join("\n");
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allPaymentRecords.map((record) => {
+  //       return [
+  //         record.orderId,
+  //         record.traderId,
+  //         record.traderName,
+  //         record.totalAmount,
+  //         record.paidAmount,
+  //         record.remainingAmount,
+  //         record.paymentStatus
+  //       ].join("\t");
+  //     })
+  //   ].join("\n");
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+
+  const handleCopyToClipboard = async (): Promise<void> => {
+  if (!allPaymentRecords || allPaymentRecords.length === 0) {
+    toast.error("No payment records to copy");
+    return;
+  }
+
+  // Define headers with optimal widths
+  const headers = [
+    { name: "Order ID", width: 12 },
+    { name: "Trader", width: 22 },
+    { name: "Total", width: 14 },
+    { name: "Paid", width: 12 },
+    { name: "Due", width: 12 },
+    { name: "Status", width: 18 },
+    { name: "Paid %", width: 8 }
+  ];
+  
+  // Create header row
+  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+  const separator = "─".repeat(headerRow.length);
+  
+  // Format currency with ₹ symbol
+  const formatCurrency = (amount: number): string => 
+    `₹${(amount || 0).toLocaleString('en-IN')}`;
+  
+  // Format each payment record
+  const paymentRows = allPaymentRecords.map((record: any) => {
+    // Format trader info
+    const traderInfo = `${record.traderName || "N/A"} (${record.traderId?.substring(0, 8) || "N/A"}...)`;
+    const formattedTrader = traderInfo.length > 20 
+      ? traderInfo.substring(0, 17) + "..." 
+      : traderInfo;
+    
+    // Calculate payment percentage
+    const paymentPercentage = record.totalAmount > 0 
+      ? Math.round((record.paidAmount / record.totalAmount) * 100) 
+      : 0;
+    
+    // Format status with emoji
+    const paymentStatus = record.paymentStatus || "N/A";
+    const statusEmoji = paymentStatus === "completed" ? "✅" : 
+                       paymentStatus === "partially_paid" ? "💰" : 
+                       paymentStatus === "pending" ? "⏳" : 
+                       paymentStatus === "failed" ? "❌" : "";
+    
+    // Create row values with padding
+    const rowValues = [
+      (record.orderId || "N/A").padEnd(headers[0].width),
+      formattedTrader.padEnd(headers[1].width),
+      formatCurrency(record.totalAmount || 0).padEnd(headers[2].width),
+      formatCurrency(record.paidAmount || 0).padEnd(headers[3].width),
+      formatCurrency(record.remainingAmount || 0).padEnd(headers[4].width),
+      `${statusEmoji} ${paymentStatus}`.padEnd(headers[5].width),
+      `${paymentPercentage}%`.padEnd(headers[6].width)
+    ];
+    
+    return rowValues.join(" │ ");
+  });
+  
+  // Calculate financial analytics
+  const totals = allPaymentRecords.reduce((acc: any, record: any) => {
+    acc.totalAmount += record.totalAmount || 0;
+    acc.totalPaid += record.paidAmount || 0;
+    acc.totalDue += record.remainingAmount || 0;
+    acc.byStatus[record.paymentStatus] = (acc.byStatus[record.paymentStatus] || 0) + 1;
+    return acc;
+  }, {
+    totalAmount: 0,
+    totalPaid: 0,
+    totalDue: 0,
+    byStatus: {}
+  });
+  
+  const collectionRate = totals.totalAmount > 0 
+    ? Math.round((totals.totalPaid / totals.totalAmount) * 100) 
+    : 0;
+  
+  // Build complete table with analytics
+  const tableContent = [
+    "💰 PAYMENT COLLECTION REPORT",
+    "=".repeat(headerRow.length),
+    headerRow,
+    separator,
+    ...paymentRows,
+    separator,
+    "",
+    "📊 FINANCIAL SUMMARY",
+    `• Total Records: ${allPaymentRecords.length}`,
+    `• Total Billed Amount: ₹${totals.totalAmount.toLocaleString('en-IN')}`,
+    `• Total Collected: ₹${totals.totalPaid.toLocaleString('en-IN')}`,
+    `• Total Outstanding: ₹${totals.totalDue.toLocaleString('en-IN')}`,
+    `• Collection Rate: ${collectionRate}%`,
+    `• Average Collection: ₹${Math.round(totals.totalPaid / allPaymentRecords.length).toLocaleString('en-IN')}`,
+    "",
+    "📈 PAYMENT STATUS DISTRIBUTION",
+    ...Object.entries(totals.byStatus).map(([status, count]: [string, any]) => {
+      const amountByStatus = allPaymentRecords
+        .filter((r: any) => r.paymentStatus === status)
+        .reduce((sum: number, r: any) => sum + (r.totalAmount || 0), 0);
+      return `• ${status}: ${count} records (₹${amountByStatus.toLocaleString('en-IN')})`;
+    }),
+    "",
+    "🎯 COLLECTION INSIGHTS",
+    `• Fully Paid: ${allPaymentRecords.filter((r: any) => r.paymentStatus === "completed").length}`,
+    `• Partially Paid: ${allPaymentRecords.filter((r: any) => r.paymentStatus === "partially_paid").length}`,
+    `• Pending: ${allPaymentRecords.filter((r: any) => r.paymentStatus === "pending").length}`,
+    `• High Value (>₹10K): ${allPaymentRecords.filter((r: any) => (r.totalAmount || 0) > 10000).length}`,
+    "",
+    "📅 REPORT METADATA",
+    `• Report Period: All Time`,
+    `• Generated: ${new Date().toLocaleString()}`,
+    `• Data Source: ${allPaymentRecords.length} payment records`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success(`Copied ${allPaymentRecords.length} payment records!`);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
 
   const handleExportExcel = () => {
     const data = allPaymentRecords.map((record) => {

@@ -1468,35 +1468,102 @@ export default function BreedOptionsPage() {
   };
 
   /* ---------- COPY TO CLIPBOARD FUNCTIONALITY ---------- */
-  const copyToClipboard = () => {
-    try {
-      const exportData = filteredBreeds.length > 0 ? filteredBreeds : breeds;
+  // const copyToClipboard = () => {
+  //   try {
+  //     const exportData = filteredBreeds.length > 0 ? filteredBreeds : breeds;
       
-      if (exportData.length === 0) {
-        setMessage("No data to copy");
-        return;
-      }
+  //     if (exportData.length === 0) {
+  //       setMessage("No data to copy");
+  //       return;
+  //     }
 
-      // Create table text with Sort Order
-      let tableText = "ID\tBreed Name\tSort Order\tCreated Date\n";
-      tableText += exportData.map((breed, index) => 
-        `${index + 1}\t${breed.name}\t${breed.sortOrder}\t${new Date().toLocaleDateString()}`
-      ).join("\n");
+  //     // Create table text with Sort Order
+  //     let tableText = "ID\tBreed Name\tSort Order\tCreated Date\n";
+  //     tableText += exportData.map((breed, index) => 
+  //       `${index + 1}\t${breed.name}\t${breed.sortOrder}\t${new Date().toLocaleDateString()}`
+  //     ).join("\n");
 
-      // Copy to clipboard
-      navigator.clipboard.writeText(tableText)
-        .then(() => {
-          showSuccess(`Copied ${exportData.length} breeds to clipboard`);
-        })
-        .catch((err) => {
-          console.error("Failed to copy: ", err);
-          setMessage("Failed to copy to clipboard");
-        });
-    } catch (error) {
-      console.error("Error copying to clipboard:", error);
-      setMessage("Failed to copy data");
+  //     // Copy to clipboard
+  //     navigator.clipboard.writeText(tableText)
+  //       .then(() => {
+  //         showSuccess(`Copied ${exportData.length} breeds to clipboard`);
+  //       })
+  //       .catch((err) => {
+  //         console.error("Failed to copy: ", err);
+  //         setMessage("Failed to copy to clipboard");
+  //       });
+  //   } catch (error) {
+  //     console.error("Error copying to clipboard:", error);
+  //     setMessage("Failed to copy data");
+  //   }
+  // };
+ const copyToClipboard = () => {
+  try {
+    const exportData = filteredBreeds.length > 0 ? filteredBreeds : breeds;
+    
+    if (exportData.length === 0) {
+      setMessage("No data to copy");
+      return;
     }
-  };
+
+    // Calculate dynamic column widths
+    const maxIdLength = Math.max(2, exportData.length.toString().length);
+    const maxNameLength = Math.max(10, ...exportData.map(b => b.name?.length || 0));
+    const maxSortOrderLength = 10; // "Sort Order".length
+    const maxDateLength = 12; // Date format length
+    
+    // Create table header
+    const headers = [
+      "ID".padEnd(maxIdLength),
+      "Breed Name".padEnd(maxNameLength),
+      "Sort Order".padEnd(maxSortOrderLength),
+      "Created Date".padEnd(maxDateLength)
+    ].join("\t");
+    
+    // Create separator
+    const separator = [
+      "-".repeat(maxIdLength),
+      "-".repeat(maxNameLength),
+      "-".repeat(maxSortOrderLength),
+      "-".repeat(maxDateLength)
+    ].join("\t");
+    
+    // Create table rows
+    const rows = exportData.map((breed, index) => {
+      const rowData = [
+        (index + 1).toString().padEnd(maxIdLength),
+        (breed.name || "").padEnd(maxNameLength),
+        (breed.sortOrder?.toString() || "").padEnd(maxSortOrderLength),
+        new Date().toLocaleDateString().padEnd(maxDateLength)
+      ];
+      return rowData.join("\t");
+    }).join("\n");
+    
+    // Combine everything
+    const tableText = `${headers}\n${separator}\n${rows}`;
+    
+    // Build summary string properly
+    let summary = `\n\nTotal Breeds: ${exportData.length}`;
+    if (filteredBreeds.length > 0) {
+      summary += ` (Filtered from ${breeds.length} total)`;
+    }
+    
+    const finalText = tableText + summary;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(finalText)
+      .then(() => {
+        showSuccess(`Copied ${exportData.length} breed${exportData.length !== 1 ? 's' : ''} to clipboard`);
+      })
+      .catch((err) => {
+        console.error("Failed to copy: ", err);
+        setMessage("Failed to copy to clipboard");
+      });
+  } catch (error) {
+    console.error("Error copying to clipboard:", error);
+    setMessage("Failed to copy data");
+  }
+};
 
   /* ---------- EXPORT TO EXCEL FUNCTIONALITY ---------- */
   const exportToExcel = () => {

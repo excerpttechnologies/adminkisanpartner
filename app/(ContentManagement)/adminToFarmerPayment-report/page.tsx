@@ -193,33 +193,183 @@ const FarmerPaymentsReport: React.FC = () => {
   };
 
   // Export functions
-  const handleCopyToClipboard = async () => {
-    const headers = ["Order ID", "Farmer ID", "Farmer Name", "Total Amount", "Paid Amount", "Remaining", "Status", "Payment Date", "Payment Method"];
+  // const handleCopyToClipboard = async () => {
+  //   const headers = ["Order ID", "Farmer ID", "Farmer Name", "Total Amount", "Paid Amount", "Remaining", "Status", "Payment Date", "Payment Method"];
     
-    const csvContent = [
-      headers.join("\t"),
-      ...allPaymentsData.map((item) => [
-        item.orderId,
-        item.farmerId,
-        item.farmerName,
-        item.totalAmount,
-        item.paidAmount,
-        item.remainingAmount,
-        item.paymentStatus,
-        item.paidDate ? new Date(item.paidDate).toLocaleDateString() : 'N/A',
-        item.paymentMethod || 'N/A'
-      ].join("\t"))
-    ].join("\n");
+  //   const csvContent = [
+  //     headers.join("\t"),
+  //     ...allPaymentsData.map((item) => [
+  //       item.orderId,
+  //       item.farmerId,
+  //       item.farmerName,
+  //       item.totalAmount,
+  //       item.paidAmount,
+  //       item.remainingAmount,
+  //       item.paymentStatus,
+  //       item.paidDate ? new Date(item.paidDate).toLocaleDateString() : 'N/A',
+  //       item.paymentMethod || 'N/A'
+  //     ].join("\t"))
+  //   ].join("\n");
     
-    try {
-      await navigator.clipboard.writeText(csvContent);
-      toast.success("Data copied to clipboard!");
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-      toast.error("Failed to copy to clipboard");
-    }
-  };
+  //   try {
+  //     await navigator.clipboard.writeText(csvContent);
+  //     toast.success("Data copied to clipboard!");
+  //   } catch (err) {
+  //     console.error("Failed to copy: ", err);
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+const handleCopyToClipboard = async (): Promise<void> => {
+  if (!allPaymentsData || allPaymentsData.length === 0) {
+    toast.error("No payment data to copy");
+    return;
+  }
 
+  // Define headers with optimized widths
+  const headers = [
+    { name: "Order ID", width: 14 },
+    { name: "Farmer", width: 22 },
+    { name: "Total", width: 14 },
+    { name: "Paid", width: 12 },
+    { name: "Due", width: 12 },
+    { name: "Status", width: 16 },
+    { name: "Paid Date", width: 14 },
+    { name: "Method", width: 12 }
+  ];
+  
+  // Create header row
+  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+  const separator = "─".repeat(headerRow.length);
+  
+  // Format currency with ₹ symbol
+  const formatCurrency = (amount: number): string => 
+    `₹${(amount || 0).toLocaleString('en-IN')}`;
+  
+  // Format each payment row
+  const paymentRows = allPaymentsData.map((item: any) => {
+    // Format farmer info
+    const farmerInfo = `${item.farmerName || "N/A"} (${item.farmerId?.substring(0, 8) || "N/A"}...)`;
+    const formattedFarmer = farmerInfo.length > 20 
+      ? farmerInfo.substring(0, 17) + "..." 
+      : farmerInfo;
+    
+    // Calculate payment percentage
+    const paymentPercentage = item.totalAmount > 0 
+      ? Math.round((item.paidAmount / item.totalAmount) * 100) 
+      : 0;
+    
+    // Format status with emoji
+    const paymentStatus = item.paymentStatus || "N/A";
+    const statusEmoji = paymentStatus === "completed" ? "✅" : 
+                       paymentStatus === "partially_paid" ? "💰" : 
+                       paymentStatus === "pending" ? "⏳" : 
+                       paymentStatus === "failed" ? "❌" : "";
+    
+    // Format payment date
+    const paymentDate = item.paidDate 
+      ? new Date(item.paidDate).toLocaleDateString() 
+      : "Not Paid";
+    
+    // Format payment method
+    const paymentMethod = item.paymentMethod || "N/A";
+    const methodIcon = paymentMethod.toLowerCase().includes("bank") ? "🏦" : 
+                      paymentMethod.toLowerCase().includes("upi") ? "📱" : 
+                      paymentMethod.toLowerCase().includes("cash") ? "💵" : "💳";
+    
+    // Create row values with padding
+    const rowValues = [
+      (item.orderId || "N/A").padEnd(headers[0].width),
+      formattedFarmer.padEnd(headers[1].width),
+      formatCurrency(item.totalAmount || 0).padEnd(headers[2].width),
+      formatCurrency(item.paidAmount || 0).padEnd(headers[3].width),
+      formatCurrency(item.remainingAmount || 0).padEnd(headers[4].width),
+      `${statusEmoji} ${paymentStatus} (${paymentPercentage}%)`.padEnd(headers[5].width),
+      paymentDate.padEnd(headers[6].width),
+      `${methodIcon} ${paymentMethod}`.padEnd(headers[7].width)
+    ];
+    
+    return rowValues.join(" │ ");
+  });
+  
+  // Calculate payment analytics
+  const analytics = allPaymentsData.reduce((acc: any, item: any) => {
+    acc.totalAmount += item.totalAmount || 0;
+    acc.totalPaid += item.paidAmount || 0;
+    acc.totalDue += item.remainingAmount || 0;
+    acc.byStatus[item.paymentStatus] = (acc.byStatus[item.paymentStatus] || 0) + 1;
+    acc.byMethod[item.paymentMethod] = (acc.byMethod[item.paymentMethod] || 0) + 1;
+    
+    // Count paid items
+    if (item.paidDate) {
+      acc.paidCount++;
+    }
+    
+    return acc;
+  }, {
+    totalAmount: 0,
+    totalPaid: 0,
+    totalDue: 0,
+    byStatus: {},
+    byMethod: {},
+    paidCount: 0
+  });
+  
+  const collectionRate = analytics.totalAmount > 0 
+    ? Math.round((analytics.totalPaid / analytics.totalAmount) * 100) 
+    : 0;
+  
+  // Build complete table with analytics
+  const tableContent = [
+    "👨‍🌾 FARMER PAYMENTS REPORT",
+    "=".repeat(headerRow.length),
+    headerRow,
+    separator,
+    ...paymentRows,
+    separator,
+    "",
+    "💰 FINANCIAL SUMMARY",
+    `• Total Payments: ${allPaymentsData.length}`,
+    `• Total Billed: ₹${analytics.totalAmount.toLocaleString('en-IN')}`,
+    `• Total Paid: ₹${analytics.totalPaid.toLocaleString('en-IN')}`,
+    `• Total Due: ₹${analytics.totalDue.toLocaleString('en-IN')}`,
+    `• Collection Rate: ${collectionRate}%`,
+    `• Average Payment: ₹${Math.round(analytics.totalPaid / analytics.paidCount).toLocaleString('en-IN')}`,
+    "",
+    "📊 PAYMENT STATUS DISTRIBUTION",
+    ...Object.entries(analytics.byStatus).map(([status, count]: [string, any]) => {
+      const amountByStatus = allPaymentsData
+        .filter((item: any) => item.paymentStatus === status)
+        .reduce((sum: number, item: any) => sum + (item.totalAmount || 0), 0);
+      return `• ${status}: ${count} payments (₹${amountByStatus.toLocaleString('en-IN')})`;
+    }),
+    "",
+    "💳 PAYMENT METHOD ANALYSIS",
+    ...Object.entries(analytics.byMethod).map(([method, count]: [string, any]) => 
+      `• ${method}: ${count} payments (${Math.round((count / allPaymentsData.length) * 100)}%)`
+    ),
+    "",
+    "👥 FARMER PAYMENT INSIGHTS",
+    `• Unique Farmers: ${new Set(allPaymentsData.map((item: any) => item.farmerId)).size}`,
+    `• Unique Orders: ${new Set(allPaymentsData.map((item: any) => item.orderId)).size}`,
+    `• Payments Made: ${analytics.paidCount}`,
+    `• Pending Payments: ${allPaymentsData.length - analytics.paidCount}`,
+    "",
+    "📅 TIMELINE ANALYSIS",
+    `• Paid Payments: ${analytics.paidCount}`,
+    `• Unpaid Payments: ${allPaymentsData.filter((item: any) => !item.paidDate).length}`,
+    `• Average Payment Amount: ₹${Math.round(analytics.totalPaid / Math.max(analytics.paidCount, 1)).toLocaleString('en-IN')}`,
+    "",
+    `🔍 Report Generated: ${new Date().toLocaleString()}`
+  ].join("\n");
+  
+  try {
+    await navigator.clipboard.writeText(tableContent);
+    toast.success(`Copied ${allPaymentsData.length} farmer payments!`);
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    toast.error("Failed to copy to clipboard");
+  }
+};
   const handleExportExcel = () => {
     const data = allPaymentsData.map((item) => ({
       "Order ID": item.orderId,
@@ -618,8 +768,7 @@ const FarmerPaymentsReport: React.FC = () => {
             >
               <option value="">All Status</option>
               <option value="pending">Pending</option>
-              <option value="partial">Partial</option>
-              <option value="completed">Completed</option>
+              <option value="paid">Paid</option>
             </select>
           </div>
 

@@ -753,19 +753,47 @@ export default function StatesPage() {
   };
 
   /* ---------- EXPORT FUNCTIONS ---------- */
-  const handleCopy = async () => {
-    const text = states.map((state, index) => 
-      `${index + 1}\t${state.name}`
-    ).join("\n");
+  // const handleCopy = async () => {
+  //   const text = states.map((state, index) => 
+  //     `${index + 1}\t${state.name}`
+  //   ).join("\n");
     
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("States data copied to clipboard!");
-    } catch (err) {
-      toast.error("Failed to copy to clipboard");
-    }
-  };
-
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     toast.success("States data copied to clipboard!");
+  //   } catch (err) {
+  //     toast.error("Failed to copy to clipboard");
+  //   }
+  // };
+ const handleCopy = async () => {
+  // Calculate column widths based on content
+  const maxIndexLength = states.length.toString().length + 1;
+  const maxNameLength = Math.max(...states.map(state => state.name.length), 12);
+  
+  // Create table header
+  const headerNumber = "No.".padEnd(maxIndexLength);
+  const headerName = "State Name".padEnd(maxNameLength);
+  const tableHeader = `${headerNumber}\t${headerName}`;
+  
+  // Create separator
+  const separator = "-".repeat(maxIndexLength) + "\t" + "-".repeat(maxNameLength);
+  
+  // Create table rows
+  const tableRows = states.map((state, index) => {
+    const number = (index + 1).toString().padEnd(maxIndexLength);
+    const name = state.name.padEnd(maxNameLength);
+    return `${number}\t${name}`;
+  }).join("\n");
+  
+  const text = `${tableHeader}\n${separator}\n${tableRows}`;
+  
+  try {
+    await navigator.clipboard.writeText(text);
+    toast.success("States table copied to clipboard!");
+  } catch (err) {
+    toast.error("Failed to copy to clipboard");
+  }
+};
   const handleExportExcel = () => {
     if (states.length === 0) {
       toast.error("No states to export");
