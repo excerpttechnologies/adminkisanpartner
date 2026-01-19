@@ -122,6 +122,9 @@ export async function POST(req: NextRequest) {
       pageAccess.push("dashboard");
     }
 
+        if (!pageAccess.includes("admin-notifications")) {
+      pageAccess.push("admin notifications");
+    }
     const adminData = {
       ...body,
       pageAccess,

@@ -2650,6 +2650,7 @@ const modalStyle = {
 
 export default function CropManagementPage() {
   const [crops, setCrops] = useState<Crop[]>([]);
+  const [allcrops, setAllCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -2682,8 +2683,8 @@ export default function CropManagementPage() {
   const tableRef = useRef<HTMLDivElement>(null);
 
   // Get unique farming types and seed types from crops data
-  const farmingTypes = [...new Set(crops.map(crop => crop.farmingType))];
-  const seedTypes = [...new Set(crops.map(crop => crop.seedType))];
+  const farmingTypes = [...new Set(allcrops.map(crop => crop.farmingType))];
+  const seedTypes = [...new Set(allcrops.map(crop => crop.seedType))];
 
   /* ================= API FUNCTIONS ================= */
 
@@ -2714,6 +2715,7 @@ export default function CropManagementPage() {
         const total = response.data.total || 0;
         
         setCrops(data);
+        setAllCrops(response.data.data1)
         setTotalItems(total);
         setTotalPages(Math.ceil(total / limit) || 1);
       } else {
@@ -3579,10 +3581,10 @@ export default function CropManagementPage() {
                       type="checkbox"
                       checked={selectedIds.includes(row._id)}
                       onChange={(e) => handleSelectOne(row._id, e.target.checked)}
-                      className="rounded border-gray-300"
+                      className="rounded border-gray-300 -mt-12 -ml-2"
                     />
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 ">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
                           {getFarmingTypeLabel(row.farmingType)}
                         </span>
@@ -3591,6 +3593,7 @@ export default function CropManagementPage() {
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 mb-1">
+                        <span className="text-xs ml-2 mr-2">Sowing Date</span>
                         <FaCalendarAlt className="inline w-3 h-3 mr-1" />
                         {formatDate(row.sowingDate)}
                       </div>
@@ -3618,7 +3621,7 @@ export default function CropManagementPage() {
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="font-medium">Acres:</span>
                     <span className="ml-2 font-bold text-gray-900">

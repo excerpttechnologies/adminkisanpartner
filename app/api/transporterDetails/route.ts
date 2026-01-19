@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
-    const status = searchParams.get("status"); // pending | completed
+    const status = searchParams.get("status") || ""; // pending | completed
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder: 1 | -1 =
       searchParams.get("sortOrder") === "asc" ? 1 : -1;
@@ -22,11 +22,9 @@ export async function GET(req: NextRequest) {
     /* ------------------ MATCH FILTER ------------------ */
     const match: Record<string, any> = {};
 
-    if (status === "completed") {
-      match.transporterStatus = "completed";
-    } else if (status === "pending") {
-      match.transporterStatus = { $ne: "completed" };
-    }
+    if (status) {
+      match.transporterStatus = status;
+    } 
 
     if (search) {
       match.$or = [

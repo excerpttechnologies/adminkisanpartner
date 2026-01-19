@@ -19,14 +19,16 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists
     const user = await Admin.findOne({ email });
+
  
     // For security, don't reveal if user doesn't exist
     if (!user) {
       return NextResponse.json({
-        success: true,
-        message: 'If an account exists with this email, you will receive reset instructions.'
+        success: false,
+        message: 'email not found'
       });
     }
+
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');

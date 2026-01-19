@@ -204,6 +204,7 @@ export interface IAdmin extends Document {
   state:string;
   district:string;
   commodity:string[];
+  subCategories:string[];
   comparePassword(password: string): Promise<boolean>;
 }
 
@@ -252,6 +253,7 @@ const AdminSchema = new Schema<IAdmin>(
     state: String,
     district: String,
     commodity: [String],
+    subCategories:[String],
     resetToken: String,       
     resetTokenExpiry: Date, 
   },

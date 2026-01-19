@@ -272,11 +272,11 @@ export const MENU_CONFIG: MenuSection[] = [
   {
     section: "Options & Settings",
     items: [
-      { name: "Breed Options", path: "/breed-options", icon: "MdPets" },
-      { name: "Cattle Options", path: "/cattle-options", icon: "MdGrass" },
-      { name: "Quantity Options", path: "/quantity-options", icon: "MdScale" },
-      { name: "Acres", path: "/acres", icon: "MdLandscape" },
-      { name: "Seeds", path: "/seeds", icon: "MdEco" },
+      // { name: "Breed Options", path: "/breed-options", icon: "MdPets" },
+      // { name: "Cattle Options", path: "/cattle-options", icon: "MdGrass" },
+      // { name: "Quantity Options", path: "/quantity-options", icon: "MdScale" },
+      // { name: "Acres", path: "/acres", icon: "MdLandscape" },
+      // { name: "Seeds", path: "/seeds", icon: "MdEco" },
       // { name: "Settings", path: "/settings", icon: "MdSettings" },
       { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
       { name: "Market", path: "/market", icon: "MdStore" },

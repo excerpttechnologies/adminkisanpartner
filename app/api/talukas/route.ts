@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
         .populate({
           path: 'districtId'
         })
-        .sort({ name: 1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),

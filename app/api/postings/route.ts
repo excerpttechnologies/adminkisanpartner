@@ -880,12 +880,15 @@ export async function GET(req: NextRequest) {
       .skip((page - 1) * limit)
       .limit(limit);
 
+      const data1=await Posting.find({})
+
     return NextResponse.json({
       success: true,
       page,
       limit,
       total,
       data,
+      data1
     });
   } catch (error) {
     console.error("Error fetching crops:", error);

@@ -115,9 +115,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   await connectDB();
 
+  const Allstates=await State.find({})
+
   const { searchParams } = new URL(req.url);
   const page = Number(searchParams.get("page")) || 1;
-  const limit = Number(searchParams.get("limit")) || 10;
+  const limit = Number(searchParams.get("limit")) || Number(Allstates.length > 0? Allstates.length : 10);
   const search = searchParams.get("search") || "";
 
   const query = search
