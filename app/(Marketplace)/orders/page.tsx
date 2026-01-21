@@ -3338,11 +3338,11 @@ const AdminOrdersRedesign: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     {order.transporterDetails && (
                       <button
                         onClick={() => openVerificationDialog(order)}
-                        className="flex-1 bg-purple-100 text-purple-700 px-3 py-1 rounded text-sm font-medium"
+                        className="flex-1 bg-purple-100 text-purple-700 px-2 py-1 rounded text-sm font-medium"
                       >
                         Verification
                       </button>
@@ -3350,7 +3350,7 @@ const AdminOrdersRedesign: React.FC = () => {
                     {order.traderToAdminPayment && (
                       <button
                         onClick={() => generateTraderInvoice(order)}
-                        className="flex-1 bg-yellow-100 text-yellow-700 px-3 py-1 rounded text-sm font-medium"
+                        className="flex-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm font-medium"
                       >
                         Trader Invoice
                       </button>
@@ -3358,7 +3358,7 @@ const AdminOrdersRedesign: React.FC = () => {
                     {order.adminToFarmerPayment && (
                       <button
                         onClick={() => generateFarmerInvoice(order)}
-                        className="flex-1 bg-green-100 text-green-700 px-3 py-1 rounded text-sm font-medium"
+                        className="flex-1 bg-green-100 text-green-700 px-2 py-1 rounded text-sm font-medium"
                       >
                         Farmer Invoice
                       </button>
@@ -3750,7 +3750,7 @@ const AdminOrdersRedesign: React.FC = () => {
           )}
 
           {/* Dialog Footer */}
-          <div className="mt-6 pt-6 border-t flex justify-end gap-3">
+          <div className="mt-6 pt-6 border-t flex flex-wrap justify-end gap-3">
             <button
               onClick={() => setDetailsDialogOpen(false)}
               className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 transition-colors"

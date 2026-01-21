@@ -1,18 +1,3 @@
-// import mongoose, { Schema, Document, Model } from "mongoose";
-
-// export interface IOrder extends Document {}
-
-// const OrderSchema = new Schema({}, {
-//   timestamps: true,
-//   strict: false,          // ✅ accept any structure
-//   collection: "orders",   // ✅ existing collection
-// });
-
-// const Order: Model<IOrder> =
-//   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);
-
-// export default Order;
-
 
 
 /* eslint-disable @typescript-eslint/no-empty-object-type */

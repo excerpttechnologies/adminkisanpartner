@@ -5,6 +5,7 @@
 
 
 
+
 // "use client"
 
 // import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -150,24 +151,44 @@
 //   const tableRef = useRef<HTMLDivElement>(null);
 
 //   // Fetch categories - Updated to ensure unique categories
-//   const fetchCategories = useCallback(async () => {
-//     try {
-//       const response = await axios.get(`${API_BASE}/category`);
-//       if (response.data.success) {
-//         const categoriesData = response.data.categories || [];
+//   // const fetchCategories = useCallback(async () => {
+//   //   try {
+//   //     const response = await axios.get(`${API_BASE}/category`);
+//   //     if (response.data.success) {
+//   //       const categoriesData = response.data.categories || [];
         
-//         // Ensure unique categories by categoryId
-//         const uniqueCategories = Array.from(
-//           new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
-//         );
+//   //       // Ensure unique categories by categoryId
+//   //       const uniqueCategories = Array.from(
+//   //         new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
+//   //       );
         
-//         setCategories(uniqueCategories);
-//       }
-//     } catch (error) {
-//       console.error('Error fetching categories:', error);
-//       toast.error('Failed to fetch categories');
+//   //       setCategories(uniqueCategories);
+//   //     }
+//   //   } catch (error) {
+//   //     console.error('Error fetching categories:', error);
+//   //     toast.error('Failed to fetch categories');
+//   //   }
+//   // }, [API_BASE]);
+
+
+// const fetchCategories = useCallback(async () => {
+//   try {
+//     const response = await axios.get(`${API_BASE}/category`);
+//     if (response.data.success) {
+//       const categoriesData = response.data.categories || [];
+      
+//       // Ensure unique categories by categoryId
+//       const uniqueCategories: Category[] = Array.from(
+//         new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
+//       ) as Category[];
+      
+//       setCategories(uniqueCategories);
 //     }
-//   }, [API_BASE]);
+//   } catch (error) {
+//     console.error('Error fetching categories:', error);
+//     toast.error('Failed to fetch categories');
+//   }
+// }, [API_BASE]);
 
 //   // Fetch subcategories
 //   const fetchSubCategories = useCallback(async () => {
@@ -349,36 +370,160 @@
 //   };
 
 //   // Export functions
-//   const handleCopyToClipboard = async () => {
-//     const headers = ["Product ID", "Crop", "Category", "Grade", "Quantity", "Price/Unit", "Total Value", "Status", "Delivery Date"];
+//   // const handleCopyToClipboard = async () => {
+//   //   const headers = ["Product ID", "Crop", "Category", "Grade", "Quantity", "Price/Unit", "Total Value", "Status", "Delivery Date"];
     
-//     const csvContent = [
-//       headers.join("\t"),
-//       ...allSalesData.map((item) => {
-//         const totalValue = item.pricePerUnit * item.totalQty;
-//         return [
-//           item.productId,
-//           item.cropBriefDetails,
-//           item.categoryName || "N/A",
-//           item.grade,
-//           item.totalQty,
-//           item.pricePerUnit,
-//           totalValue,
-//           item.gradeStatus,
-//           new Date(item.deliveryDate).toLocaleDateString()
-//         ].join("\t");
-//       })
-//     ].join("\n");
+//   //   const csvContent = [
+//   //     headers.join("\t"),
+//   //     ...allSalesData.map((item) => {
+//   //       const totalValue = item.pricePerUnit * item.totalQty;
+//   //       return [
+//   //         item.productId,
+//   //         item.cropBriefDetails,
+//   //         item.categoryName || "N/A",
+//   //         item.grade,
+//   //         item.totalQty,
+//   //         item.pricePerUnit,
+//   //         totalValue,
+//   //         item.gradeStatus,
+//   //         new Date(item.deliveryDate).toLocaleDateString()
+//   //       ].join("\t");
+//   //     })
+//   //   ].join("\n");
     
-//     try {
-//       await navigator.clipboard.writeText(csvContent);
-//       toast.success("Data copied to clipboard!");
-//     } catch (err) {
-//       console.error("Failed to copy: ", err);
-//       toast.error("Failed to copy to clipboard");
-//     }
-//   };
+//   //   try {
+//   //     await navigator.clipboard.writeText(csvContent);
+//   //     toast.success("Data copied to clipboard!");
+//   //   } catch (err) {
+//   //     console.error("Failed to copy: ", err);
+//   //     toast.error("Failed to copy to clipboard");
+//   //   }
+//   // };
+// const handleCopyToClipboard = async (): Promise<void> => {
+//   if (!allSalesData || allSalesData.length === 0) {
+//     toast.error("No sales data to copy");
+//     return;
+//   }
 
+//   // Define headers with optimized widths
+//   const headers = [
+//     { name: "Product ID", width: 14 },
+//     { name: "Crop", width: 18 },
+//     { name: "Category", width: 12 },
+//     { name: "Grade", width: 8 },
+//     { name: "Qty", width: 10 },
+//     { name: "Price/Unit", width: 12 },
+//     { name: "Total Value", width: 14 },
+//     { name: "Status", width: 14 },
+//     { name: "Delivery", width: 12 }
+//   ];
+  
+//   // Create header row
+//   const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+//   const separator = "─".repeat(headerRow.length);
+  
+//   // Format each sales row
+//   const salesRows = allSalesData.map((item: any) => {
+//     // Safely calculate total value
+//     const totalValue = (item.pricePerUnit || 0) * (item.totalQty || 0);
+    
+//     // Format crop name
+//     const cropName = item.cropBriefDetails || "N/A";
+//     const formattedCrop = cropName.length > 16 
+//       ? cropName.substring(0, 13) + "..." 
+//       : cropName;
+    
+//     // Format grade with indicator
+//     const grade = item.grade || "N/A";
+//     const gradeIndicator = grade.includes("A") || grade.includes("1") ? "A" : 
+//                           grade.includes("B") || grade.includes("2") ? "B" : 
+//                           grade.includes("C") || grade.includes("3") ? "C" : grade;
+    
+//     // Format status with color indicator
+//     const status = item.gradeStatus || "N/A";
+//     const statusIndicator = status.toLowerCase().includes("sold") ? "✅" : 
+//                            status.toLowerCase().includes("listed") ? "📋" : 
+//                            status.toLowerCase().includes("pending") ? "⏳" : 
+//                            status.toLowerCase().includes("delivered") ? "🚚" : "📊";
+    
+//     // Format dates
+//     const deliveryDate = item.deliveryDate 
+//       ? new Date(item.deliveryDate).toLocaleDateString() 
+//       : "N/A";
+    
+//     // Format currency
+//     const formatCurrency = (amount: number) => 
+//       `₹${(amount || 0).toLocaleString('en-IN')}`;
+    
+//     // Create row with proper padding
+//     const row = [
+//       (item.productId || "N/A").padEnd(headers[0].width),
+//       formattedCrop.padEnd(headers[1].width),
+//       (item.categoryName || "N/A").padEnd(headers[2].width),
+//       gradeIndicator.padEnd(headers[3].width),
+//       (item.totalQty || 0).toString().padEnd(headers[4].width),
+//       formatCurrency(item.pricePerUnit || 0).padEnd(headers[5].width),
+//       formatCurrency(totalValue).padEnd(headers[6].width),
+//       `${statusIndicator} ${status}`.padEnd(headers[7].width),
+//       deliveryDate.padEnd(headers[8].width)
+//     ];
+    
+//     return row.join(" │ ");
+//   });
+  
+//   // Calculate statistics
+//   const stats = allSalesData.reduce((acc: any, item: any) => {
+//     const value = (item.pricePerUnit || 0) * (item.totalQty || 0);
+    
+//     acc.totalQty += item.totalQty || 0;
+//     acc.totalValue += value;
+//     acc.byStatus[item.gradeStatus] = (acc.byStatus[item.gradeStatus] || 0) + 1;
+//     acc.byGrade[item.grade] = (acc.byGrade[item.grade] || 0) + 1;
+    
+//     return acc;
+//   }, {
+//     totalQty: 0,
+//     totalValue: 0,
+//     byStatus: {},
+//     byGrade: {}
+//   });
+  
+//   // Build the complete table
+//   const tableContent = [
+//     "📦 SALES INVENTORY",
+//     "=".repeat(headerRow.length),
+//     headerRow,
+//     separator,
+//     ...salesRows,
+//     separator,
+//     "",
+//     "📊 SUMMARY",
+//     `• Total Products: ${allSalesData.length}`,
+//     `• Total Quantity: ${stats.totalQty.toLocaleString('en-IN')}`,
+//     `• Total Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
+//     `• Avg Price/Unit: ₹${stats.totalQty > 0 ? Math.round(stats.totalValue / stats.totalQty) : 0}`,
+//     "",
+//     "📈 STATUS DISTRIBUTION",
+//     ...Object.entries(stats.byStatus).map(([status, count]: [string, any]) => 
+//       `• ${status}: ${count} items`
+//     ),
+//     "",
+//     "⭐ GRADE DISTRIBUTION",
+//     ...Object.entries(stats.byGrade).map(([grade, count]: [string, any]) => 
+//       `• ${grade}: ${count} items`
+//     ),
+//     "",
+//     `📅 Generated: ${new Date().toLocaleString()}`
+//   ].join("\n");
+  
+//   try {
+//     await navigator.clipboard.writeText(tableContent);
+//     toast.success(`Copied ${allSalesData.length} products!`);
+//   } catch (err) {
+//     console.error("Failed to copy:", err);
+//     toast.error("Failed to copy to clipboard");
+//   }
+// };
 //   const handleExportExcel = () => {
 //     const data = allSalesData.map((item) => {
 //       const totalValue = item.pricePerUnit * item.totalQty;
@@ -1489,14 +1634,6 @@
 
 
 
-
-
-
-
-
-
-
-
 "use client"
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -1641,45 +1778,26 @@ const CropSalesReport: React.FC = () => {
   const API_BASE = '/api';
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Fetch categories - Updated to ensure unique categories
-  // const fetchCategories = useCallback(async () => {
-  //   try {
-  //     const response = await axios.get(`${API_BASE}/category`);
-  //     if (response.data.success) {
-  //       const categoriesData = response.data.categories || [];
+  // Fetch categories - Always fetch all categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/category`);
+      if (response.data.success) {
+        const categoriesData = response.data.categories || [];
         
-  //       // Ensure unique categories by categoryId
-  //       const uniqueCategories = Array.from(
-  //         new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
-  //       );
+        // Ensure unique categories by categoryId
+        const uniqueCategories: Category[] = Array.from(
+          new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
+        ) as Category[];
         
-  //       setCategories(uniqueCategories);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching categories:', error);
-  //     toast.error('Failed to fetch categories');
-  //   }
-  // }, [API_BASE]);
-
-
-const fetchCategories = useCallback(async () => {
-  try {
-    const response = await axios.get(`${API_BASE}/category`);
-    if (response.data.success) {
-      const categoriesData = response.data.categories || [];
-      
-      // Ensure unique categories by categoryId
-      const uniqueCategories: Category[] = Array.from(
-        new Map(categoriesData.map((cat: Category) => [cat.categoryId, cat])).values()
-      ) as Category[];
-      
-      setCategories(uniqueCategories);
+        setCategories(uniqueCategories);
+        console.log('Categories loaded:', uniqueCategories.length);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      // Don't show toast here, we'll extract from sales data
     }
-  } catch (error) {
-    console.error('Error fetching categories:', error);
-    toast.error('Failed to fetch categories');
-  }
-}, [API_BASE]);
+  }, [API_BASE]);
 
   // Fetch subcategories
   const fetchSubCategories = useCallback(async () => {
@@ -1690,7 +1808,6 @@ const fetchCategories = useCallback(async () => {
       }
     } catch (error) {
       console.error('Error fetching subcategories:', error);
-      toast.error('Failed to fetch subcategories');
     }
   }, [API_BASE]);
 
@@ -1715,6 +1832,26 @@ const fetchCategories = useCallback(async () => {
       setFilteredSubCategories(filtered);
     }
   }, [categoryFilter, subCategories]);
+
+  // Extract categories from sales data as fallback
+  const extractCategoriesFromData = useCallback((data: CropSaleItem[]) => {
+    if (data.length === 0) return [];
+    
+    const categoryMap = new Map<string, Category>();
+    data.forEach(item => {
+      if (item.categoryName && item.categoryId) {
+        if (!categoryMap.has(item.categoryId)) {
+          categoryMap.set(item.categoryId, {
+            _id: item.categoryId,
+            categoryName: item.categoryName,
+            categoryId: item.categoryId
+          });
+        }
+      }
+    });
+    
+    return Array.from(categoryMap.values());
+  }, []);
 
   // Fetch sales data with server-side pagination and sorting
   const fetchSalesData = useCallback(async () => {
@@ -1754,7 +1891,16 @@ const fetchCategories = useCallback(async () => {
         
         const exportResponse = await axios.get(`${API_BASE}/crop-sales-report?${exportParams.toString()}`);
         if (exportResponse.data.success) {
-          setAllSalesData(exportResponse.data.data || []);
+          const allData = exportResponse.data.data || [];
+          setAllSalesData(allData);
+          
+          // Extract categories from data if categories API didn't load properly
+          if (categories.length === 0 && allData.length > 0) {
+            const extractedCategories = extractCategoriesFromData(allData);
+            if (extractedCategories.length > 0) {
+              setCategories(extractedCategories);
+            }
+          }
         }
       } else {
         toast.error('Failed to fetch crop sales data');
@@ -1765,9 +1911,9 @@ const fetchCategories = useCallback(async () => {
     } finally {
       setLoading(false);
     }
-  }, [API_BASE, searchInput, categoryFilter, subCategoryFilter, gradeFilter, statusFilter, currentPage, itemsPerPage, sortField, sortOrder]);
+  }, [API_BASE, searchInput, categoryFilter, subCategoryFilter, gradeFilter, statusFilter, currentPage, itemsPerPage, sortField, sortOrder, categories.length, extractCategoriesFromData]);
 
-  // Initial data fetch
+  // Initial data fetch - load categories and subcategories
   useEffect(() => {
     fetchCategories();
     fetchSubCategories();
@@ -1823,27 +1969,6 @@ const fetchCategories = useCallback(async () => {
     return { startItem, endItem };
   };
 
-  // Get unique categories from sales data (fallback method)
-  const getUniqueCategoriesFromSalesData = () => {
-    if (categories.length > 0) return categories;
-    
-    // Extract unique categories from sales data if API categories are not available
-    const categoryMap = new Map();
-    allSalesData.forEach(item => {
-      if (item.categoryName && item.categoryId) {
-        if (!categoryMap.has(item.categoryId)) {
-          categoryMap.set(item.categoryId, {
-            _id: item.categoryId,
-            categoryName: item.categoryName,
-            categoryId: item.categoryId
-          });
-        }
-      }
-    });
-    
-    return Array.from(categoryMap.values());
-  };
-
   // Helper function to get market details
   const getMarketDetails = (item: CropSaleItem) => {
     // Check if marketDetails exists
@@ -1861,160 +1986,132 @@ const fetchCategories = useCallback(async () => {
   };
 
   // Export functions
-  // const handleCopyToClipboard = async () => {
-  //   const headers = ["Product ID", "Crop", "Category", "Grade", "Quantity", "Price/Unit", "Total Value", "Status", "Delivery Date"];
-    
-  //   const csvContent = [
-  //     headers.join("\t"),
-  //     ...allSalesData.map((item) => {
-  //       const totalValue = item.pricePerUnit * item.totalQty;
-  //       return [
-  //         item.productId,
-  //         item.cropBriefDetails,
-  //         item.categoryName || "N/A",
-  //         item.grade,
-  //         item.totalQty,
-  //         item.pricePerUnit,
-  //         totalValue,
-  //         item.gradeStatus,
-  //         new Date(item.deliveryDate).toLocaleDateString()
-  //       ].join("\t");
-  //     })
-  //   ].join("\n");
-    
-  //   try {
-  //     await navigator.clipboard.writeText(csvContent);
-  //     toast.success("Data copied to clipboard!");
-  //   } catch (err) {
-  //     console.error("Failed to copy: ", err);
-  //     toast.error("Failed to copy to clipboard");
-  //   }
-  // };
-const handleCopyToClipboard = async (): Promise<void> => {
-  if (!allSalesData || allSalesData.length === 0) {
-    toast.error("No sales data to copy");
-    return;
-  }
+  const handleCopyToClipboard = async (): Promise<void> => {
+    if (!allSalesData || allSalesData.length === 0) {
+      toast.error("No sales data to copy");
+      return;
+    }
 
-  // Define headers with optimized widths
-  const headers = [
-    { name: "Product ID", width: 14 },
-    { name: "Crop", width: 18 },
-    { name: "Category", width: 12 },
-    { name: "Grade", width: 8 },
-    { name: "Qty", width: 10 },
-    { name: "Price/Unit", width: 12 },
-    { name: "Total Value", width: 14 },
-    { name: "Status", width: 14 },
-    { name: "Delivery", width: 12 }
-  ];
-  
-  // Create header row
-  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
-  const separator = "─".repeat(headerRow.length);
-  
-  // Format each sales row
-  const salesRows = allSalesData.map((item: any) => {
-    // Safely calculate total value
-    const totalValue = (item.pricePerUnit || 0) * (item.totalQty || 0);
-    
-    // Format crop name
-    const cropName = item.cropBriefDetails || "N/A";
-    const formattedCrop = cropName.length > 16 
-      ? cropName.substring(0, 13) + "..." 
-      : cropName;
-    
-    // Format grade with indicator
-    const grade = item.grade || "N/A";
-    const gradeIndicator = grade.includes("A") || grade.includes("1") ? "A" : 
-                          grade.includes("B") || grade.includes("2") ? "B" : 
-                          grade.includes("C") || grade.includes("3") ? "C" : grade;
-    
-    // Format status with color indicator
-    const status = item.gradeStatus || "N/A";
-    const statusIndicator = status.toLowerCase().includes("sold") ? "✅" : 
-                           status.toLowerCase().includes("listed") ? "📋" : 
-                           status.toLowerCase().includes("pending") ? "⏳" : 
-                           status.toLowerCase().includes("delivered") ? "🚚" : "📊";
-    
-    // Format dates
-    const deliveryDate = item.deliveryDate 
-      ? new Date(item.deliveryDate).toLocaleDateString() 
-      : "N/A";
-    
-    // Format currency
-    const formatCurrency = (amount: number) => 
-      `₹${(amount || 0).toLocaleString('en-IN')}`;
-    
-    // Create row with proper padding
-    const row = [
-      (item.productId || "N/A").padEnd(headers[0].width),
-      formattedCrop.padEnd(headers[1].width),
-      (item.categoryName || "N/A").padEnd(headers[2].width),
-      gradeIndicator.padEnd(headers[3].width),
-      (item.totalQty || 0).toString().padEnd(headers[4].width),
-      formatCurrency(item.pricePerUnit || 0).padEnd(headers[5].width),
-      formatCurrency(totalValue).padEnd(headers[6].width),
-      `${statusIndicator} ${status}`.padEnd(headers[7].width),
-      deliveryDate.padEnd(headers[8].width)
+    // Define headers with optimized widths
+    const headers = [
+      { name: "Product ID", width: 14 },
+      { name: "Crop", width: 18 },
+      { name: "Category", width: 12 },
+      { name: "Grade", width: 8 },
+      { name: "Qty", width: 10 },
+      { name: "Price/Unit", width: 12 },
+      { name: "Total Value", width: 14 },
+      { name: "Status", width: 14 },
+      { name: "Delivery", width: 12 }
     ];
     
-    return row.join(" │ ");
-  });
-  
-  // Calculate statistics
-  const stats = allSalesData.reduce((acc: any, item: any) => {
-    const value = (item.pricePerUnit || 0) * (item.totalQty || 0);
+    // Create header row
+    const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+    const separator = "─".repeat(headerRow.length);
     
-    acc.totalQty += item.totalQty || 0;
-    acc.totalValue += value;
-    acc.byStatus[item.gradeStatus] = (acc.byStatus[item.gradeStatus] || 0) + 1;
-    acc.byGrade[item.grade] = (acc.byGrade[item.grade] || 0) + 1;
+    // Format each sales row
+    const salesRows = allSalesData.map((item: any) => {
+      // Safely calculate total value
+      const totalValue = (item.pricePerUnit || 0) * (item.totalQty || 0);
+      
+      // Format crop name
+      const cropName = item.cropBriefDetails || "N/A";
+      const formattedCrop = cropName.length > 16 
+        ? cropName.substring(0, 13) + "..." 
+        : cropName;
+      
+      // Format grade with indicator
+      const grade = item.grade || "N/A";
+      const gradeIndicator = grade.includes("A") || grade.includes("1") ? "A" : 
+                            grade.includes("B") || grade.includes("2") ? "B" : 
+                            grade.includes("C") || grade.includes("3") ? "C" : grade;
+      
+      // Format status with color indicator
+      const status = item.gradeStatus || "N/A";
+      const statusIndicator = status.toLowerCase().includes("sold") ? "✅" : 
+                             status.toLowerCase().includes("listed") ? "📋" : 
+                             status.toLowerCase().includes("pending") ? "⏳" : 
+                             status.toLowerCase().includes("delivered") ? "🚚" : "📊";
+      
+      // Format dates
+      const deliveryDate = item.deliveryDate 
+        ? new Date(item.deliveryDate).toLocaleDateString() 
+        : "N/A";
+      
+      // Format currency
+      const formatCurrency = (amount: number) => 
+        `₹${(amount || 0).toLocaleString('en-IN')}`;
+      
+      // Create row with proper padding
+      const row = [
+        (item.productId || "N/A").padEnd(headers[0].width),
+        formattedCrop.padEnd(headers[1].width),
+        (item.categoryName || "N/A").padEnd(headers[2].width),
+        gradeIndicator.padEnd(headers[3].width),
+        (item.totalQty || 0).toString().padEnd(headers[4].width),
+        formatCurrency(item.pricePerUnit || 0).padEnd(headers[5].width),
+        formatCurrency(totalValue).padEnd(headers[6].width),
+        `${statusIndicator} ${status}`.padEnd(headers[7].width),
+        deliveryDate.padEnd(headers[8].width)
+      ];
+      
+      return row.join(" │ ");
+    });
     
-    return acc;
-  }, {
-    totalQty: 0,
-    totalValue: 0,
-    byStatus: {},
-    byGrade: {}
-  });
-  
-  // Build the complete table
-  const tableContent = [
-    "📦 SALES INVENTORY",
-    "=".repeat(headerRow.length),
-    headerRow,
-    separator,
-    ...salesRows,
-    separator,
-    "",
-    "📊 SUMMARY",
-    `• Total Products: ${allSalesData.length}`,
-    `• Total Quantity: ${stats.totalQty.toLocaleString('en-IN')}`,
-    `• Total Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
-    `• Avg Price/Unit: ₹${stats.totalQty > 0 ? Math.round(stats.totalValue / stats.totalQty) : 0}`,
-    "",
-    "📈 STATUS DISTRIBUTION",
-    ...Object.entries(stats.byStatus).map(([status, count]: [string, any]) => 
-      `• ${status}: ${count} items`
-    ),
-    "",
-    "⭐ GRADE DISTRIBUTION",
-    ...Object.entries(stats.byGrade).map(([grade, count]: [string, any]) => 
-      `• ${grade}: ${count} items`
-    ),
-    "",
-    `📅 Generated: ${new Date().toLocaleString()}`
-  ].join("\n");
-  
-  try {
-    await navigator.clipboard.writeText(tableContent);
-    toast.success(`Copied ${allSalesData.length} products!`);
-  } catch (err) {
-    console.error("Failed to copy:", err);
-    toast.error("Failed to copy to clipboard");
-  }
-};
+    // Calculate statistics
+    const stats = allSalesData.reduce((acc: any, item: any) => {
+      const value = (item.pricePerUnit || 0) * (item.totalQty || 0);
+      
+      acc.totalQty += item.totalQty || 0;
+      acc.totalValue += value;
+      acc.byStatus[item.gradeStatus] = (acc.byStatus[item.gradeStatus] || 0) + 1;
+      acc.byGrade[item.grade] = (acc.byGrade[item.grade] || 0) + 1;
+      
+      return acc;
+    }, {
+      totalQty: 0,
+      totalValue: 0,
+      byStatus: {},
+      byGrade: {}
+    });
+    
+    // Build the complete table
+    const tableContent = [
+      "📦 SALES INVENTORY",
+      "=".repeat(headerRow.length),
+      headerRow,
+      separator,
+      ...salesRows,
+      separator,
+      "",
+      "📊 SUMMARY",
+      `• Total Products: ${allSalesData.length}`,
+      `• Total Quantity: ${stats.totalQty.toLocaleString('en-IN')}`,
+      `• Total Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
+      `• Avg Price/Unit: ₹${stats.totalQty > 0 ? Math.round(stats.totalValue / stats.totalQty) : 0}`,
+      "",
+      "📈 STATUS DISTRIBUTION",
+      ...Object.entries(stats.byStatus).map(([status, count]: [string, any]) => 
+        `• ${status}: ${count} items`
+      ),
+      "",
+      "⭐ GRADE DISTRIBUTION",
+      ...Object.entries(stats.byGrade).map(([grade, count]: [string, any]) => 
+        `• ${grade}: ${count} items`
+      ),
+      "",
+      `📅 Generated: ${new Date().toLocaleString()}`
+    ].join("\n");
+    
+    try {
+      await navigator.clipboard.writeText(tableContent);
+      toast.success(`Copied ${allSalesData.length} products!`);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
   const handleExportExcel = () => {
     const data = allSalesData.map((item) => {
       const totalValue = item.pricePerUnit * item.totalQty;
@@ -2272,9 +2369,6 @@ const handleCopyToClipboard = async (): Promise<void> => {
   const { totalValue, totalQuantity, availableItems, soldItems } = calculateStats();
   const { startItem, endItem } = getPaginationRange();
 
-  // Get unique categories (with fallback)
-  const uniqueCategories = getUniqueCategoriesFromSalesData();
-
   if (loading && allSalesData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -2395,7 +2489,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
             />
           </div>
 
-          {/* Category Filter */}
+          {/* Category Filter - FIXED: Always shows all categories */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaLeaf className="text-gray-400" />
@@ -2409,11 +2503,29 @@ const handleCopyToClipboard = async (): Promise<void> => {
               }}
             >
               <option value="">All Categories</option>
-              {uniqueCategories.map((cat) => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.categoryName}
-                </option>
-              ))}
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.categoryName}
+                  </option>
+                ))
+              ) : (
+                // Fallback: Show categories from sales data if available
+                allSalesData.length > 0 ? (
+                  Array.from(new Set(allSalesData.map(item => item.categoryId)))
+                    .filter(catId => catId)
+                    .map(catId => {
+                      const item = allSalesData.find(i => i.categoryId === catId);
+                      return (
+                        <option key={catId} value={catId}>
+                          {item?.categoryName || `Category ${catId}`}
+                        </option>
+                      );
+                    })
+                ) : (
+                  <option value="" disabled>Loading categories...</option>
+                )
+              )}
             </select>
           </div>
 
@@ -2849,7 +2961,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
         </div>
       )}
 
-      {/* Details Dialog - UPDATED */}
+      {/* Details Dialog */}
       <Dialog
         open={detailsDialogOpen}
         onClose={() => setDetailsDialogOpen(false)}
@@ -3008,7 +3120,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
                   </div>
                 </div>
 
-                {/* Market Information - UPDATED */}
+                {/* Market Information */}
                 <div className="bg-gray-50 p-4 rounded">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     <FaMapMarkerAlt className="text-orange-600" />

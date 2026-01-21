@@ -234,6 +234,8 @@ export const MENU_CONFIG: MenuSection[] = [
        
         { name: "Farmer Trans Management", path: "/orders-details", icon: "MdReceiptLong" },
          { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
+           { name: "Transport-vehicle-management", path: "/Transport-vehicle-management", icon: "MdLocalShipping" },
+         { name: "All Transporters", path: "/transporters", icon: "MdLocalShipping" },
     ],
 },
 

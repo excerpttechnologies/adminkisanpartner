@@ -12163,9 +12163,9 @@ export default function FarmersPage() {
             </section>
 
             {/* NEAREST MARKETS */}
-            <section className="bg-gray-50 p-6 rounded-lg">
+            <section className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Nearest Markets</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {markets.map(market => (
                   <label key={market._id} className="flex items-center space-x-2 cursor-pointer p-2 bg-white rounded border hover:bg-gray-50">
                     <input 
@@ -12542,9 +12542,9 @@ export default function FarmersPage() {
             </section>
 
             {/* NEAREST MARKETS */}
-            <section className="bg-gray-50 p-6 rounded-lg">
+            <section className="bg-gray-50 p-4 rounded-lg">
               <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Nearest Markets</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {markets.map(market => (
                   <label key={market._id} className="flex items-center space-x-2 cursor-pointer p-2 bg-white rounded border hover:bg-gray-50">
                     <input 
