@@ -1129,12 +1129,7 @@ export default function ProfileSettings() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <div className="max-w-2xl mx-auto mt-6 text-center">
-        <p className="text-xs text-gray-500">
-          © 2025 AgroAdmin. All rights reserved.
-        </p>
-      </div>
+     
 
       {/* Add these styles to your global CSS or stylesheet */}
       <style jsx global>{`

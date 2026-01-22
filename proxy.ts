@@ -53,7 +53,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Handle root path redirect
-  if (path === "/") {
+  if (path === "/" && session) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

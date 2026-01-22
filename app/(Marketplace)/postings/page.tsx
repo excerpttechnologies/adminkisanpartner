@@ -3,6 +3,8 @@
 
 
 
+
+
 // "use client";
 
 // import React, { useRef, useState, useEffect } from "react";
@@ -735,6 +737,7 @@
 
 // export default function CropManagementPage() {
 //   const [crops, setCrops] = useState<Crop[]>([]);
+//   const [allcrops, setAllCrops] = useState<Crop[]>([]);
 //   const [loading, setLoading] = useState(true);
 //   const [page, setPage] = useState(1);
 //   const [searchTerm, setSearchTerm] = useState("");
@@ -767,8 +770,8 @@
 //   const tableRef = useRef<HTMLDivElement>(null);
 
 //   // Get unique farming types and seed types from crops data
-//   const farmingTypes = [...new Set(crops.map(crop => crop.farmingType))];
-//   const seedTypes = [...new Set(crops.map(crop => crop.seedType))];
+//   const farmingTypes = [...new Set(allcrops.map(crop => crop.farmingType))];
+//   const seedTypes = [...new Set(allcrops.map(crop => crop.seedType))];
 
 //   /* ================= API FUNCTIONS ================= */
 
@@ -794,11 +797,14 @@
 //         params,
 //       });
 
-//       if (response.data.success || Array.isArray(response.data)) {
-//         const data = response.data.success ? response.data.data : response.data;
-//         setCrops(data || []);
-//         setTotalItems(data?.length || 0);
-//         setTotalPages(Math.ceil((data?.length || 0) / limit) || 1);
+//       if (response.data.success) {
+//         const data = response.data.data || [];
+//         const total = response.data.total || 0;
+        
+//         setCrops(data);
+//         setAllCrops(response.data.data1)
+//         setTotalItems(total);
+//         setTotalPages(Math.ceil(total / limit) || 1);
 //       } else {
 //         showSnackbar("Failed to fetch crops", "error");
 //       }
@@ -1662,10 +1668,10 @@
 //                       type="checkbox"
 //                       checked={selectedIds.includes(row._id)}
 //                       onChange={(e) => handleSelectOne(row._id, e.target.checked)}
-//                       className="rounded border-gray-300"
+//                       className="rounded border-gray-300 -mt-12 -ml-2"
 //                     />
 //                     <div>
-//                       <div className="flex items-center gap-2 mb-1">
+//                       <div className="flex items-center gap-2 mb-1 ">
 //                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
 //                           {getFarmingTypeLabel(row.farmingType)}
 //                         </span>
@@ -1674,6 +1680,7 @@
 //                         </span>
 //                       </div>
 //                       <div className="text-xs text-gray-500 mb-1">
+//                         <span className="text-xs ml-2 mr-2">Sowing Date</span>
 //                         <FaCalendarAlt className="inline w-3 h-3 mr-1" />
 //                         {formatDate(row.sowingDate)}
 //                       </div>
@@ -1701,7 +1708,7 @@
 //                     </button>
 //                   </div>
 //                 </div>
-//                 <div className="grid grid-cols-2 gap-3 text-xs">
+//                 <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
 //                   <div>
 //                     <span className="font-medium">Acres:</span>
 //                     <span className="ml-2 font-bold text-gray-900">
@@ -1738,7 +1745,7 @@
 //                 No crop records found
 //               </h3>
 //               <p className="text-gray-600 max-w-md mx-auto text-xs">
-//                 Try adjusting your search or filters to find what you&apos;re looking for.
+//                 Try adjusting your search or filters to find what you're looking for.
 //               </p>
 //             </div>
 //           )}
@@ -1768,7 +1775,10 @@
 //               results
 //               <select
 //                 value={limit}
-//                 onChange={(e) => setLimit(Number(e.target.value))}
+//                 onChange={(e) => {
+//                   setLimit(Number(e.target.value));
+//                   setPage(1);
+//                 }}
 //                 className="p-1 ml-3 border border-zinc-300 rounded"
 //               >
 //                 {[2, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100].map(
@@ -1904,20 +1914,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 "use client";
 
 import React, { useRef, useState, useEffect } from "react";
@@ -1939,6 +1935,19 @@ import {
   FaChartLine,
   FaLeaf,
   FaInfoCircle,
+  FaUser,
+  FaPhone,
+  FaMapMarkerAlt,
+  FaCheckCircle,
+  FaClock,
+  FaExclamationTriangle,
+  FaArrowRight,
+  FaCamera,
+  FaList,
+  FaChevronDown,
+  FaChevronUp,
+  FaEnvelope,
+  FaIdCard,
 } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -1959,6 +1968,8 @@ import {
   DialogActions,
   Chip,
   LinearProgress,
+  Tooltip,
+  Collapse,
 } from "@mui/material";
 
 /* ================= TYPES ================= */
@@ -1968,6 +1979,7 @@ interface Stage {
   status: "pending" | "in-progress" | "completed" | "skipped";
   photos: string[];
   _id: string;
+  completedAt?: string;
 }
 
 interface TrackingData {
@@ -1979,7 +1991,39 @@ interface TrackingData {
   stages: Stage[];
   currentStageIndex: number;
   createdAt: string;
-  __v: number;
+  updatedAt?: string;
+  __v?: number;
+  progress?: number;
+  isCompleted?: boolean;
+  currentStageName?: string;
+}
+
+interface FarmerPersonalInfo {
+  name: string;
+  mobileNo: string;
+  email?: string;
+  address?: string;
+  villageGramaPanchayat?: string;
+  pincode?: string;
+  state?: string;
+  district?: string;
+  taluk?: string;
+  post?: string;
+}
+
+interface Farmer {
+  _id: string;
+  farmerId?: string;
+  traderId?: string;
+  personalInfo: FarmerPersonalInfo;
+  role: string;
+  registrationStatus: string;
+  isActive: boolean;
+  commodities?: string[];
+  subcategories?: string[];
+  createdAt: string;
+  updatedAt?: string;
+  __v?: number;
 }
 
 interface Crop {
@@ -1989,11 +2033,12 @@ interface Crop {
   acres: number;
   sowingDate: string;
   farmerId: string;
-  trackingId: string;
+  trackingId?: string;
   createdAt: string;
   updatedAt?: string;
   __v?: number;
-  trackingData?: TrackingData;
+  tracking?: TrackingData | null;
+  farmer?: Farmer | null;
 }
 
 /* ================= TRACKING MODAL ================= */
@@ -2047,31 +2092,11 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
     return Math.round((completedStages / trackingData.stages.length) * 100);
   };
 
-  // FIXED: Proper date formatting function
   const formatDateString = (dateString: string) => {
     if (!dateString) return "N/A";
     try {
       const date = new Date(dateString);
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        // Try parsing different date formats
-        const parts = dateString.split(/[- :T.]/);
-        if (parts.length >= 3) {
-          const year = parseInt(parts[0]);
-          const month = parseInt(parts[1]) - 1; // months are 0-indexed
-          const day = parseInt(parts[2]);
-          const newDate = new Date(year, month, day);
-          if (!isNaN(newDate.getTime())) {
-            return newDate.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            });
-          }
-        }
-        return "Invalid Date";
-      }
+      if (isNaN(date.getTime())) return "Invalid Date";
       
       return date.toLocaleDateString("en-US", {
         year: "numeric",
@@ -2079,12 +2104,10 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
         day: "numeric",
       });
     } catch (error) {
-      console.error("Error formatting date:", dateString, error);
       return "Invalid Date";
     }
   };
 
-  // FIXED: Format time if needed
   const formatDateTime = (dateString: string) => {
     if (!dateString) return "N/A";
     try {
@@ -2152,12 +2175,12 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                   Overall Progress
                 </Typography>
                 <Typography variant="h6" className="font-bold text-green-600">
-                  {calculateProgress()}%
+                  {trackingData.progress || calculateProgress()}%
                 </Typography>
               </div>
               <LinearProgress
                 variant="determinate"
-                value={calculateProgress()}
+                value={trackingData.progress || calculateProgress()}
                 className="h-2 rounded-full mb-2"
                 sx={{
                   "& .MuiLinearProgress-bar": {
@@ -2169,8 +2192,9 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                 <span>
                   Current Stage:{" "}
                   <span className="font-semibold">
-                    {trackingData.stages[trackingData.currentStageIndex]?.name ||
-                      "Not Started"}
+                    {trackingData.currentStageName || 
+                     trackingData.stages[trackingData.currentStageIndex]?.name ||
+                     "Not Started"}
                   </span>
                 </span>
                 <span>
@@ -2215,11 +2239,6 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                       {formatDateString(trackingData.createdAt)}
                     </span>
                   </div>
-                  {/* Debug info - remove in production */}
-                  <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">
-                    <div>Raw Date: {trackingData.createdAt}</div>
-                    <div>Formatted: {formatDateString(trackingData.createdAt)}</div>
-                  </div>
                 </div>
               </div>
 
@@ -2260,6 +2279,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                   </Typography>
                   <Chip
                     label={
+                      trackingData.currentStageName ||
                       trackingData.stages[trackingData.currentStageIndex]
                         ?.name || "Not Started"
                     }
@@ -2317,7 +2337,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                           {stage.name}
                         </Typography>
                         <Typography variant="caption" className="text-gray-500">
-                          {stage.photos.length} photos
+                          {stage.photos?.length || 0} photos
                         </Typography>
                       </div>
                     </div>
@@ -2515,7 +2535,6 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
                 <option value="organic">Organic</option>
                 <option value="natural">Natural</option>
                 <option value="hydroponic">Hydroponic</option>
-                {/* <option value="inorganic">Inorganic</option> */}
                 <option value="regular">Regular</option>
               </select>
               {errors.farmingType && (
@@ -2593,7 +2612,7 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
                 value={formData.farmerId}
                 disabled
                 onChange={(e) => handleInputChange("farmerId", e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
+                className={`w-full px-3 bg-gray-50 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                   errors.farmerId ? "border-red-500" : "border-gray-300"
                 }`}
                 placeholder="Enter farmer ID"
@@ -2646,11 +2665,393 @@ const modalStyle = {
   p: { xs: 3, sm: 4 },
 };
 
+/* ================= STAGES DISPLAY COMPONENT ================= */
+
+const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = ({ stages, currentStageIndex }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const getStageStatusColor = (status: string) => {
+    switch (status) {
+      case "completed": return "bg-green-500";
+      case "in-progress": return "bg-blue-500";
+      case "skipped": return "bg-yellow-500";
+      case "pending": default: return "bg-gray-300";
+    }
+  };
+
+  const getStageStatusText = (status: string) => {
+    switch (status) {
+      case "completed": return "Completed";
+      case "in-progress": return "In Progress";
+      case "skipped": return "Skipped";
+      case "pending": default: return "Pending";
+    }
+  };
+
+  const getStageStatusIcon = (status: string) => {
+    switch (status) {
+      case "completed": return <FaCheckCircle className="w-3 h-3 text-green-500" />;
+      case "in-progress": return <FaClock className="w-3 h-3 text-blue-500" />;
+      case "skipped": return <FaExclamationTriangle className="w-3 h-3 text-yellow-500" />;
+      case "pending": default: return <FaClock className="w-3 h-3 text-gray-400" />;
+    }
+  };
+
+  // Desktop view - compact
+  const DesktopStagesView = () => (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <FaList className="w-3 h-3 text-gray-500" />
+          <span className="text-xs font-semibold text-gray-700">Stages ({stages.length})</span>
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+        >
+          {expanded ? (
+            <>
+              <FaChevronUp className="w-3 h-3" />
+              Hide Details
+            </>
+          ) : (
+            <>
+              <FaChevronDown className="w-3 h-3" />
+              Show Details
+            </>
+          )}
+        </button>
+      </div>
+      
+      {/* Compact stages view */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-2">
+        {stages.map((stage, index) => (
+          <Tooltip key={stage._id} title={`${stage.name}: ${getStageStatusText(stage.status)}`} arrow>
+            <div className={`relative flex flex-col items-center min-w-[50px] px-1 py-1 rounded ${
+              index === currentStageIndex ? "bg-blue-50 border border-blue-200" : ""
+            }`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                index < currentStageIndex ? "bg-green-100" :
+                index === currentStageIndex ? "bg-blue-100" :
+                "bg-gray-100"
+              }`}>
+                <span className={`text-xs font-bold ${
+                  index < currentStageIndex ? "text-green-600" :
+                  index === currentStageIndex ? "text-blue-600" :
+                  "text-gray-400"
+                }`}>
+                  {index + 1}
+                </span>
+                {/* {stage.status === "completed" && (
+                  <FaCheckCircle className="absolute -top-1 -right-1 w-3 h-3 text-green-500" />
+                )} */}
+              </div>
+              <div className="mt-1">
+                {getStageStatusIcon(stage.status)}
+              </div>
+              <div className="text-xs mt-1 text-center font-medium truncate max-w-[50px]">
+                {stage.name.split(' ')[0]}
+              </div>
+            </div>
+          </Tooltip>
+        ))}
+      </div>
+
+      {/* Expanded stages details */}
+      <Collapse in={expanded}>
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {stages.map((stage, index) => (
+              <div 
+                key={stage._id} 
+                className={`p-2 rounded text-xs ${
+                  index === currentStageIndex ? "bg-blue-50 border-l-4 border-blue-500" :
+                  "bg-gray-50"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${getStageStatusColor(stage.status)}`} />
+                    <span className="font-semibold">{index + 1}. {stage.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Chip
+                      label={getStageStatusText(stage.status)}
+                      size="small"
+                      className={`text-xs ${
+                        stage.status === "completed" ? "bg-green-100 text-green-800" :
+                        stage.status === "in-progress" ? "bg-blue-100 text-blue-800" :
+                        stage.status === "skipped" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}
+                    />
+                    {index === currentStageIndex && (
+                      <Chip
+                        label="Current"
+                        size="small"
+                        className="bg-blue-100 text-blue-800 text-xs"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-gray-600">
+                  <FaCamera className="w-3 h-3" />
+                  <span>{stage.photos?.length || 0} photos</span>
+                </div>
+                {stage.completedAt && (
+                  <div className="mt-1 text-gray-500 text-xs">
+                    Completed: {new Date(stage.completedAt).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Collapse>
+    </div>
+  );
+
+  // Mobile view - detailed
+  const MobileStagesView = () => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FaList className="w-4 h-4 text-gray-500" />
+          <span className="font-medium text-gray-700">All Stages ({stages.length})</span>
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-blue-600 hover:text-blue-800"
+        >
+          {expanded ? <FaChevronUp /> : <FaChevronDown />}
+        </button>
+      </div>
+      
+      {/* Stages progress bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-green-500 h-2 rounded-full" 
+            style={{ width: `${(stages.filter(s => s.status === "completed").length / stages.length) * 100}%` }}
+          ></div>
+        </div>
+        <span className="text-xs font-bold">
+          {stages.filter(s => s.status === "completed").length}/{stages.length}
+        </span>
+      </div>
+
+      {/* Stages visualization */}
+      <div className="flex items-center gap-1 overflow-x-auto py-2">
+        {stages.map((stage, index) => (
+          <div 
+            key={stage._id} 
+            className={`flex flex-col items-center min-w-[60px] p-2 rounded ${
+              index === currentStageIndex ? "bg-blue-50 border border-blue-200" : "bg-gray-50"
+            }`}
+          >
+            <div className="relative">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                index < currentStageIndex ? "bg-green-100" :
+                index === currentStageIndex ? "bg-blue-100" :
+                "bg-gray-100"
+              }`}>
+                <span className={`text-sm font-bold ${
+                  index < currentStageIndex ? "text-green-600" :
+                  index === currentStageIndex ? "text-blue-600" :
+                  "text-gray-400"
+                }`}>
+                  {index + 1}
+                </span>
+                {stage.status === "completed" && (
+                  <FaCheckCircle className="absolute -top-1 -right-1 w-4 h-4 text-green-500" />
+                )}
+              </div>
+            </div>
+            <div className="mt-1">
+              {getStageStatusIcon(stage.status)}
+            </div>
+            <div className="text-xs mt-1 text-center font-medium truncate max-w-[60px]">
+              {stage.name}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div className="space-y-2 mt-2 pt-2 border-t border-gray-200">
+          {stages.map((stage, index) => (
+            <div 
+              key={stage._id} 
+              className={`p-3 rounded ${
+                index === currentStageIndex ? "bg-blue-50 border-l-4 border-blue-500" :
+                "bg-gray-50"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${getStageStatusColor(stage.status)}`} />
+                  <div>
+                    <div className="font-semibold text-sm">{index + 1}. {stage.name}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={`px-2 py-0.5 rounded text-xs font-medium ${
+                        stage.status === "completed" ? "bg-green-100 text-green-800" :
+                        stage.status === "in-progress" ? "bg-blue-100 text-blue-800" :
+                        stage.status === "skipped" ? "bg-yellow-100 text-yellow-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {getStageStatusText(stage.status)}
+                      </div>
+                      {index === currentStageIndex && (
+                        <div className="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          Current
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                <div className="flex items-center gap-1">
+                  <FaCamera className="w-3 h-3 text-gray-500" />
+                  <span className="text-gray-600">Photos:</span>
+                  <span className="font-semibold">{stage.photos?.length || 0}</span>
+                </div>
+                {stage.completedAt && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-600">Completed:</span>
+                    <span className="font-semibold">
+                      {new Date(stage.completedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <>
+      <div className="hidden lg:block">
+        <DesktopStagesView />
+      </div>
+      <div className="lg:hidden">
+        <MobileStagesView />
+      </div>
+    </>
+  );
+};
+
+/* ================= FARMER INFO COMPONENT ================= */
+
+const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div  onClick={() => setExpanded(!expanded)} className="space-y-1 cursor-pointer">
+      <div  onClick={() => setExpanded(!expanded)} className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FaUser className="w-4 h-4 text-gray-500" />
+          <span className="text-xs font-semibold text-gray-700">Farmer Info</span>
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+        >
+          {expanded ? (
+            <>
+              <FaChevronUp className="w-3 h-3" />
+             
+            </>
+          ) : (
+            <>
+              <FaChevronDown className="w-3 h-3" />
+             
+            </>
+          )}
+        </button>
+      </div>
+      
+      <div className="space-y-1 text-xs">
+        <div className="flex items-center gap-2">
+          <FaUser className="w-3 h-3 text-gray-400" />
+          <span className="font-medium text-gray-900">{farmer.personalInfo.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <FaPhone className="w-3 h-3 text-gray-400" />
+          <span className="text-gray-600">{farmer.personalInfo.mobileNo}</span>
+        </div>
+        {farmer.personalInfo.email && (
+          <div className="flex items-center gap-2">
+            <FaEnvelope className="w-3 h-3 text-gray-400" />
+            <span className="text-gray-600 truncate max-w-[150px]">{farmer.personalInfo.email}</span>
+          </div>
+        )}
+        {(farmer.farmerId || farmer.traderId) && (
+          <div className="flex items-center gap-2">
+            <FaIdCard className="w-3 h-3 text-gray-400" />
+            <span className="text-gray-600">{farmer.farmerId || farmer.traderId}</span>
+          </div>
+        )}
+      </div>
+
+      <Collapse in={expanded}>
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="space-y-1 text-xs">
+            {farmer.personalInfo.address && (
+              <div>
+                <span className="text-gray-600">Address: </span>
+                <span className="font-medium">{farmer.personalInfo.address}</span>
+              </div>
+            )}
+            {farmer.personalInfo.villageGramaPanchayat && (
+              <div>
+                <span className="text-gray-600">Village: </span>
+                <span className="font-medium">{farmer.personalInfo.villageGramaPanchayat}</span>
+              </div>
+            )}
+            {(farmer.personalInfo.taluk || farmer.personalInfo.district) && (
+              <div className="flex items-center gap-1">
+                <FaMapMarkerAlt className="w-3 h-3 text-gray-400" />
+                <span className="text-gray-600">
+                  {farmer.personalInfo.taluk && `${farmer.personalInfo.taluk}, `}
+                  {farmer.personalInfo.district && `${farmer.personalInfo.district}, `}
+                  {farmer.personalInfo.state}
+                </span>
+              </div>
+            )}
+            {farmer.personalInfo.pincode && (
+              <div>
+                <span className="text-gray-600">Pincode: </span>
+                <span className="font-medium">{farmer.personalInfo.pincode}</span>
+              </div>
+            )}
+            <div className="mt-1">
+              <span className="text-gray-600">Status: </span>
+              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
+                farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
+                "bg-gray-100 text-gray-800"
+              }`}>
+                {farmer.registrationStatus}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Collapse>
+    </div>
+  );
+};
+
 /* ================= MAIN COMPONENT ================= */
 
 export default function CropManagementPage() {
   const [crops, setCrops] = useState<Crop[]>([]);
-  const [allcrops, setAllCrops] = useState<Crop[]>([]);
+  const [allCrops, setAllCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -2682,9 +3083,9 @@ export default function CropManagementPage() {
   
   const tableRef = useRef<HTMLDivElement>(null);
 
-  // Get unique farming types and seed types from crops data
-  const farmingTypes = [...new Set(allcrops.map(crop => crop.farmingType))];
-  const seedTypes = [...new Set(allcrops.map(crop => crop.seedType))];
+  // Get unique farming types and seed types from all crops data
+  const farmingTypes = [...new Set(allCrops.map(crop => crop.farmingType))];
+  const seedTypes = [...new Set(allCrops.map(crop => crop.seedType))];
 
   /* ================= API FUNCTIONS ================= */
 
@@ -2715,7 +3116,7 @@ export default function CropManagementPage() {
         const total = response.data.total || 0;
         
         setCrops(data);
-        setAllCrops(response.data.data1)
+        setAllCrops(response.data.allData || []);
         setTotalItems(total);
         setTotalPages(Math.ceil(total / limit) || 1);
       } else {
@@ -2891,36 +3292,18 @@ export default function CropManagementPage() {
         return "bg-orange-100 text-orange-800";
       case "heirloom":
         return "bg-teal-100 text-teal-800";
-      case "local":
+      case "naati":
         return "bg-indigo-100 text-indigo-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  // FIXED: Improved date formatting
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
     try {
-      // Try to parse the date string
       const date = new Date(dateString);
-      
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        // Try to parse ISO string with different formats
-        const isoString = dateString.replace(' ', 'T');
-        const newDate = new Date(isoString);
-        
-        if (!isNaN(newDate.getTime())) {
-          return newDate.toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          });
-        }
-        
-        return "Invalid Date";
-      }
+      if (isNaN(date.getTime())) return "Invalid Date";
       
       return date.toLocaleDateString("en-US", {
         year: "numeric",
@@ -2928,7 +3311,6 @@ export default function CropManagementPage() {
         day: "numeric",
       });
     } catch (error) {
-      console.error("Error formatting date:", dateString, error);
       return "Invalid Date";
     }
   };
@@ -2949,7 +3331,7 @@ export default function CropManagementPage() {
       gmo: "GMO",
       hybrid: "Hybrid",
       heirloom: "Heirloom",
-      local: "Local"
+      naati: "Naati"
     };
     return labels[type] || type;
   };
@@ -2960,65 +3342,204 @@ export default function CropManagementPage() {
     return `...${trackingId.slice(-8)}`;
   };
 
-  /* ================= EXPORT FUNCTIONS ================= */
-
-  const copyData = () => {
-    if (crops.length === 0) {
-      showSnackbar("No data to copy", "warning");
-      return;
-    }
-
-    try {
-      const headers = ["Farming Type", "Seed Type", "Acres", "Sowing Date", "Farmer ID", "Tracking ID", "Created Date"];
-      
-      const rows = crops.map((crop) => [
-        getFarmingTypeLabel(crop.farmingType) || "",
-        getSeedTypeLabel(crop.seedType) || "",
-        crop.acres?.toString() || "0",
-        formatDate(crop.sowingDate) || "",
-        crop.farmerId || "",
-        crop.trackingId || "",
-        formatDate(crop.createdAt) || ""
-      ]);
-      
-      const columnWidths = headers.map((header, colIndex) => {
-        const maxHeaderLength = header.length;
-        const maxDataLength = rows.reduce((max, row) => {
-          const cell = row[colIndex] || "";
-          const cellLength = cell.toString().length;
-          return Math.max(max, cellLength);
-        }, 0);
-        return Math.max(maxHeaderLength, maxDataLength, 10);
-      });
-      
-      let tableString = "";
-      
-      tableString += headers.map((header, i) => 
-        header.padEnd(columnWidths[i])
-      ).join(" | ") + "\n";
-      
-      tableString += headers.map((_, i) => 
-        "-".repeat(columnWidths[i])
-      ).join("-+-") + "\n";
-      
-      rows.forEach(row => {
-        tableString += row.map((cell, i) => {
-          const cellStr = cell?.toString() || "";
-          return cellStr.padEnd(columnWidths[i]);
-        }).join(" | ") + "\n";
-      });
-      
-      tableString += `\nTotal Crops: ${totalItems}\n`;
-      tableString += `Generated: ${new Date().toLocaleDateString()}\n`;
-      
-      navigator.clipboard.writeText(tableString);
-      showSnackbar("Data copied in table format", "success");
-    } catch (error) {
-      console.error("Error copying data:", error);
-      showSnackbar("Failed to copy data", "error");
-    }
+  const getFarmerDisplayId = (crop: Crop) => {
+    if (crop.farmer?.farmerId) return crop.farmer.farmerId;
+    if (crop.farmer?.traderId) return crop.farmer.traderId;
+    return crop.farmerId;
   };
 
+  const getFarmerName = (crop: Crop) => {
+    return crop.farmer?.personalInfo?.name || "Unknown";
+  };
+
+  const getFarmerContact = (crop: Crop) => {
+    return crop.farmer?.personalInfo?.mobileNo || "N/A";
+  };
+
+  const getFarmerLocation = (crop: Crop) => {
+    const farmer = crop.farmer;
+    if (!farmer?.personalInfo) return "N/A";
+    
+    const loc = farmer.personalInfo;
+    const parts = [];
+    if (loc.villageGramaPanchayat) parts.push(loc.villageGramaPanchayat);
+    if (loc.taluk) parts.push(loc.taluk);
+    if (loc.district) parts.push(loc.district);
+    if (loc.state) parts.push(loc.state);
+    
+    return parts.length > 0 ? parts.join(", ") : "N/A";
+  };
+
+  const getFarmerEmail = (crop: Crop) => {
+    return crop.farmer?.personalInfo?.email || "N/A";
+  };
+
+  const getFarmerAddress = (crop: Crop) => {
+    return crop.farmer?.personalInfo?.address || "N/A";
+  };
+
+  const getFarmerRegistrationStatus = (crop: Crop) => {
+    return crop.farmer?.registrationStatus || "N/A";
+  };
+
+  /* ================= EXPORT FUNCTIONS ================= */
+
+  // const copyData = () => {
+  //   if (crops.length === 0) {
+  //     showSnackbar("No data to copy", "warning");
+  //     return;
+  //   }
+
+  //   try {
+  //     const headers = [
+  //       "Farming Type", "Seed Type", "Acres", "Sowing Date", 
+  //       "Farmer Name", "Farmer Phone", "Farmer Email", "Farmer Address",
+  //       "Farmer ID", "Farmer Location", "Registration Status",
+  //       "Tracking ID", "Progress", "Current Stage", "Total Stages",
+  //       "Stages Completed", "Created Date"
+  //     ];
+      
+  //     const rows = crops.map((crop) => [
+  //       getFarmingTypeLabel(crop.farmingType) || "",
+  //       getSeedTypeLabel(crop.seedType) || "",
+  //       crop.acres?.toString() || "0",
+  //       formatDate(crop.sowingDate) || "",
+  //       getFarmerName(crop) || "",
+  //       getFarmerContact(crop) || "",
+  //       getFarmerEmail(crop) || "",
+  //       getFarmerAddress(crop) || "",
+  //       getFarmerDisplayId(crop) || "",
+  //       getFarmerLocation(crop) || "",
+  //       getFarmerRegistrationStatus(crop) || "",
+  //       crop.trackingId || "",
+  //       crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+  //       crop.tracking?.currentStageName || "Not Started",
+  //       crop.tracking?.stages?.length || 0,
+  //       crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
+  //       formatDate(crop.createdAt) || ""
+  //     ]);
+      
+  //     const columnWidths = headers.map((header, colIndex) => {
+  //       const maxHeaderLength = header.length;
+  //       const maxDataLength = rows.reduce((max, row) => {
+  //         const cell = row[colIndex] || "";
+  //         const cellLength = cell.toString().length;
+  //         return Math.max(max, cellLength);
+  //       }, 0);
+  //       return Math.max(maxHeaderLength, maxDataLength, 10);
+  //     });
+      
+  //     let tableString = "";
+      
+  //     tableString += headers.map((header, i) => 
+  //       header.padEnd(columnWidths[i])
+  //     ).join(" | ") + "\n";
+      
+  //     tableString += headers.map((_, i) => 
+  //       "-".repeat(columnWidths[i])
+  //     ).join("-+-") + "\n";
+      
+  //     rows.forEach(row => {
+  //       tableString += row.map((cell, i) => {
+  //         const cellStr = cell?.toString() || "";
+  //         return cellStr.padEnd(columnWidths[i]);
+  //       }).join(" | ") + "\n";
+  //     });
+      
+  //     tableString += `\nTotal Crops: ${totalItems}\n`;
+  //     tableString += `Generated: ${new Date().toLocaleDateString()}\n`;
+      
+  //     navigator.clipboard.writeText(tableString);
+  //     showSnackbar("Data copied in table format", "success");
+  //   } catch (error) {
+  //     console.error("Error copying data:", error);
+  //     showSnackbar("Failed to copy data", "error");
+  //   }
+  // };
+
+const copyData = () => {
+  if (crops.length === 0) {
+    showSnackbar("No data to copy", "warning");
+    return;
+  }
+
+  try {
+    // Only essential columns
+    const headers = [
+      "Farming", "Seed", "Acres", "Sowing", 
+      "Farmer", "Phone", "ID", "Location",
+      "Progress", "Stage", "Tracking ID"
+    ];
+    
+    const rows = crops.map((crop) => [
+      getFarmingTypeLabel(crop.farmingType)?.substring(0, 8) || "",
+      getSeedTypeLabel(crop.seedType)?.substring(0, 8) || "",
+      crop.acres?.toString() || "0",
+      formatDate(crop.sowingDate)?.split(',')[0] || "", // Just date part
+      getFarmerName(crop)?.substring(0, 12) || "",
+      getFarmerContact(crop) || "",
+      getFarmerDisplayId(crop) || "",
+      getFarmerLocation(crop)?.split(',')[0]?.substring(0, 15) || "", // Just first part
+      crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+      crop.tracking?.currentStageName?.substring(0, 12) || "Not Started",
+      crop.trackingId?.substring(0, 8) + "..." || ""
+    ]);
+    
+    const columnWidths = [10, 10, 8, 12, 14, 12, 10, 16, 10, 14, 15];
+    
+    let tableString = "";
+    
+    // Create compact table
+    tableString += "┌" + columnWidths.map(w => "─".repeat(w)).join("┬") + "┐\n";
+    tableString += "│" + headers.map((h, i) => ` ${h.padEnd(columnWidths[i] - 2)} `).join("│") + "│\n";
+    tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
+    
+    rows.forEach((row, i) => {
+      tableString += "│" + row.map((cell, j) => {
+        const cellStr = cell?.toString() || "";
+        return ` ${cellStr.padEnd(columnWidths[j] - 2)} `;
+      }).join("│") + "│\n";
+      
+      if ((i + 1) % 5 === 0 && i < rows.length - 1) {
+        tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
+      }
+    });
+    
+    tableString += "└" + columnWidths.map(w => "─".repeat(w)).join("┴") + "┘\n\n";
+    
+    // Full details for first few records
+    if (crops.length > 0) {
+      tableString += "DETAILED VIEW (First 3 records):\n";
+      tableString += "════════════════════════════════════════════════════════════\n";
+      
+      crops.slice(0, 3).forEach((crop, index) => {
+        tableString += `\nRECORD ${index + 1}:\n`;
+        tableString += `  Farming Type: ${getFarmingTypeLabel(crop.farmingType)}\n`;
+        tableString += `  Seed Type: ${getSeedTypeLabel(crop.seedType)}\n`;
+        tableString += `  Acres: ${crop.acres}\n`;
+        tableString += `  Sowing Date: ${formatDate(crop.sowingDate)}\n`;
+        tableString += `  Farmer: ${getFarmerName(crop)} (${getFarmerDisplayId(crop)})\n`;
+        tableString += `  Phone: ${getFarmerContact(crop)}\n`;
+        tableString += `  Email: ${getFarmerEmail(crop)}\n`;
+        tableString += `  Location: ${getFarmerLocation(crop)}\n`;
+        tableString += `  Tracking ID: ${crop.trackingId}\n`;
+        tableString += `  Progress: ${crop.tracking?.progress || 0}%\n`;
+        tableString += `  Current Stage: ${crop.tracking?.currentStageName || "Not Started"}\n`;
+        tableString += `  Stages: ${crop.tracking?.stages?.filter(s => s.status === "completed").length || 0}/${crop.tracking?.stages?.length || 0}\n`;
+      });
+    }
+    
+    tableString += `\nTotal Records: ${totalItems}\n`;
+    tableString += `Generated: ${new Date().toLocaleString()}\n`;
+    
+    navigator.clipboard.writeText(tableString);
+    showSnackbar("Data copied in compact table format", "success");
+  } catch (error) {
+    console.error("Error copying data:", error);
+    showSnackbar("Failed to copy data", "error");
+  }
+};
+ 
   const exportCSV = () => {
     if (crops.length === 0) {
       showSnackbar("No data to export", "warning");
@@ -3026,15 +3547,37 @@ export default function CropManagementPage() {
     }
 
     try {
-      const headers = ["Farming Type", "Seed Type", "Acres", "Sowing Date", "Farmer ID", "Tracking ID", "Created Date"];
+      const headers = [
+        "Farming Type", "Seed Type", "Acres", "Sowing Date", 
+        "Farmer Name", "Farmer Phone", "Farmer Email", "Farmer Address",
+        "Farmer Village", "Farmer Taluk", "Farmer District", "Farmer State",
+        "Farmer Pincode", "Farmer ID", "Registration Status",
+        "Tracking ID", "Progress", "Current Stage", "Total Stages",
+        "Stages Completed", "Tracking Created", "Created Date"
+      ];
       
       const rows = crops.map((crop) => [
         getFarmingTypeLabel(crop.farmingType),
         getSeedTypeLabel(crop.seedType),
         crop.acres,
         formatDate(crop.sowingDate),
-        crop.farmerId,
+        crop.farmer?.personalInfo?.name || "",
+        crop.farmer?.personalInfo?.mobileNo || "",
+        crop.farmer?.personalInfo?.email || "",
+        crop.farmer?.personalInfo?.address || "",
+        crop.farmer?.personalInfo?.villageGramaPanchayat || "",
+        crop.farmer?.personalInfo?.taluk || "",
+        crop.farmer?.personalInfo?.district || "",
+        crop.farmer?.personalInfo?.state || "",
+        crop.farmer?.personalInfo?.pincode || "",
+        getFarmerDisplayId(crop),
+        crop.farmer?.registrationStatus || "",
         crop.trackingId,
+        crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+        crop.tracking?.currentStageName || "Not Started",
+        crop.tracking?.stages?.length || 0,
+        crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
+        crop.tracking ? formatDate(crop.tracking.createdAt) : "N/A",
         formatDate(crop.createdAt)
       ]);
       
@@ -3082,8 +3625,25 @@ export default function CropManagementPage() {
         "Seed Type": getSeedTypeLabel(crop.seedType),
         "Acres": crop.acres,
         "Sowing Date": formatDate(crop.sowingDate),
-        "Farmer ID": crop.farmerId,
+        "Farmer Name": crop.farmer?.personalInfo?.name || "",
+        "Farmer Phone": crop.farmer?.personalInfo?.mobileNo || "",
+        "Farmer Email": crop.farmer?.personalInfo?.email || "",
+        "Farmer Address": crop.farmer?.personalInfo?.address || "",
+        "Farmer Village": crop.farmer?.personalInfo?.villageGramaPanchayat || "",
+        "Farmer Taluk": crop.farmer?.personalInfo?.taluk || "",
+        "Farmer District": crop.farmer?.personalInfo?.district || "",
+        "Farmer State": crop.farmer?.personalInfo?.state || "",
+        "Farmer Pincode": crop.farmer?.personalInfo?.pincode || "",
+        "Farmer ID": getFarmerDisplayId(crop),
+        "Registration Status": crop.farmer?.registrationStatus || "",
         "Tracking ID": crop.trackingId,
+        "Progress": crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+        "Current Stage": crop.tracking?.currentStageName || "N/A",
+        "Total Stages": crop.tracking?.stages?.length || 0,
+        "Stages Completed": crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
+        "Stages In Progress": crop.tracking?.stages?.filter(s => s.status === "in-progress").length || 0,
+        "Stages Pending": crop.tracking?.stages?.filter(s => s.status === "pending").length || 0,
+        "Tracking Created": crop.tracking ? formatDate(crop.tracking.createdAt) : "N/A",
         "Created Date": formatDate(crop.createdAt),
       }));
 
@@ -3102,54 +3662,60 @@ export default function CropManagementPage() {
   };
 
   const exportPDF = () => {
-    if (crops.length === 0) {
-      showSnackbar("No data to export", "warning");
-      return;
-    }
+  if (crops.length === 0) {
+    showSnackbar("No data to export", "warning");
+    return;
+  }
 
-    try {
-      const doc = new jsPDF();
+  try {
+    const doc = new jsPDF();
 
-      doc.setFontSize(18);
-      doc.text("Crops Management Report", 14, 22);
-      doc.setFontSize(11);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
-      doc.text(`Total Crops: ${totalItems}`, 14, 37);
+    doc.setFontSize(18);
+    doc.text("Crops Management Report", 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+    doc.text(`Total Crops: ${totalItems}`, 14, 37);
 
-      const tableColumn = [
-        "Farming Type",
-        "Seed Type",
-        "Acres",
-        "Sowing Date",
-        "Farmer ID",
-        "Tracking ID",
-        "Created",
-      ];
-      const tableRows = crops.map((crop) => [
-        getFarmingTypeLabel(crop.farmingType),
-        getSeedTypeLabel(crop.seedType),
-        crop.acres.toString(),
-        formatDate(crop.sowingDate),
-        crop.farmerId.substring(0, 15) + (crop.farmerId.length > 15 ? "..." : ""),
-        formatTrackingId(crop.trackingId),
-        formatDate(crop.createdAt),
-      ]);
+    const tableColumn = [
+      "Farming Type",
+      "Seed Type",
+      "Acres",
+      "Sowing Date",
+      "Farmer Name",
+      "Farmer Phone",
+      "Tracking ID",
+      "Progress",
+      "Current Stage",
+    ];
+    const tableRows = crops.map((crop) => [
+      getFarmingTypeLabel(crop.farmingType),
+      getSeedTypeLabel(crop.seedType),
+      crop.acres.toString(),
+      formatDate(crop.sowingDate),
+      getFarmerName(crop).substring(0, 15) + (getFarmerName(crop).length > 15 ? "..." : ""),
+      getFarmerContact(crop).substring(0, 15),
+      formatTrackingId(crop.trackingId || ""),
+      crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+      // Fix: Add proper null checking with default empty string
+      (crop.tracking?.currentStageName || "").substring(0, 15) + 
+      ((crop.tracking?.currentStageName || "").length > 15 ? "..." : "") || "N/A",
+    ]);
 
-      autoTable(doc, {
-        head: [tableColumn],
-        body: tableRows,
-        startY: 45,
-        styles: { fontSize: 9, cellPadding: 3 },
-        headStyles: { fillColor: [59, 130, 246] },
-      });
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
 
-      doc.save(`crops_${new Date().toISOString().split("T")[0]}.pdf`);
-      showSnackbar("PDF exported successfully", "success");
-    } catch (error) {
-      console.error("Error exporting PDF:", error);
-      showSnackbar("Failed to export PDF", "error");
-    }
-  };
+    doc.save(`crops_${new Date().toISOString().split("T")[0]}.pdf`);
+    showSnackbar("PDF exported successfully", "success");
+  } catch (error) {
+    console.error("Error exporting PDF:", error);
+    showSnackbar("Failed to export PDF", "error");
+  }
+};
 
   const printTable = () => {
     const printContent = tableRef.current?.innerHTML;
@@ -3167,6 +3733,14 @@ export default function CropManagementPage() {
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f8fafc; font-weight: 600; }
             .type-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; display: inline-block; }
+            .tracking-info { font-size: 11px; margin-top: 4px; }
+            .stage-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+            .completed { background-color: #10B981; }
+            .in-progress { background-color: #3B82F6; }
+            .pending { background-color: #9CA3AF; }
+            .skipped { background-color: #F59E0B; }
+            .stage-item { margin: 2px 0; padding: 4px; border-radius: 4px; }
+            .stage-current { background-color: #DBEAFE; }
             @media print {
               body { margin: 0; }
               .no-print { display: none; }
@@ -3235,17 +3809,20 @@ export default function CropManagementPage() {
   };
 
   const handleViewTracking = (crop: Crop) => {
-    if (crop.trackingId) {
+    if (crop.tracking) {
+      setTrackingData(crop.tracking);
+      setModal({ type: "tracking" });
+    } else if (crop.trackingId) {
       fetchTrackingData(crop.trackingId);
     } else {
-      showSnackbar("No tracking ID available for this crop", "warning");
+      showSnackbar("No tracking data available for this crop", "warning");
     }
   };
 
   /* ================= RENDER ================= */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b relative overflow-x-auto from-gray-50 to-white text-black p-4">
+    <div className="min-h-screen xl:w-[83vw] lg:w-[75vw] overflow-x-scroll bg-gray-50 p-4">
       {loading && crops.length === 0 && (
         <div className="min-h-screen absolute w-full top-0 left-0 bg-[#fdfbfb73] z-[100] flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -3265,6 +3842,14 @@ export default function CropManagementPage() {
               </p>
             </div>
           </div>
+          {/* <button
+            onClick={() => setFormModalOpen(true)}
+            className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all flex items-center gap-2"
+          >
+            <FaChartLine className="w-5 h-5" />
+            <span className="hidden sm:inline">Add New Crop</span>
+            <span className="sm:hidden">Add Crop</span>
+          </button> */}
         </div>
 
         {/* Stats Indicators */}
@@ -3322,7 +3907,7 @@ export default function CropManagementPage() {
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Search by farming type, seed type, farmer ID, tracking ID..."
+                  placeholder="Search by farming type, seed type, farmer name, phone, email, location, tracking ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full lg:w-[40vw] pl-10 pr-4 py-2 text-xs sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
@@ -3456,12 +4041,12 @@ export default function CropManagementPage() {
         </div>
 
         {/* Table Section */}
-        <div ref={tableRef}>
+        <div ref={tableRef} className="w-full overflow-x-scroll">
           {/* Desktop Table */}
           <table className="min-w-full hidden bg-white lg:table">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase w-10">
+                <th className="px-4 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-700 uppercase w-10">
                   <input
                     type="checkbox"
                     checked={
@@ -3477,14 +4062,16 @@ export default function CropManagementPage() {
                   "Seed Type",
                   "Acres",
                   "Sowing Date",
-                  "Farmer ID",
-                  "Tracking ID",
+                  "Farmer Info",
+                  "Tracking Info",
+                  "Progress",
+                  "All Stages",
                   "Created",
                   "Actions",
                 ].map((header) => (
                   <th
                     key={header}
-                    className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase border-b border-gray-200"
+                    className="px-2 py-3 min-w-28 text-left text-[10px] font-semibold text-gray-700 uppercase border-b border-gray-200"
                   >
                     {header}
                   </th>
@@ -3502,12 +4089,12 @@ export default function CropManagementPage() {
                       className="rounded border-gray-300"
                     />
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
                       {getFarmingTypeLabel(row.farmingType)}
                     </span>
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-3 py-2">
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
                       {getSeedTypeLabel(row.seedType)}
                     </span>
@@ -3515,7 +4102,7 @@ export default function CropManagementPage() {
                   <td className="px-4 py-2 text-xs font-bold text-gray-900">
                     {row.acres}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-2 w-32 py-2">
                     <div className="flex items-center gap-2">
                       <FaCalendarAlt className="w-4 h-4 text-gray-400" />
                       <span className="text-xs text-gray-700">
@@ -3523,15 +4110,84 @@ export default function CropManagementPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-2">
-                    <div className="text-xs font-medium text-gray-900">
-                      {row.farmerId}
-                    </div>
+                  <td className="px-4 py-2 min-w-[200px]">
+                    {row.farmer ? (
+                      <FarmerInfoDisplay farmer={row.farmer} />
+                    ) : (
+                      <div className="text-xs text-gray-500 italic">
+                        No farmer data
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-2">
-                    <div className="text-xs font-medium text-gray-900 truncate" title={row.trackingId}>
-                      {formatTrackingId(row.trackingId)}
+                    {row.tracking ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <FaChartLine className="w-3 h-3 text-purple-500" />
+                          <span className="text-xs font-semibold text-gray-700 truncate max-w-[150px]">
+                            {row.tracking.name}
+                          </span>
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          ID: {formatTrackingId(row.tracking._id)}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs">
+                          <span className="text-gray-600">Created:</span>
+                          <span className="text-gray-900">
+                            {formatDate(row.tracking.createdAt)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-600">Status:</span>
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                            row.tracking.isCompleted ? "bg-green-100 text-green-800" :
+                            "bg-blue-100 text-blue-800"
+                          }`}>
+                            {row.tracking.isCompleted ? "Completed" : "Active"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500 italic">
+                        No tracking data
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-green-500 h-2 rounded-full" 
+                            style={{ width: `${row.tracking?.progress || 0}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs font-bold text-gray-900">
+                          {row.tracking?.progress || 0}%
+                        </span>
+                      </div>
+                      {row.tracking?.currentStageName && (
+                        <div className="text-xs text-gray-500">
+                          Current: {row.tracking.currentStageName}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-600">Stages:</span>
+                        <span className="font-semibold">
+                          {row.tracking?.currentStageIndex !== undefined ? row.tracking.currentStageIndex + 1 : 0}/{row.tracking?.stages?.length || 0}
+                        </span>
+                      </div>
                     </div>
+                  </td>
+                  <td className="px-4 py-2 min-w-[250px]">
+                    {row.tracking?.stages ? (
+                      <StagesDisplay 
+                        stages={row.tracking.stages} 
+                        currentStageIndex={row.tracking.currentStageIndex} 
+                      />
+                    ) : (
+                      <div className="text-xs text-gray-500 italic">No stages data</div>
+                    )}
                   </td>
                   <td className="px-4 py-2">
                     <div className="text-xs text-gray-500">
@@ -3540,24 +4196,24 @@ export default function CropManagementPage() {
                   </td>
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-2">
-                      <button
+                      {/* <button
                         onClick={() => handleViewTracking(row)}
                         className="p-2 rounded-lg text-purple-700 hover:bg-purple-200 transition-colors"
-                        title="View Tracking"
+                        title="View Tracking Details"
                       >
                         <FaChartLine className="w-4 h-4" />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => handleEditClick(row)}
                         className="p-2 rounded-lg text-blue-700 hover:bg-blue-200 transition-colors"
-                        title="Edit"
+                        title="Edit Crop"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setModal({ type: "delete", row })}
                         className="p-2 rounded-lg text-red-700 hover:bg-red-200 transition-colors"
-                        title="Delete"
+                        title="Delete Crop"
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>
@@ -3584,7 +4240,7 @@ export default function CropManagementPage() {
                       className="rounded border-gray-300 -mt-12 -ml-2"
                     />
                     <div>
-                      <div className="flex items-center gap-2 mb-1 ">
+                      <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
                           {getFarmingTypeLabel(row.farmingType)}
                         </span>
@@ -3600,27 +4256,31 @@ export default function CropManagementPage() {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <button
+                    {/* <button
                       onClick={() => handleViewTracking(row)}
                       className="p-1.5 rounded-lg text-purple-700 hover:bg-purple-200"
-                      title="View Tracking"
+                      title="View Tracking Details"
                     >
                       <FaChartLine className="w-3.5 h-3.5" />
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleEditClick(row)}
                       className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-200"
+                      title="Edit Crop"
                     >
                       <FaEdit className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => setModal({ type: "delete", row })}
                       className="p-1.5 rounded-lg text-red-700 hover:bg-red-200"
+                      title="Delete Crop"
                     >
                       <FaTrash className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
+                
+                {/* Basic Info */}
                 <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
                   <div>
                     <span className="font-medium">Acres:</span>
@@ -3629,18 +4289,106 @@ export default function CropManagementPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="font-medium">Tracking ID:</span>
-                    <span className="ml-2 font-medium text-gray-900 truncate block" title={row.trackingId}>
-                      {formatTrackingId(row.trackingId)}
+                    <span className="font-medium">Progress:</span>
+                    <span className="ml-2 font-bold text-gray-900">
+                      {row.tracking?.progress || 0}%
                     </span>
                   </div>
-                  <div className="col-span-2">
-                    <span className="font-medium">Farmer ID:</span>
-                    <span className="ml-2 font-medium text-gray-900">
-                      {row.farmerId}
-                    </span>
-                  </div>
-                  <div className="col-span-2 text-xs text-gray-500">
+                  
+                  {/* Farmer Info */}
+                  {row.farmer && (
+                    <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+                      <div className="font-medium text-gray-700 mb-2">Farmer Information:</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Name:</span>
+                          <span className="font-medium">{row.farmer.personalInfo.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Phone:</span>
+                          <span className="font-medium">{row.farmer.personalInfo.mobileNo}</span>
+                        </div>
+                        {row.farmer.personalInfo.email && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Email:</span>
+                            <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.email}</span>
+                          </div>
+                        )}
+                        {row.farmer.personalInfo.address && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Address:</span>
+                            <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.address}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Location:</span>
+                          <span className="font-medium">
+                            {row.farmer.personalInfo.villageGramaPanchayat}, {row.farmer.personalInfo.district}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                            row.farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
+                            row.farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
+                            "bg-gray-100 text-gray-800"
+                          }`}>
+                            {row.farmer.registrationStatus}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tracking Info */}
+                  {row.tracking && (
+                    <>
+                      <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+                        <div className="font-medium text-gray-700 mb-2">Tracking Information:</div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Name:</span>
+                            <span className="font-medium truncate max-w-[150px]">{row.tracking.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">ID:</span>
+                            <span className="font-medium">{formatTrackingId(row.tracking._id)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Status:</span>
+                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                              row.tracking.isCompleted ? "bg-green-100 text-green-800" :
+                              "bg-blue-100 text-blue-800"
+                            }`}>
+                              {row.tracking.isCompleted ? "Completed" : "Active"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Current Stage:</span>
+                            <span className="font-medium text-green-600">
+                              {row.tracking.currentStageName || 
+                               row.tracking.stages[row.tracking.currentStageIndex]?.name || 
+                               "Not Started"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Created:</span>
+                            <span className="font-medium">{formatDate(row.tracking.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Stages Display */}
+                      <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+                        <StagesDisplay 
+                          stages={row.tracking.stages} 
+                          currentStageIndex={row.tracking.currentStageIndex} 
+                        />
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
                     Created: {formatDate(row.createdAt)}
                   </div>
                 </div>
@@ -3768,8 +4516,10 @@ const DeleteModal = ({ row, onClose, onDelete }: any) => (
           Delete Crop Record
         </Typography>
         <Typography className="text-gray-600 mb-6">
-          Are you sure you want to delete the crop record for farmer ID{" "}
-          <span className="font-bold text-gray-900">"{row.farmerId}"</span>?
+          Are you sure you want to delete the crop record for{" "}
+          <span className="font-bold text-gray-900">
+            {row.farmer?.personalInfo?.name || row.farmerId}
+          </span>?
           <br />
           This action cannot be undone.
         </Typography>

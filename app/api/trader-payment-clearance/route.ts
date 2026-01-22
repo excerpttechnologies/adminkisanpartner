@@ -1,150 +1,4 @@
 
-
-// // // app/api/reports/trader-payment-clearance/route.ts
-// // import { NextRequest, NextResponse } from 'next/server';
-// // import dbConnect from '@/app/lib/Db';
-// // import mongoose from 'mongoose';
-
-// // const OrderSchema = new mongoose.Schema({}, {
-// //   strict: false,
-// //   timestamps: true,
-// //   collection: 'orders'
-// // });
-
-// // const Order = mongoose.models.Order || mongoose.model('Order', OrderSchema);
-
-// // export async function GET(request: NextRequest) {
-// //   try {
-// //     await dbConnect();
-
-// //     const params = request.nextUrl.searchParams;
-
-// //     const traderId = params.get('traderId');
-// //     const orderId = params.get('orderId');
-// //     const search = params.get('search');
-// //     const startDate = params.get('startDate');
-// //     const endDate = params.get('endDate');
-
-// //     const page = Number(params.get('page') || 1);
-// //     const limit = Number(params.get('limit') || 20);
-// //     const sortBy = params.get('sortBy') || 'lastStatusChangeDate';
-// //     const order = params.get('order') === 'asc' ? 1 : -1;
-
-// //     const skip = (page - 1) * limit;
-
-// //     /* ---------- MATCH CONDITIONS ---------- */
-// //     const match: any = {
-// //       'traderToAdminPayment.paymentStatus': 'paid'
-// //     };
-
-// //     if (traderId) match.traderId = traderId;
-// //     if (orderId) match.orderId = orderId;
-
-// //     if (startDate || endDate) {
-// //       match['traderToAdminPayment.lastStatusChangeDate'] = {};
-// //       if (startDate) match['traderToAdminPayment.lastStatusChangeDate'].$gte = new Date(startDate);
-// //       if (endDate) match['traderToAdminPayment.lastStatusChangeDate'].$lte = new Date(endDate);
-// //     }
-
-// //     if (search) {
-// //       match.$or = [
-// //         { traderName: { $regex: search, $options: 'i' } },
-// //         { orderId: { $regex: search, $options: 'i' } }
-// //       ];
-// //     }
-
-// //     /* ---------- DATA PIPELINE ---------- */
-// //     const dataPipeline = [
-// //       { $match: match },
-// //       {
-// //         $project: {
-// //           _id: 0,
-// //           orderId: 1,
-// //           traderId: 1,
-// //           traderName: 1,
-// //           totalAmount: '$traderToAdminPayment.totalAmount',
-// //           paidAmount: '$traderToAdminPayment.paidAmount',
-// //           remainingAmount: '$traderToAdminPayment.remainingAmount',
-// //           paymentStatus: '$traderToAdminPayment.paymentStatus',
-// //           lastStatusChangeDate: '$traderToAdminPayment.lastStatusChangeDate'
-// //         }
-// //       },
-// //       { $sort: { [sortBy]: order } },
-// //       { $skip: skip },
-// //       { $limit: limit }
-// //     ];
-
-// //     /* ---------- COUNT PIPELINE ---------- */
-// //     const countPipeline = [
-// //       { $match: match },
-// //       { $count: 'total' }
-// //     ];
-
-// //     /* ---------- SUMMARY PIPELINE ---------- */
-// //     const summaryPipeline = [
-// //       { $match: match },
-// //       {
-// //         $group: {
-// //           _id: null,
-// //           totalClearedOrders: { $sum: 1 },
-// //           totalClearedAmount: { $sum: '$traderToAdminPayment.totalAmount' },
-// //           traders: { $addToSet: '$traderId' }
-// //         }
-// //       }
-// //     ];
-
-// //     const [data, count, summaryAgg] = await Promise.all([
-// //       Order.aggregate(dataPipeline),
-// //       Order.aggregate(countPipeline),
-// //       Order.aggregate(summaryPipeline)
-// //     ]);
-
-// //     const total = count[0]?.total || 0;
-// //     const summaryDoc = summaryAgg[0] || {};
-
-// //     return NextResponse.json({
-// //       success: true,
-// //       reportName: 'TRADERS PAYMENT CLEARANCE REPORT',
-// //       data,
-// //       summary: {
-// //         totalClearedOrders: summaryDoc.totalClearedOrders || 0,
-// //         totalClearedAmount: summaryDoc.totalClearedAmount || 0,
-// //         averageClearedAmount: summaryDoc.totalClearedOrders
-// //           ? summaryDoc.totalClearedAmount / summaryDoc.totalClearedOrders
-// //           : 0,
-// //         tradersCount: summaryDoc.traders?.length || 0
-// //       },
-// //       pagination: {
-// //         page,
-// //         limit,
-// //         total,
-// //         totalPages: Math.ceil(total / limit)
-// //       }
-// //     });
-
-// //   } catch (error: any) {
-// //     console.error(error);
-// //     return NextResponse.json(
-// //       { success: false, message: 'Failed to fetch report', error: error.message },
-// //       { status: 500 }
-// //     );
-// //   }
-// // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // app/api/reports/trader-payment-clearance/route.ts
 // import { NextRequest, NextResponse } from 'next/server';
 // import dbConnect from '@/app/lib/Db';
 // import mongoose from 'mongoose';
@@ -176,7 +30,7 @@
 //     const page = Math.max(1, parseInt(params.get('page') || '1'));
 //     const limit = Math.min(1000, Math.max(1, parseInt(params.get('limit') || '20')));
 //     const sortBy = params.get('sortBy') || 'lastStatusChangeDate';
-//     const order = params.get('order') === 'asc' ? 1 : -1;
+//     const sortOrder = params.get('order') === 'asc' ? 1 : -1;
 
 //     const skip = (page - 1) * limit;
 
@@ -226,7 +80,7 @@
 //     }
 
 //     /* ---------- DATA PIPELINE ---------- */
-//     const dataPipeline = [
+//     const dataPipeline: any[] = [
 //       { $match: match },
 //       {
 //         $project: {
@@ -253,19 +107,19 @@
 //           updatedAt: 1
 //         }
 //       },
-//       { $sort: { [sortBy]: order } },
+//       { $sort: { [sortBy]: sortOrder } },
 //       { $skip: skip },
 //       { $limit: limit }
 //     ];
 
 //     /* ---------- COUNT PIPELINE ---------- */
-//     const countPipeline = [
+//     const countPipeline: any[] = [
 //       { $match: match },
 //       { $count: 'total' }
 //     ];
 
 //     /* ---------- SUMMARY PIPELINE ---------- */
-//     const summaryPipeline = [
+//     const summaryPipeline: any[] = [
 //       { $match: match },
 //       {
 //         $group: {
@@ -289,7 +143,7 @@
 //     const currentYear = now.getFullYear();
 
 //     /* ---------- WEEKLY/MONTHLY SUMMARY PIPELINE ---------- */
-//     const timeBasedPipeline = [
+//     const timeBasedPipeline: any[] = [
 //       { $match: match },
 //       {
 //         $addFields: {
@@ -447,7 +301,7 @@
 // function getWeekNumber(date: Date): number {
 //   const d = new Date(date);
 //   d.setHours(0, 0, 0, 0);
-//   d.setDate(d.getDate() + 4 - (d.getDate() || 7));
+//   d.setDate(d.getDate() + 4 - (d.getDay() || 7));
 //   const yearStart = new Date(d.getFullYear(), 0, 1);
 //   const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 //   return weekNo;
@@ -461,10 +315,6 @@
 
 
 
-
-
-
-// app/api/trader-payment-clearance/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/app/lib/Db';
 import mongoose from 'mongoose';
@@ -541,7 +391,8 @@ export async function GET(request: NextRequest) {
       match.$or = [
         { traderName: searchRegex },
         { orderId: searchRegex },
-        { traderId: searchRegex }
+        { traderId: searchRegex },
+        { farmerId: searchRegex } // Added farmerId to search
       ];
     }
 
@@ -554,6 +405,7 @@ export async function GET(request: NextRequest) {
           orderId: 1,
           traderId: 1,
           traderName: 1,
+          farmerId: 1, // Added farmerId field
           totalAmount: { 
             $ifNull: ['$traderToAdminPayment.totalAmount', 0] 
           },
@@ -597,7 +449,8 @@ export async function GET(request: NextRequest) {
           traders: { $addToSet: '$traderId' },
           totalPaidAmount: {
             $sum: { $ifNull: ['$traderToAdminPayment.paidAmount', 0] }
-          }
+          },
+          farmers: { $addToSet: '$farmerId' } // Added farmers count
         }
       }
     ];
@@ -675,6 +528,7 @@ export async function GET(request: NextRequest) {
       orderId: item.orderId || '',
       traderId: item.traderId || '',
       traderName: item.traderName || 'Unknown Trader',
+      farmerId: item.farmerId || null, // Added farmerId to response
       totalAmount: Number(item.totalAmount) || 0,
       paidAmount: Number(item.paidAmount) || 0,
       remainingAmount: Number(item.remainingAmount) || 0,
@@ -690,6 +544,7 @@ export async function GET(request: NextRequest) {
         ? Number((summaryDoc.totalClearedAmount / summaryDoc.totalClearedOrders).toFixed(2))
         : 0,
       tradersCount: summaryDoc.traders?.length || 0,
+      farmersCount: summaryDoc.farmers?.length || 0, // Added farmers count to summary
       clearedThisWeek: timeBasedDoc.clearedThisWeek?.[0]?.count || 0,
       clearedThisMonth: timeBasedDoc.clearedThisMonth?.[0]?.count || 0,
       totalPaidAmount: summaryDoc.totalPaidAmount || 0
@@ -743,6 +598,7 @@ export async function GET(request: NextRequest) {
         totalClearedAmount: 0,
         averageClearedAmount: 0,
         tradersCount: 0,
+        farmersCount: 0, // Added farmers count to error response
         clearedThisWeek: 0,
         clearedThisMonth: 0,
         totalPaidAmount: 0

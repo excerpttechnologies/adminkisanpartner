@@ -318,7 +318,7 @@ const Sidebar = () => {
     try {
       await fetch("/api/admin/logout", { method: "POST" });
       setUser(null);
-      router.push("/admin/login");
+      router.push("/");
       router.refresh();
     } catch (error) {
       console.error("Logout failed", error);

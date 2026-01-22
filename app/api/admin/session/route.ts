@@ -17,7 +17,7 @@ export async function GET() {
       data: session.admin
     });
   } catch (error: any) {
-    console.error("Session error:", error);
+   
     return NextResponse.json(
       { success: false, message: error.message || "Session check failed" },
       { status: 500 }

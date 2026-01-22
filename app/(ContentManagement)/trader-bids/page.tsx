@@ -3,6 +3,10 @@
 
 
 
+
+
+
+
 // "use client"
 
 // import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
@@ -48,9 +52,22 @@
 //   FaGavel,
 //   FaHandshake,
 //   FaMoneyBillWave,
-//   FaChartLine
+//   FaChartLine,
+//   FaUserTag,
+//   FaMobileAlt,
+//   FaHome
 // } from 'react-icons/fa';
 // import toast from 'react-hot-toast';
+
+// interface FarmerInfo {
+//   farmerId?: string;
+//   farmerName?: string;
+//   farmerMobile?: string;
+//   farmerAddress?: string;
+//   farmerVillage?: string;
+//   farmerPincode?: string;
+//   farmerDistrict?: string;
+// }
 
 // interface Offer {
 //   // REQUIRED FIELDS:
@@ -74,6 +91,9 @@
 //   nearestMarket?: string;
 //   totalValue?: number;
 //   _id?: string;
+  
+//   // Farmer info
+//   farmerInfo?: FarmerInfo;
 // }
 
 // interface ApiResponse {
@@ -135,13 +155,86 @@
 //   // Mobile view state
 //   const [expandedOffer, setExpandedOffer] = useState<string | null>(null);
 
+//   // Farmer details cache
+//   const [farmerDetailsCache, setFarmerDetailsCache] = useState<Record<string, FarmerInfo>>({});
+
 //   const API_BASE = '/api';
 //   const tableRef = useRef<HTMLDivElement>(null);
 //   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-//   // Fetch offers with server-side pagination and sorting
-//   const fetchOffers = useCallback(async () => {
-//     setLoading(true);
+//   // Fetch farmer details
+//   const fetchFarmerDetails = useCallback(async (farmerId: string): Promise<FarmerInfo> => {
+//     if (farmerDetailsCache[farmerId]) {
+//       return farmerDetailsCache[farmerId];
+//     }
+
+//     try {
+//       const response = await axios.get(`${API_BASE}/farmers?search=${farmerId}`);
+      
+//       if (response.data.success && response.data.data && response.data.data.length > 0) {
+//         const farmerData = response.data.data[0];
+        
+//         // Build address from personalInfo
+//         let address = '';
+//         if (farmerData.personalInfo?.address) {
+//           address = farmerData.personalInfo.address;
+//         }
+        
+//         // Add village if available
+//         if (farmerData.personalInfo?.villageGramaPanchayat) {
+//           if (address) address += ', ';
+//           address += farmerData.personalInfo.villageGramaPanchayat;
+//         }
+        
+//         // Add district if available
+//         if (farmerData.personalInfo?.district) {
+//           if (address) address += ', ';
+//           address += farmerData.personalInfo.district;
+//         }
+        
+//         // Add pincode if available
+//         if (farmerData.personalInfo?.pincode) {
+//           if (address) address += ' - ';
+//           address += farmerData.personalInfo.pincode;
+//         }
+
+//         const farmerInfo: FarmerInfo = {
+//           farmerId: farmerData.farmerId,
+//           farmerName: farmerData.personalInfo?.name || 'N/A',
+//           farmerMobile: farmerData.personalInfo?.mobileNo || 'N/A',
+//           farmerAddress: address || 'N/A',
+//           farmerVillage: farmerData.personalInfo?.villageGramaPanchayat || 'N/A',
+//           farmerPincode: farmerData.personalInfo?.pincode || 'N/A',
+//           farmerDistrict: farmerData.personalInfo?.district || 'N/A'
+//         };
+        
+//         // Update cache
+//         setFarmerDetailsCache(prev => ({
+//           ...prev,
+//           [farmerId]: farmerInfo
+//         }));
+        
+//         return farmerInfo;
+//       }
+//     } catch (error) {
+//       console.error(`Error fetching farmer details for ${farmerId}:`, error);
+//     }
+    
+//     // Return default if fetch fails
+//     return {
+//       farmerId,
+//       farmerName: 'Not Found',
+//       farmerMobile: 'N/A',
+//       farmerAddress: 'N/A'
+//     };
+//   }, [API_BASE, farmerDetailsCache]);
+
+//   // Fetch offers with server-side pagination and sorting - FIXED: Only one API call
+//   const fetchOffers = useCallback(async (isForExport = false) => {
+//     // Don't set loading for export calls
+//     if (!isForExport) {
+//       setLoading(true);
+//     }
     
 //     const params = new URLSearchParams();
 //     if (searchInput) params.append('search', searchInput);
@@ -149,8 +242,15 @@
 //     if (traderIdFilter) params.append('traderId', traderIdFilter);
 //     if (farmerIdFilter) params.append('farmerId', farmerIdFilter);
 //     if (productIdFilter) params.append('productId', productIdFilter);
-//     params.append('page', currentPage.toString());
-//     params.append('limit', itemsPerPage.toString());
+    
+//     // For export, get all data, for normal fetch, use pagination
+//     if (!isForExport) {
+//       params.append('page', currentPage.toString());
+//       params.append('limit', itemsPerPage.toString());
+//     } else {
+//       params.append('limit', '10000');
+//     }
+    
 //     params.append('sortBy', sortField);
 //     params.append('order', sortOrder);
 
@@ -159,54 +259,74 @@
       
 //       if (response.data.success) {
 //         const data = response.data.data || [];
-//         setOffers(data);
-//         setTotalItemsState(response.data.pagination?.total || data.length);
-//         setTotalPages(response.data.pagination?.totalPages || 1);
         
-//         // For export functionality
-//         const exportParams = new URLSearchParams();
-//         if (searchInput) exportParams.append('search', searchInput);
-//         if (statusFilter) exportParams.append('status', statusFilter);
-//         if (traderIdFilter) exportParams.append('traderId', traderIdFilter);
-//         if (farmerIdFilter) exportParams.append('farmerId', farmerIdFilter);
-//         if (productIdFilter) exportParams.append('productId', productIdFilter);
-//         exportParams.append('limit', '10000');
-//         exportParams.append('sortBy', sortField);
-//         exportParams.append('order', sortOrder);
+//         // Process offers and fetch farmer details
+//         const processedOffers = await Promise.all(
+//           data.map(async (offer: Offer) => {
+//             if (offer.farmerId) {
+//               const farmerInfo = await fetchFarmerDetails(offer.farmerId);
+//               return {
+//                 ...offer,
+//                 farmerInfo
+//               };
+//             }
+//             return offer;
+//           })
+//         );
         
-//         const exportResponse = await axios.get(`${API_BASE}/trader-bids-reports?${exportParams.toString()}`);
-//         if (exportResponse.data.success) {
-//           setAllOffers(exportResponse.data.data || []);
+//         if (isForExport) {
+//           setAllOffers(processedOffers);
+//           return processedOffers;
 //         } else {
-//           setAllOffers(data);
+//           setOffers(processedOffers);
+//           setTotalItemsState(response.data.pagination?.total || data.length);
+//           setTotalPages(response.data.pagination?.totalPages || 1);
 //         }
 //       } else {
-//         toast.error(response.data.error || 'Failed to fetch trader bids');
+//         if (!isForExport) {
+//           toast.error(response.data.error || 'Failed to fetch trader bids');
+//         }
 //       }
 //     } catch (error) {
 //       console.error('Error fetching trader bids:', error);
-//       toast.error('Error fetching trader bids');
+//       if (!isForExport) {
+//         toast.error('Error fetching trader bids');
+//       }
 //     } finally {
-//       setLoading(false);
+//       if (!isForExport) {
+//         setLoading(false);
+//       }
 //     }
-//   }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, currentPage, itemsPerPage, sortField, sortOrder]);
+    
+//     return [];
+//   }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, currentPage, itemsPerPage, sortField, sortOrder, fetchFarmerDetails]);
 
-//   // Initial data fetch
-//   useEffect(() => {
-//     fetchOffers();
+//   // Separate function to fetch export data
+//   const fetchExportData = useCallback(async () => {
+//     try {
+//       const exportData = await fetchOffers(true);
+//       setAllOffers(exportData);
+//       return exportData;
+//     } catch (error) {
+//       console.error('Error fetching export data:', error);
+//       return [];
+//     }
 //   }, [fetchOffers]);
 
-//   // Debounced search
+//   // Initial data fetch and when pagination/sorting changes
+//   useEffect(() => {
+//     fetchOffers();
+//   }, [currentPage, itemsPerPage, sortField, sortOrder]);
+
+//   // Debounced search for filters - FIXED: Added all filter dependencies
 //   useEffect(() => {
 //     if (searchTimeoutRef.current) {
 //       clearTimeout(searchTimeoutRef.current);
 //     }
 
 //     searchTimeoutRef.current = setTimeout(() => {
-//       if (searchInput !== '' || traderIdFilter !== '' || productIdFilter !== '') {
-//         setCurrentPage(1);
-//         fetchOffers();
-//       }
+//       setCurrentPage(1);
+//       fetchOffers();
 //     }, 500);
 
 //     return () => {
@@ -214,11 +334,13 @@
 //         clearTimeout(searchTimeoutRef.current);
 //       }
 //     };
-//   }, [searchInput, traderIdFilter, productIdFilter]);
+//   }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, fetchOffers]);
 
-//   // Get unique traders for filter dropdown
+//   // Get unique traders for filter dropdown - use allOffers to get all traders
 //   const getUniqueTraders = useMemo(() => {
-//     const traders = allOffers
+//     // Temporarily use a mock or empty array if allOffers is empty
+//     const offersForFilter = allOffers.length > 0 ? allOffers : offers;
+//     const traders = offersForFilter
 //       .map(offer => ({ id: offer.traderId, name: offer.traderName }))
 //       .filter((trader, index, self) => 
 //         trader.id && 
@@ -226,15 +348,60 @@
 //         index === self.findIndex(t => t.id === trader.id)
 //       );
 //     return traders.sort((a, b) => a.name.localeCompare(b.name));
-//   }, [allOffers]);
+//   }, [allOffers, offers]);
 
 //   // Get unique products for filter dropdown
 //   const getUniqueProducts = useMemo(() => {
-//     const products = allOffers
+//     const offersForFilter = allOffers.length > 0 ? allOffers : offers;
+//     const products = offersForFilter
 //       .map(offer => offer.productId)
 //       .filter(productId => productId && productId.trim() !== '');
 //     return [...new Set(products)].sort();
-//   }, [allOffers]);
+//   }, [allOffers, offers]);
+
+//   // Filter offers client-side as a fallback (in case API doesn't filter)
+//   const filteredOffers = useMemo(() => {
+//     let result = offers;
+    
+//     // Apply client-side filtering if needed (as backup)
+//     if (statusFilter && statusFilter !== '') {
+//       result = result.filter(offer => 
+//         offer.status.toLowerCase() === statusFilter.toLowerCase()
+//       );
+//     }
+    
+//     if (searchInput && searchInput !== '') {
+//       const searchLower = searchInput.toLowerCase();
+//       result = result.filter(offer =>
+//         offer.traderName?.toLowerCase().includes(searchLower) ||
+//         offer.productId?.toLowerCase().includes(searchLower) ||
+//         offer.offerId?.toLowerCase().includes(searchLower) ||
+//         offer.farmerId?.toLowerCase().includes(searchLower) ||
+//         offer.traderId?.toLowerCase().includes(searchLower) ||
+//         offer.farmerInfo?.farmerName?.toLowerCase().includes(searchLower)
+//       );
+//     }
+    
+//     if (traderIdFilter && traderIdFilter !== '') {
+//       result = result.filter(offer => 
+//         offer.traderId === traderIdFilter
+//       );
+//     }
+    
+//     if (productIdFilter && productIdFilter !== '') {
+//       result = result.filter(offer => 
+//         offer.productId === productIdFilter
+//       );
+//     }
+    
+//     if (farmerIdFilter && farmerIdFilter !== '') {
+//       result = result.filter(offer => 
+//         offer.farmerId === farmerIdFilter
+//       );
+//     }
+    
+//     return result;
+//   }, [offers, statusFilter, searchInput, traderIdFilter, productIdFilter, farmerIdFilter]);
 
 //   // Handle sort
 //   const handleSort = (field: string) => {
@@ -272,51 +439,190 @@
 //     setCurrentPage(1);
 //   };
 
-//   // Calculate pagination range
+//   // Calculate pagination range - use filteredOffers for display
 //   const getPaginationRange = () => {
 //     const startItem = (currentPage - 1) * itemsPerPage + 1;
 //     const endItem = Math.min(currentPage * itemsPerPage, totalItemsState);
 //     return { startItem, endItem };
 //   };
 
-//   // Export functions
-//   const handleCopyToClipboard = async () => {
-//     const headers = ["Product ID", "Farmer ID", "Offer ID", "Trader ID", "Trader Name", "Offered Price", "Quantity", "Status", "Counter Price", "Counter Quantity", "Created At"];
+//   // Calculate stats - use allOffers for global stats
+//   const calculateStats = () => {
+//     const offersForStats = allOffers.length > 0 ? allOffers : offers;
+//     const totalOffers = offersForStats.length;
+//     const totalValue = offersForStats.reduce((sum, offer) => sum + ((offer.offeredPrice || 0) * (offer.quantity || 0)), 0);
     
-//     const csvContent = [
-//       headers.join("\t"),
-//       ...allOffers.map((offer) => {
-//         return [
-//           offer.productId || '',
-//           offer.farmerId || '',
-//           offer.offerId || '',
-//           offer.traderId || '',
-//           offer.traderName || '',
-//           offer.offeredPrice || 0,
-//           offer.quantity || 0,
-//           offer.status || '',
-//           offer.counterPrice || '',
-//           offer.counterQuantity || '',
-//           new Date(offer.createdAt).toLocaleDateString()
-//         ].join("\t");
-//       })
+//     const statusCounts = {
+//       pending: offersForStats.filter(o => o.status?.toLowerCase() === 'pending').length,
+//       accepted: offersForStats.filter(o => o.status?.toLowerCase() === 'accepted').length,
+//       rejected: offersForStats.filter(o => o.status?.toLowerCase() === 'rejected').length,
+//       countered: offersForStats.filter(o => o.status?.toLowerCase() === 'countered').length
+//     };
+    
+//     const counterOffers = offersForStats.filter(o => o.counterPrice || o.counterQuantity).length;
+//     const privateCounters = offersForStats.filter(o => o.isCounterPrivate).length;
+    
+//     return { totalOffers, totalValue, statusCounts, counterOffers, privateCounters };
+//   };
+
+//   const { totalOffers, totalValue, statusCounts, counterOffers, privateCounters } = calculateStats();
+//   const { startItem, endItem } = getPaginationRange();
+
+//   const handleCopyToClipboard = async (): Promise<void> => {
+//     let offersToExport = allOffers;
+    
+//     // If allOffers is empty, fetch export data
+//     if (offersToExport.length === 0) {
+//       toast.loading("Fetching data for export...", { id: "export" });
+//       offersToExport = await fetchExportData();
+//       toast.dismiss("export");
+//     }
+    
+//     if (offersToExport.length === 0) {
+//       toast.error("No offers to copy");
+//       return;
+//     }
+
+//     // Define headers with widths for optimal display
+//     const headers = [
+//       { name: "Offer ID", width: 12 },
+//       { name: "Product", width: 10 },
+//       { name: "Trader", width: 18 },
+//       { name: "Price", width: 12 },
+//       { name: "Qty", width: 8 },
+//       { name: "Status", width: 14 },
+//       { name: "Counter", width: 15 },
+//       { name: "Date", width: 12 }
+//     ];
+    
+//     // Create header row
+//     const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+//     const separator = "─".repeat(headerRow.length);
+    
+//     // Format each offer row
+//     const offerRows = offersToExport.map((offer: any) => {
+//       // Format trader info
+//       const traderInfo = `${offer.traderName || "N/A"} (${offer.traderId?.substring(0, 6) || "N/A"}...)`;
+//       const formattedTrader = traderInfo.length > 16 
+//         ? traderInfo.substring(0, 13) + "..." 
+//         : traderInfo;
+      
+//       // Format price with ₹ symbol
+//       const formatPrice = (price: number) => 
+//         price ? `₹${price.toLocaleString('en-IN')}` : "N/A";
+      
+//       const offeredPrice = formatPrice(offer.offeredPrice || 0);
+      
+//       // Format status with emoji
+//       const status = offer.status || "N/A";
+//       const statusEmoji = status === "accepted" ? "✅" : 
+//                          status === "rejected" ? "❌" : 
+//                          status === "pending" ? "⏳" : 
+//                          status === "countered" ? "💰" : "";
+      
+//       // Format counter offer info
+//       let counterInfo = "No Counter";
+//       if (offer.counterPrice || offer.counterQuantity) {
+//         const counterPrice = offer.counterPrice ? `₹${offer.counterPrice}` : "";
+//         const counterQty = offer.counterQuantity ? `${offer.counterQuantity}` : "";
+//         counterInfo = `${counterPrice} / ${counterQty}`.replace(/ \/ $/, "").replace(/^ \//, "");
+//       }
+      
+//       // Create row values with padding
+//       const rowValues = [
+//         (offer.offerId?.substring(0, 10) || "N/A").padEnd(headers[0].width),
+//         (offer.productId?.substring(0, 8) || "N/A").padEnd(headers[1].width),
+//         formattedTrader.padEnd(headers[2].width),
+//         offeredPrice.padEnd(headers[3].width),
+//         (offer.quantity || 0).toString().padEnd(headers[4].width),
+//         `${statusEmoji} ${status}`.padEnd(headers[5].width),
+//         counterInfo.padEnd(headers[6].width),
+//         (offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A").padEnd(headers[7].width)
+//       ];
+      
+//       return rowValues.join(" │ ");
+//     });
+    
+//     // Calculate statistics
+//     const stats = offersToExport.reduce((acc: any, offer: any) => {
+//       acc.totalValue += (offer.offeredPrice || 0) * (offer.quantity || 0);
+//       acc.totalQuantity += offer.quantity || 0;
+//       acc.statusCounts[offer.status] = (acc.statusCounts[offer.status] || 0) + 1;
+//       acc.hasCounter += (offer.counterPrice || offer.counterQuantity) ? 1 : 0;
+//       return acc;
+//     }, {
+//       totalValue: 0,
+//       totalQuantity: 0,
+//       statusCounts: {},
+//       hasCounter: 0
+//     });
+    
+//     // Build complete table with analytics
+//     const tableContent = [
+//       "💰 OFFERS & COUNTER-OFFERS",
+//       "=".repeat(headerRow.length),
+//       headerRow,
+//       separator,
+//       ...offerRows,
+//       separator,
+//       "",
+//       "📊 OFFER ANALYTICS",
+//       `• Total Offers: ${offersToExport.length}`,
+//       `• Total Quantity Offered: ${stats.totalQuantity.toLocaleString('en-IN')}`,
+//       `• Total Offer Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
+//       `• Average Price per Unit: ₹${stats.totalQuantity > 0 ? (stats.totalValue / stats.totalQuantity).toFixed(2) : 0}`,
+//       "",
+//       "📈 STATUS DISTRIBUTION",
+//       ...Object.entries(stats.statusCounts).map(([status, count]: [string, any]) => 
+//         `• ${status}: ${count} (${Math.round((count / offersToExport.length) * 100)}%)`
+//       ),
+//       "",
+//       "💱 COUNTER OFFER STATS",
+//       `• Offers with Counter: ${stats.hasCounter}`,
+//       `• Counter Rate: ${Math.round((stats.hasCounter / offersToExport.length) * 100)}%`,
+//       `• Without Counter: ${offersToExport.length - stats.hasCounter}`,
+//       "",
+//       "🔍 DATA SOURCE",
+//       `• Source: ${filteredOffers.length > 0 ? 'Filtered Results' : 'All Offers'}`,
+//       `• Farmers: ${new Set(offersToExport.map((o: any) => o.farmerId)).size}`,
+//       `• Products: ${new Set(offersToExport.map((o: any) => o.productId)).size}`,
+//       `• Traders: ${new Set(offersToExport.map((o: any) => o.traderId)).size}`,
+//       "",
+//       `📅 Report Generated: ${new Date().toLocaleString()}`
 //     ].join("\n");
     
 //     try {
-//       await navigator.clipboard.writeText(csvContent);
-//       toast.success("Data copied to clipboard!");
+//       await navigator.clipboard.writeText(tableContent);
+//       toast.success(`Copied ${offersToExport.length} offers to clipboard!`);
 //     } catch (err) {
-//       console.error("Failed to copy: ", err);
+//       console.error("Failed to copy:", err);
 //       toast.error("Failed to copy to clipboard");
 //     }
 //   };
 
-//   const handleExportExcel = () => {
-//     const data = allOffers.map((offer) => {
+//   const handleExportExcel = async () => {
+//     let offersToExport = allOffers;
+    
+//     // If allOffers is empty, fetch export data
+//     if (offersToExport.length === 0) {
+//       toast.loading("Fetching data for export...", { id: "export" });
+//       offersToExport = await fetchExportData();
+//       toast.dismiss("export");
+//     }
+    
+//     if (offersToExport.length === 0) {
+//       toast.error("No data to export");
+//       return;
+//     }
+
+//     const data = offersToExport.map((offer) => {
 //       const totalValue = (offer.offeredPrice || 0) * (offer.quantity || 0);
 //       return {
 //         "Product ID": offer.productId,
 //         "Farmer ID": offer.farmerId,
+//         "Farmer Name": offer.farmerInfo?.farmerName || 'N/A',
+//         "Farmer Mobile": offer.farmerInfo?.farmerMobile || 'N/A',
+//         "Farmer Address": offer.farmerInfo?.farmerAddress || 'N/A',
 //         "Offer ID": offer.offerId,
 //         "Trader ID": offer.traderId,
 //         "Trader Name": offer.traderName,
@@ -342,15 +648,30 @@
 //     toast.success("Excel file exported!");
 //   };
 
-//   const handleExportCSV = () => {
-//     const headers = ["Product ID", "Trader Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
+//   const handleExportCSV = async () => {
+//     let offersToExport = allOffers;
+    
+//     // If allOffers is empty, fetch export data
+//     if (offersToExport.length === 0) {
+//       toast.loading("Fetching data for export...", { id: "export" });
+//       offersToExport = await fetchExportData();
+//       toast.dismiss("export");
+//     }
+    
+//     if (offersToExport.length === 0) {
+//       toast.error("No data to export");
+//       return;
+//     }
+    
+//     const headers = ["Product ID", "Trader Name", "Farmer Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
     
 //     const csvContent = [
 //       headers.join(","),
-//       ...allOffers.map((offer) => {
+//       ...offersToExport.map((offer) => {
 //         return [
 //           `"${offer.productId}"`,
 //           `"${offer.traderName}"`,
+//           `"${offer.farmerInfo?.farmerName || 'N/A'}"`,
 //           offer.offeredPrice,
 //           offer.quantity,
 //           `"${offer.status}"`,
@@ -368,16 +689,31 @@
 //     toast.success("CSV file exported!");
 //   };
 
-//   const handleExportPDF = () => {
+//   const handleExportPDF = async () => {
+//     let offersToExport = allOffers;
+    
+//     // If allOffers is empty, fetch export data
+//     if (offersToExport.length === 0) {
+//       toast.loading("Fetching data for export...", { id: "export" });
+//       offersToExport = await fetchExportData();
+//       toast.dismiss("export");
+//     }
+    
+//     if (offersToExport.length === 0) {
+//       toast.error("No data to export");
+//       return;
+//     }
+    
 //     const doc = new jsPDF('landscape');
 //     doc.text("Trader Bids Report", 14, 16);
     
-//     const tableColumn = ["Product ID", "Trader", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
-//     const tableRows: any = allOffers.map((offer) => {
+//     const tableColumn = ["Product ID", "Trader", "Farmer", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
+//     const tableRows: any = offersToExport.map((offer) => {
 //       const total = (offer.offeredPrice || 0) * (offer.quantity || 0);
 //       return [
 //         offer.productId,
 //         offer.traderName,
+//         offer.farmerInfo?.farmerName || 'N/A',
 //         `₹${offer.offeredPrice.toLocaleString()}`,
 //         offer.quantity.toLocaleString(),
 //         `₹${total.toLocaleString()}`,
@@ -399,7 +735,21 @@
 //     toast.success("PDF file exported!");
 //   };
 
-//   const handlePrint = () => {
+//   const handlePrint = async () => {
+//     let offersToExport = allOffers;
+    
+//     // If allOffers is empty, fetch export data
+//     if (offersToExport.length === 0) {
+//       toast.loading("Fetching data for export...", { id: "export" });
+//       offersToExport = await fetchExportData();
+//       toast.dismiss("export");
+//     }
+    
+//     if (offersToExport.length === 0) {
+//       toast.error("No data to print");
+//       return;
+//     }
+    
 //     const printContent = `
 //       <!DOCTYPE html>
 //       <html>
@@ -415,6 +765,8 @@
 //           .status-accepted { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
 //           .status-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
 //           .status-countered { background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+//           .farmer-info { background-color: #f0fdf4; padding: 8px; border-radius: 6px; margin: 5px 0; }
+//           .farmer-label { font-weight: bold; color: #166534; }
 //           @media print { 
 //             @page { size: landscape; } 
 //             body { margin: 0; padding: 20px; }
@@ -424,13 +776,14 @@
 //       <body>
 //         <h1>Trader Bids Report</h1>
 //         <p>Generated on: ${new Date().toLocaleString()}</p>
-//         <p>Total Bids: ${allOffers.length}</p>
+//         <p>Total Bids: ${offersToExport.length}</p>
+//         <p>Status Filter: ${statusFilter || 'All'}</p>
 //         <table>
 //           <thead>
 //             <tr>
 //               <th>Product ID</th>
 //               <th>Trader</th>
-//               <th>Farmer ID</th>
+//               <th>Farmer</th>
 //               <th>Price</th>
 //               <th>Quantity</th>
 //               <th>Total Value</th>
@@ -440,7 +793,7 @@
 //             </tr>
 //           </thead>
 //           <tbody>
-//             ${allOffers.map((offer) => {
+//             ${offersToExport.map((offer) => {
 //               const total = (offer.offeredPrice || 0) * (offer.quantity || 0);
 //               const statusClass = `status-${offer.status}`;
 //               const counterInfo = offer.counterPrice 
@@ -450,7 +803,16 @@
 //                 <tr>
 //                   <td>${offer.productId}</td>
 //                   <td>${offer.traderName}<br><small>ID: ${offer.traderId}</small></td>
-//                   <td>${offer.farmerId}</td>
+//                   <td>
+//                     ${offer.farmerInfo ? `
+//                       <div class="farmer-info">
+//                         <div><span class="farmer-label">Name:</span> ${offer.farmerInfo.farmerName}</div>
+//                         <div><span class="farmer-label">ID:</span> ${offer.farmerInfo.farmerId}</div>
+//                         <div><span class="farmer-label">Mobile:</span> ${offer.farmerInfo.farmerMobile}</div>
+//                         <div><span class="farmer-label">Address:</span> ${offer.farmerInfo.farmerAddress}</div>
+//                       </div>
+//                     ` : offer.farmerId}
+//                   </td>
 //                   <td>₹${offer.offeredPrice.toLocaleString()}</td>
 //                   <td>${offer.quantity.toLocaleString()}</td>
 //                   <td>₹${total.toLocaleString()}</td>
@@ -547,27 +909,6 @@
 //     fetchOffers();
 //   };
 
-//   // Calculate stats
-//   const calculateStats = () => {
-//     const totalOffers = allOffers.length;
-//     const totalValue = allOffers.reduce((sum, offer) => sum + ((offer.offeredPrice || 0) * (offer.quantity || 0)), 0);
-    
-//     const statusCounts = {
-//       pending: allOffers.filter(o => o.status?.toLowerCase() === 'pending').length,
-//       accepted: allOffers.filter(o => o.status?.toLowerCase() === 'accepted').length,
-//       rejected: allOffers.filter(o => o.status?.toLowerCase() === 'rejected').length,
-//       countered: allOffers.filter(o => o.status?.toLowerCase() === 'countered').length
-//     };
-    
-//     const counterOffers = allOffers.filter(o => o.counterPrice || o.counterQuantity).length;
-//     const privateCounters = allOffers.filter(o => o.isCounterPrivate).length;
-    
-//     return { totalOffers, totalValue, statusCounts, counterOffers, privateCounters };
-//   };
-
-//   const { totalOffers, totalValue, statusCounts, counterOffers, privateCounters } = calculateStats();
-//   const { startItem, endItem } = getPaginationRange();
-
 //   if (loading && offers.length === 0) {
 //     return (
 //       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -578,6 +919,9 @@
 //       </div>
 //     );
 //   }
+
+//   // Use filteredOffers for display in the table
+//   const displayOffers = filteredOffers;
 
 //   return (
 //     <div className="min-h-screen xl:w-[83vw] lg:w-[75vw] overflow-x-scroll bg-gray-50 p-2">
@@ -706,7 +1050,7 @@
 //             <input
 //               type="text"
 //               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-//               placeholder="Search by trader name, product ID..."
+//               placeholder="Search by trader name, product ID, farmer name..."
 //               value={searchInput}
 //               onChange={(e) => setSearchInput(e.target.value)}
 //             />
@@ -720,7 +1064,10 @@
 //             <select
 //               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
 //               value={statusFilter}
-//               onChange={(e) => setStatusFilter(e.target.value)}
+//               onChange={(e) => {
+//                 setStatusFilter(e.target.value);
+//                 setCurrentPage(1); // Reset to first page when status changes
+//               }}
 //             >
 //               <option value="">All Status</option>
 //               <option value="pending">Pending</option>
@@ -823,6 +1170,9 @@
 //                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
 //                   Trader Details
 //                 </th>
+//                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+//                   Farmer Details
+//                 </th>
 //                 <th 
 //                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap"
 //                   onClick={() => handleSort('offeredPrice')}
@@ -847,7 +1197,7 @@
 //               </tr>
 //             </thead>
 //             <tbody className="bg-white divide-y divide-gray-200">
-//               {offers.map((offer, index) => {
+//               {displayOffers.map((offer, index) => {
 //                 const totalValue = (offer.offeredPrice || 0) * (offer.quantity || 0);
                 
 //                 return (
@@ -855,7 +1205,7 @@
 //                     {/* Offer ID */}
 //                     <td className="px-4 py-3 whitespace-nowrap">
 //                       <div className="text-sm font-medium text-blue-600">{offer.offerId}</div>
-//                       <div className="text-xs text-gray-500">Farmer: {offer.farmerId}</div>
+//                       <div className="text-xs text-gray-500">Farmer ID: {offer.farmerId}</div>
 //                     </td>
 
 //                     {/* Product Details */}
@@ -880,6 +1230,58 @@
 //                           <div className="text-xs text-gray-500 truncate">{offer.traderId}</div>
 //                         </div>
 //                       </div>
+//                     </td>
+
+//                     {/* Farmer Details */}
+//                     <td className="px-4 py-3">
+//                       {offer.farmerInfo ? (
+//                         <div className="space-y-1 min-w-0">
+//                           {/* Farmer ID and Name */}
+//                           <div className="flex items-center">
+//                             <FaUserTag className="text-green-500 mr-2 flex-shrink-0 text-xs" />
+//                             <div className="min-w-0">
+//                               <div className="text-sm font-medium text-gray-900 truncate">
+//                                 {offer.farmerInfo.farmerName}
+//                               </div>
+//                               <div className="text-xs text-gray-500 truncate">
+//                                 ID: {offer.farmerInfo.farmerId}
+//                               </div>
+//                             </div>
+//                           </div>
+                          
+//                           {/* Mobile Number */}
+//                           {offer.farmerInfo.farmerMobile !== 'N/A' && (
+//                             <div className="flex items-center text-xs text-gray-600 ml-6">
+//                               <FaMobileAlt className="mr-1 flex-shrink-0" />
+//                               <span className="truncate">{offer.farmerInfo.farmerMobile}</span>
+//                             </div>
+//                           )}
+                          
+//                           {/* Address */}
+//                           {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+//                             <div className="flex items-start text-xs text-gray-600 ml-6">
+//                               <FaHome className="mr-1 flex-shrink-0 mt-0.5" />
+//                               <span className="truncate">{offer.farmerInfo.farmerAddress}</span>
+//                             </div>
+//                           )}
+                          
+//                           {/* Show when no address is available */}
+//                           {(offer.farmerInfo.farmerAddress === 'N/A' || offer.farmerInfo.farmerAddress === '') && (
+//                             <div className="flex items-center text-xs text-gray-400 italic ml-6">
+//                               <FaHome className="mr-1 flex-shrink-0" />
+//                               <span>No address available</span>
+//                             </div>
+//                           )}
+//                         </div>
+//                       ) : offer.farmerId ? (
+//                         <div className="text-xs text-gray-500 italic">
+//                           Loading farmer details...
+//                         </div>
+//                       ) : (
+//                         <div className="text-xs text-gray-400 italic">
+//                           No farmer assigned
+//                         </div>
+//                       )}
 //                     </td>
 
 //                     {/* Bid Details */}
@@ -958,7 +1360,7 @@
 //         </div>
 
 //         {/* No Data State */}
-//         {offers.length === 0 && !loading && (
+//         {displayOffers.length === 0 && !loading && (
 //           <div className="text-center py-12">
 //             <div className="text-gray-400 text-4xl mb-4">
 //               <FaGavel className="mx-auto" />
@@ -971,7 +1373,7 @@
 
 //       {/* Mobile Cards (visible only on mobile) */}
 //       <div className="lg:hidden space-y-3">
-//         {offers.map((offer, index) => {
+//         {displayOffers.map((offer, index) => {
 //           const totalValue = (offer.offeredPrice || 0) * (offer.quantity || 0);
           
 //           return (
@@ -1003,6 +1405,34 @@
 //                 </div>
 //               </div>
 
+//               {/* Farmer Info in Mobile View */}
+//               {offer.farmerInfo && (
+//                 <div className="mb-2 p-2 bg-gray-50 rounded border-l-2 border-green-500">
+//                   <div className="text-xs text-gray-500 mb-1">Farmer Details</div>
+//                   <div className="space-y-1">
+//                     <div className="flex items-center">
+//                       <FaUserTag className="text-green-500 mr-2 text-xs flex-shrink-0" />
+//                       <div className="min-w-0">
+//                         <div className="text-sm font-medium truncate">{offer.farmerInfo.farmerName}</div>
+//                         <div className="text-xs text-gray-500 truncate">ID: {offer.farmerInfo.farmerId}</div>
+//                       </div>
+//                     </div>
+//                     {offer.farmerInfo.farmerMobile !== 'N/A' && (
+//                       <div className="flex items-center text-xs text-gray-600 ml-6">
+//                         <FaMobileAlt className="mr-1 flex-shrink-0" />
+//                         <span className="truncate">{offer.farmerInfo.farmerMobile}</span>
+//                       </div>
+//                     )}
+//                     {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+//                       <div className="flex items-start text-xs text-gray-600 ml-6">
+//                         <FaHome className="mr-1 flex-shrink-0 mt-0.5" />
+//                         <span className="truncate">{offer.farmerInfo.farmerAddress}</span>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//               )}
+
 //               <div className="grid grid-cols-2 gap-2 mb-2">
 //                 <div className="truncate">
 //                   <div className="text-xs text-gray-500">Trader</div>
@@ -1030,14 +1460,40 @@
 //                 </div>
 //               </div>
 
-//               <div className="mb-2">
-//                 <div className="text-xs text-gray-500 mb-1">Farmer ID</div>
-//                 <div className="text-xs font-medium">{offer.farmerId}</div>
-//               </div>
-
 //               {/* Expanded Content */}
 //               {expandedOffer === offer.offerId && (
 //                 <div className="mt-3 pt-3 border-t border-gray-200 space-y-3">
+//                   {/* Farmer Details in Expanded View */}
+//                   {offer.farmerInfo && (
+//                     <div className="bg-green-50 p-2 rounded">
+//                       <div className="text-xs text-gray-500 mb-2">Farmer Information</div>
+//                       <div className="space-y-2">
+//                         <div className="grid grid-cols-2 gap-2">
+//                           <div>
+//                             <div className="text-xs text-gray-600">Name</div>
+//                             <div className="text-sm font-medium">{offer.farmerInfo.farmerName}</div>
+//                           </div>
+//                           <div>
+//                             <div className="text-xs text-gray-600">ID</div>
+//                             <div className="text-sm font-medium">{offer.farmerInfo.farmerId}</div>
+//                           </div>
+//                         </div>
+//                         {offer.farmerInfo.farmerMobile !== 'N/A' && (
+//                           <div>
+//                             <div className="text-xs text-gray-600">Mobile</div>
+//                             <div className="text-sm font-medium">{offer.farmerInfo.farmerMobile}</div>
+//                           </div>
+//                         )}
+//                         {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+//                           <div>
+//                             <div className="text-xs text-gray-600">Address</div>
+//                             <div className="text-sm font-medium">{offer.farmerInfo.farmerAddress}</div>
+//                           </div>
+//                         )}
+//                       </div>
+//                     </div>
+//                   )}
+
 //                   {/* Counter Offer Details */}
 //                   {(offer.counterPrice || offer.counterQuantity) && (
 //                     <div>
@@ -1096,7 +1552,7 @@
 //       </div>
 
 //       {/* Pagination and Limit Controls */}
-//       {offers.length > 0 && (
+//       {displayOffers.length > 0 && (
 //         <div className="flex flex-col sm:flex-row justify-between items-center gap-3 p-3 bg-white rounded-lg shadow mt-4">
 //           {/* Items per page selector */}
 //           <div className="flex items-center gap-3">
@@ -1142,7 +1598,7 @@
 //       )}
 
 //       {/* Counter Offer Statistics */}
-//       {offers.length > 0 && (
+//       {displayOffers.length > 0 && (
 //         <div className="mt-6 bg-white rounded-lg shadow border p-4">
 //           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
 //             <FaChartLine className="text-blue-600" />
@@ -1152,13 +1608,13 @@
 //             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
 //               <div className="text-xs text-blue-600 font-medium mb-1">Total Counter Offers</div>
 //               <div className="text-xl font-bold">
-//                 {offers.filter(o => o.counterPrice || o.counterQuantity).length}
+//                 {displayOffers.filter(o => o.counterPrice || o.counterQuantity).length}
 //               </div>
 //             </div>
 //             <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
 //               <div className="text-xs text-purple-600 font-medium mb-1">Private Counter Offers</div>
 //               <div className="text-xl font-bold">
-//                 {offers.filter(o => o.isCounterPrivate).length}
+//                 {displayOffers.filter(o => o.isCounterPrivate).length}
 //               </div>
 //             </div>
 //             <div className="bg-green-50 p-3 rounded-lg border border-green-200">
@@ -1250,6 +1706,38 @@
 //                   </div>
 //                 </div>
 //               </div>
+
+//               {/* Farmer Information Section */}
+//               {currentOffer.farmerInfo && (
+//                 <div className="bg-yellow-50 p-3 rounded">
+//                   <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+//                     <FaUserTag className="text-yellow-600" />
+//                     Farmer Information
+//                   </h3>
+//                   <div className="space-y-2">
+//                     <div className="flex justify-between">
+//                       <span className="text-gray-600 text-sm">Farmer ID:</span>
+//                       <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerId}</span>
+//                     </div>
+//                     <div className="flex justify-between">
+//                       <span className="text-gray-600 text-sm">Name:</span>
+//                       <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerName}</span>
+//                     </div>
+//                     <div className="flex justify-between">
+//                       <span className="text-gray-600 text-sm">Mobile:</span>
+//                       <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerMobile}</span>
+//                     </div>
+//                     {currentOffer.farmerInfo.farmerAddress && currentOffer.farmerInfo.farmerAddress !== 'N/A' && (
+//                       <div>
+//                         <div className="text-gray-600 text-sm mb-1">Address:</div>
+//                         <div className="font-medium text-sm text-gray-900">
+//                           {currentOffer.farmerInfo.farmerAddress}
+//                         </div>
+//                       </div>
+//                     )}
+//                   </div>
+//                 </div>
+//               )}
 
 //               {/* Bid Amount Details */}
 //               <div className="bg-gray-50 p-3 rounded">
@@ -1410,9 +1898,22 @@ import {
   FaGavel,
   FaHandshake,
   FaMoneyBillWave,
-  FaChartLine
+  FaChartLine,
+  FaUserTag,
+  FaMobileAlt,
+  FaHome
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+
+interface FarmerInfo {
+  farmerId?: string;
+  farmerName?: string;
+  farmerMobile?: string;
+  farmerAddress?: string;
+  farmerVillage?: string;
+  farmerPincode?: string;
+  farmerDistrict?: string;
+}
 
 interface Offer {
   // REQUIRED FIELDS:
@@ -1436,6 +1937,9 @@ interface Offer {
   nearestMarket?: string;
   totalValue?: number;
   _id?: string;
+  
+  // Farmer info
+  farmerInfo?: FarmerInfo;
 }
 
 interface ApiResponse {
@@ -1497,22 +2001,116 @@ const TraderBidsReport: React.FC = () => {
   // Mobile view state
   const [expandedOffer, setExpandedOffer] = useState<string | null>(null);
 
+  // Farmer details cache
+  const [farmerDetailsCache, setFarmerDetailsCache] = useState<Record<string, FarmerInfo>>({});
+
+  // FIX: Add separate state for total stats from API
+  const [totalStats, setTotalStats] = useState({
+    totalOffers: 0,
+    totalValue: 0,
+    statusCounts: {
+      pending: 0,
+      accepted: 0,
+      rejected: 0,
+      countered: 0
+    },
+    counterOffers: 0,
+    privateCounters: 0
+  });
+
   const API_BASE = '/api';
   const tableRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch offers with server-side pagination and sorting
-  const fetchOffers = useCallback(async () => {
-    setLoading(true);
+  // Fetch farmer details
+  const fetchFarmerDetails = useCallback(async (farmerId: string): Promise<FarmerInfo> => {
+    if (farmerDetailsCache[farmerId]) {
+      return farmerDetailsCache[farmerId];
+    }
+
+    try {
+      const response = await axios.get(`${API_BASE}/farmers?search=${farmerId}`);
+      
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        const farmerData = response.data.data[0];
+        
+        // Build address from personalInfo
+        let address = '';
+        if (farmerData.personalInfo?.address) {
+          address = farmerData.personalInfo.address;
+        }
+        
+        // Add village if available
+        if (farmerData.personalInfo?.villageGramaPanchayat) {
+          if (address) address += ', ';
+          address += farmerData.personalInfo.villageGramaPanchayat;
+        }
+        
+        // Add district if available
+        if (farmerData.personalInfo?.district) {
+          if (address) address += ', ';
+          address += farmerData.personalInfo.district;
+        }
+        
+        // Add pincode if available
+        if (farmerData.personalInfo?.pincode) {
+          if (address) address += ' - ';
+          address += farmerData.personalInfo.pincode;
+        }
+
+        const farmerInfo: FarmerInfo = {
+          farmerId: farmerData.farmerId,
+          farmerName: farmerData.personalInfo?.name || 'N/A',
+          farmerMobile: farmerData.personalInfo?.mobileNo || 'N/A',
+          farmerAddress: address || 'N/A',
+          farmerVillage: farmerData.personalInfo?.villageGramaPanchayat || 'N/A',
+          farmerPincode: farmerData.personalInfo?.pincode || 'N/A',
+          farmerDistrict: farmerData.personalInfo?.district || 'N/A'
+        };
+        
+        // Update cache
+        setFarmerDetailsCache(prev => ({
+          ...prev,
+          [farmerId]: farmerInfo
+        }));
+        
+        return farmerInfo;
+      }
+    } catch (error) {
+      console.error(`Error fetching farmer details for ${farmerId}:`, error);
+    }
+    
+    // Return default if fetch fails
+    return {
+      farmerId,
+      farmerName: 'Not Found',
+      farmerMobile: 'N/A',
+      farmerAddress: 'N/A'
+    };
+  }, [API_BASE, farmerDetailsCache]);
+
+  // Fetch offers with server-side pagination and sorting - FIXED: Fetch total stats separately
+  const fetchOffers = useCallback(async (isForExport = false) => {
+    // Don't set loading for export calls
+    if (!isForExport) {
+      setLoading(true);
+    }
     
     const params = new URLSearchParams();
     if (searchInput) params.append('search', searchInput);
-    if (statusFilter) params.append('status', statusFilter); // This sends status filter to API
+    if (statusFilter) params.append('status', statusFilter);
     if (traderIdFilter) params.append('traderId', traderIdFilter);
     if (farmerIdFilter) params.append('farmerId', farmerIdFilter);
     if (productIdFilter) params.append('productId', productIdFilter);
-    params.append('page', currentPage.toString());
-    params.append('limit', itemsPerPage.toString());
+    
+    // For export, get all data, for normal fetch, use pagination
+    if (!isForExport) {
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+    } else {
+      params.append('limit', '10000');
+    }
+    
     params.append('sortBy', sortField);
     params.append('order', sortOrder);
 
@@ -1521,54 +2119,132 @@ const TraderBidsReport: React.FC = () => {
       
       if (response.data.success) {
         const data = response.data.data || [];
-        setOffers(data); // This should already be filtered by status from the API
-        setTotalItemsState(response.data.pagination?.total || data.length);
-        setTotalPages(response.data.pagination?.totalPages || 1);
         
-        // For export functionality - fetch ALL offers without filters for export
-        const exportParams = new URLSearchParams();
-        if (searchInput) exportParams.append('search', searchInput);
-        if (statusFilter) exportParams.append('status', statusFilter); // Keep status filter for exports too
-        if (traderIdFilter) exportParams.append('traderId', traderIdFilter);
-        if (farmerIdFilter) exportParams.append('farmerId', farmerIdFilter);
-        if (productIdFilter) exportParams.append('productId', productIdFilter);
-        exportParams.append('limit', '10000');
-        exportParams.append('sortBy', sortField);
-        exportParams.append('order', sortOrder);
+        // Process offers and fetch farmer details
+        const processedOffers = await Promise.all(
+          data.map(async (offer: Offer) => {
+            if (offer.farmerId) {
+              const farmerInfo = await fetchFarmerDetails(offer.farmerId);
+              return {
+                ...offer,
+                farmerInfo
+              };
+            }
+            return offer;
+          })
+        );
         
-        const exportResponse = await axios.get(`${API_BASE}/trader-bids-reports?${exportParams.toString()}`);
-        if (exportResponse.data.success) {
-          setAllOffers(exportResponse.data.data || []);
+        if (isForExport) {
+          setAllOffers(processedOffers);
+          return processedOffers;
         } else {
-          setAllOffers(data);
+          setOffers(processedOffers);
+          setTotalItemsState(response.data.pagination?.total || data.length);
+          setTotalPages(response.data.pagination?.totalPages || 1);
+          
+          // FIX: Update total stats from API response if available
+          if (response.data.summary) {
+            setTotalStats({
+              totalOffers: response.data.summary.totalOffers || 0,
+              totalValue: response.data.summary.totalValue || 0,
+              statusCounts: response.data.summary.statusCounts || {
+                pending: 0,
+                accepted: 0,
+                rejected: 0,
+                countered: 0
+              },
+              counterOffers: processedOffers.filter(o => o.counterPrice || o.counterQuantity).length,
+              privateCounters: processedOffers.filter(o => o.isCounterPrivate).length
+            });
+          }
         }
       } else {
-        toast.error(response.data.error || 'Failed to fetch trader bids');
+        if (!isForExport) {
+          toast.error(response.data.error || 'Failed to fetch trader bids');
+        }
       }
     } catch (error) {
       console.error('Error fetching trader bids:', error);
-      toast.error('Error fetching trader bids');
+      if (!isForExport) {
+        toast.error('Error fetching trader bids');
+      }
     } finally {
-      setLoading(false);
+      if (!isForExport) {
+        setLoading(false);
+      }
     }
-  }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, currentPage, itemsPerPage, sortField, sortOrder]);
+    
+    return [];
+  }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, currentPage, itemsPerPage, sortField, sortOrder, fetchFarmerDetails]);
 
-  // Initial data fetch
-  useEffect(() => {
-    fetchOffers();
+  // Separate function to fetch total stats
+  const fetchTotalStats = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchInput) params.append('search', searchInput);
+      if (statusFilter) params.append('status', statusFilter);
+      if (traderIdFilter) params.append('traderId', traderIdFilter);
+      if (farmerIdFilter) params.append('farmerId', farmerIdFilter);
+      if (productIdFilter) params.append('productId', productIdFilter);
+      
+      // Fetch with limit=1 just to get the summary/total counts
+      params.append('limit', '1');
+      params.append('page', '1');
+      
+      const response = await axios.get(`${API_BASE}/trader-bids-reports?${params.toString()}`);
+      
+      if (response.data.success && response.data.summary) {
+        setTotalStats({
+          totalOffers: response.data.summary.totalOffers || 0,
+          totalValue: response.data.summary.totalValue || 0,
+          statusCounts: response.data.summary.statusCounts || {
+            pending: 0,
+            accepted: 0,
+            rejected: 0,
+            countered: 0
+          },
+          counterOffers: 0, // Will be calculated from allOffers
+          privateCounters: 0 // Will be calculated from allOffers
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching total stats:', error);
+    }
+  }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter]);
+
+  // Separate function to fetch export data
+  const fetchExportData = useCallback(async () => {
+    try {
+      const exportData = await fetchOffers(true);
+      setAllOffers(exportData);
+      return exportData;
+    } catch (error) {
+      console.error('Error fetching export data:', error);
+      return [];
+    }
   }, [fetchOffers]);
 
-  // Debounced search
+  // Initial data fetch and when pagination/sorting changes
+  useEffect(() => {
+    fetchOffers();
+  }, [currentPage, itemsPerPage, sortField, sortOrder]);
+
+  // Fetch total stats when filters change (but not on pagination)
+  useEffect(() => {
+    fetchTotalStats();
+  }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, fetchTotalStats]);
+
+  // Debounced search for filters - FIXED: Reset to page 1 when filters change
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      if (searchInput !== '' || traderIdFilter !== '' || productIdFilter !== '' || statusFilter !== '') {
-        setCurrentPage(1);
-        fetchOffers();
-      }
+      // FIX: Reset to page 1 when filters change
+      setCurrentPage(1);
+      fetchOffers();
+      fetchTotalStats(); // Also refresh stats
     }, 500);
 
     return () => {
@@ -1576,12 +2252,12 @@ const TraderBidsReport: React.FC = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchInput, traderIdFilter, productIdFilter, statusFilter]);
+  }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter]);
 
   // Get unique traders for filter dropdown - use allOffers to get all traders
   const getUniqueTraders = useMemo(() => {
     // Temporarily use a mock or empty array if allOffers is empty
-    const offersForFilter = allOffers.length > 0 ? allOffers : [];
+    const offersForFilter = allOffers.length > 0 ? allOffers : offers;
     const traders = offersForFilter
       .map(offer => ({ id: offer.traderId, name: offer.traderName }))
       .filter((trader, index, self) => 
@@ -1590,16 +2266,16 @@ const TraderBidsReport: React.FC = () => {
         index === self.findIndex(t => t.id === trader.id)
       );
     return traders.sort((a, b) => a.name.localeCompare(b.name));
-  }, [allOffers]);
+  }, [allOffers, offers]);
 
   // Get unique products for filter dropdown
   const getUniqueProducts = useMemo(() => {
-    const offersForFilter = allOffers.length > 0 ? allOffers : [];
+    const offersForFilter = allOffers.length > 0 ? allOffers : offers;
     const products = offersForFilter
       .map(offer => offer.productId)
       .filter(productId => productId && productId.trim() !== '');
     return [...new Set(products)].sort();
-  }, [allOffers]);
+  }, [allOffers, offers]);
 
   // Filter offers client-side as a fallback (in case API doesn't filter)
   const filteredOffers = useMemo(() => {
@@ -1619,7 +2295,8 @@ const TraderBidsReport: React.FC = () => {
         offer.productId?.toLowerCase().includes(searchLower) ||
         offer.offerId?.toLowerCase().includes(searchLower) ||
         offer.farmerId?.toLowerCase().includes(searchLower) ||
-        offer.traderId?.toLowerCase().includes(searchLower)
+        offer.traderId?.toLowerCase().includes(searchLower) ||
+        offer.farmerInfo?.farmerName?.toLowerCase().includes(searchLower)
       );
     }
     
@@ -1665,7 +2342,7 @@ const TraderBidsReport: React.FC = () => {
       : <FaChevronDown className="inline ml-1 text-blue-600" />;
   };
 
-  // Handle page change
+  // Handle page change - FIXED: Use the correct page value
   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
     setCurrentPage(value);
     if (tableRef.current) {
@@ -1677,7 +2354,7 @@ const TraderBidsReport: React.FC = () => {
   const handleItemsPerPageChange = (event: SelectChangeEvent<number>) => {
     const newLimit = Number(event.target.value);
     setItemsPerPage(newLimit);
-    setCurrentPage(1);
+    setCurrentPage(1); // Reset to page 1 when items per page changes
   };
 
   // Calculate pagination range - use filteredOffers for display
@@ -1687,192 +2364,178 @@ const TraderBidsReport: React.FC = () => {
     return { startItem, endItem };
   };
 
-  // Calculate stats - use allOffers for global stats
+  // Calculate stats - use totalStats from API instead of calculating from current page
   const calculateStats = () => {
-    const totalOffers = allOffers.length;
-    const totalValue = allOffers.reduce((sum, offer) => sum + ((offer.offeredPrice || 0) * (offer.quantity || 0)), 0);
+    // Use totalStats from API for global counts
+    const offersForCounterStats = allOffers.length > 0 ? allOffers : offers;
+    const counterOffers = offersForCounterStats.filter(o => o.counterPrice || o.counterQuantity).length;
+    const privateCounters = offersForCounterStats.filter(o => o.isCounterPrivate).length;
     
-    const statusCounts = {
-      pending: allOffers.filter(o => o.status?.toLowerCase() === 'pending').length,
-      accepted: allOffers.filter(o => o.status?.toLowerCase() === 'accepted').length,
-      rejected: allOffers.filter(o => o.status?.toLowerCase() === 'rejected').length,
-      countered: allOffers.filter(o => o.status?.toLowerCase() === 'countered').length
+    return { 
+      ...totalStats, 
+      counterOffers, 
+      privateCounters 
     };
-    
-    const counterOffers = allOffers.filter(o => o.counterPrice || o.counterQuantity).length;
-    const privateCounters = allOffers.filter(o => o.isCounterPrivate).length;
-    
-    return { totalOffers, totalValue, statusCounts, counterOffers, privateCounters };
   };
 
   const { totalOffers, totalValue, statusCounts, counterOffers, privateCounters } = calculateStats();
   const { startItem, endItem } = getPaginationRange();
 
-  // Export functions - use filteredOffers for context-aware exports
-  // const handleCopyToClipboard = async () => {
-  //   const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
+  const handleCopyToClipboard = async (): Promise<void> => {
+    let offersToExport = allOffers;
     
-  //   const headers = ["Product ID", "Farmer ID", "Offer ID", "Trader ID", "Trader Name", "Offered Price", "Quantity", "Status", "Counter Price", "Counter Quantity", "Created At"];
-    
-  //   const csvContent = [
-  //     headers.join("\t"),
-  //     ...offersToExport.map((offer) => {
-  //       return [
-  //         offer.productId || '',
-  //         offer.farmerId || '',
-  //         offer.offerId || '',
-  //         offer.traderId || '',
-  //         offer.traderName || '',
-  //         offer.offeredPrice || 0,
-  //         offer.quantity || 0,
-  //         offer.status || '',
-  //         offer.counterPrice || '',
-  //         offer.counterQuantity || '',
-  //         new Date(offer.createdAt).toLocaleDateString()
-  //       ].join("\t");
-  //     })
-  //   ].join("\n");
-    
-  //   try {
-  //     await navigator.clipboard.writeText(csvContent);
-  //     toast.success("Data copied to clipboard!");
-  //   } catch (err) {
-  //     console.error("Failed to copy: ", err);
-  //     toast.error("Failed to copy to clipboard");
-  //   }
-  // };
- const handleCopyToClipboard = async (): Promise<void> => {
-  const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
-  
-  if (offersToExport.length === 0) {
-    toast.error("No offers to copy");
-    return;
-  }
-
-  // Define headers with widths for optimal display
-  const headers = [
-    { name: "Offer ID", width: 12 },
-    { name: "Product", width: 10 },
-    { name: "Trader", width: 18 },
-    { name: "Price", width: 12 },
-    { name: "Qty", width: 8 },
-    { name: "Status", width: 14 },
-    { name: "Counter", width: 15 },
-    { name: "Date", width: 12 }
-  ];
-  
-  // Create header row
-  const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
-  const separator = "─".repeat(headerRow.length);
-  
-  // Format each offer row
-  const offerRows = offersToExport.map((offer: any) => {
-    // Format trader info
-    const traderInfo = `${offer.traderName || "N/A"} (${offer.traderId?.substring(0, 6) || "N/A"}...)`;
-    const formattedTrader = traderInfo.length > 16 
-      ? traderInfo.substring(0, 13) + "..." 
-      : traderInfo;
-    
-    // Format price with ₹ symbol
-    const formatPrice = (price: number) => 
-      price ? `₹${price.toLocaleString('en-IN')}` : "N/A";
-    
-    const offeredPrice = formatPrice(offer.offeredPrice || 0);
-    
-    // Format status with emoji
-    const status = offer.status || "N/A";
-    const statusEmoji = status === "accepted" ? "✅" : 
-                       status === "rejected" ? "❌" : 
-                       status === "pending" ? "⏳" : 
-                       status === "countered" ? "💰" : "";
-    
-    // Format counter offer info
-    let counterInfo = "No Counter";
-    if (offer.counterPrice || offer.counterQuantity) {
-      const counterPrice = offer.counterPrice ? `₹${offer.counterPrice}` : "";
-      const counterQty = offer.counterQuantity ? `${offer.counterQuantity}` : "";
-      counterInfo = `${counterPrice} / ${counterQty}`.replace(/ \/ $/, "").replace(/^ \//, "");
+    // If allOffers is empty, fetch export data
+    if (offersToExport.length === 0) {
+      toast.loading("Fetching data for export...", { id: "export" });
+      offersToExport = await fetchExportData();
+      toast.dismiss("export");
     }
     
-    // Create row values with padding
-    const rowValues = [
-      (offer.offerId?.substring(0, 10) || "N/A").padEnd(headers[0].width),
-      (offer.productId?.substring(0, 8) || "N/A").padEnd(headers[1].width),
-      formattedTrader.padEnd(headers[2].width),
-      offeredPrice.padEnd(headers[3].width),
-      (offer.quantity || 0).toString().padEnd(headers[4].width),
-      `${statusEmoji} ${status}`.padEnd(headers[5].width),
-      counterInfo.padEnd(headers[6].width),
-      (offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A").padEnd(headers[7].width)
+    if (offersToExport.length === 0) {
+      toast.error("No offers to copy");
+      return;
+    }
+
+    // Define headers with widths for optimal display
+    const headers = [
+      { name: "Offer ID", width: 12 },
+      { name: "Product", width: 10 },
+      { name: "Trader", width: 18 },
+      { name: "Price", width: 12 },
+      { name: "Qty", width: 8 },
+      { name: "Status", width: 14 },
+      { name: "Counter", width: 15 },
+      { name: "Date", width: 12 }
     ];
     
-    return rowValues.join(" │ ");
-  });
-  
-  // Calculate statistics
-  const stats = offersToExport.reduce((acc: any, offer: any) => {
-    acc.totalValue += (offer.offeredPrice || 0) * (offer.quantity || 0);
-    acc.totalQuantity += offer.quantity || 0;
-    acc.statusCounts[offer.status] = (acc.statusCounts[offer.status] || 0) + 1;
-    acc.hasCounter += (offer.counterPrice || offer.counterQuantity) ? 1 : 0;
-    return acc;
-  }, {
-    totalValue: 0,
-    totalQuantity: 0,
-    statusCounts: {},
-    hasCounter: 0
-  });
-  
-  // Build complete table with analytics
-  const tableContent = [
-    "💰 OFFERS & COUNTER-OFFERS",
-    "=".repeat(headerRow.length),
-    headerRow,
-    separator,
-    ...offerRows,
-    separator,
-    "",
-    "📊 OFFER ANALYTICS",
-    `• Total Offers: ${offersToExport.length}`,
-    `• Total Quantity Offered: ${stats.totalQuantity.toLocaleString('en-IN')}`,
-    `• Total Offer Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
-    `• Average Price per Unit: ₹${stats.totalQuantity > 0 ? (stats.totalValue / stats.totalQuantity).toFixed(2) : 0}`,
-    "",
-    "📈 STATUS DISTRIBUTION",
-    ...Object.entries(stats.statusCounts).map(([status, count]: [string, any]) => 
-      `• ${status}: ${count} (${Math.round((count / offersToExport.length) * 100)}%)`
-    ),
-    "",
-    "💱 COUNTER OFFER STATS",
-    `• Offers with Counter: ${stats.hasCounter}`,
-    `• Counter Rate: ${Math.round((stats.hasCounter / offersToExport.length) * 100)}%`,
-    `• Without Counter: ${offersToExport.length - stats.hasCounter}`,
-    "",
-    "🔍 DATA SOURCE",
-    `• Source: ${filteredOffers.length > 0 ? 'Filtered Results' : 'All Offers'}`,
-    `• Farmers: ${new Set(offersToExport.map((o: any) => o.farmerId)).size}`,
-    `• Products: ${new Set(offersToExport.map((o: any) => o.productId)).size}`,
-    `• Traders: ${new Set(offersToExport.map((o: any) => o.traderId)).size}`,
-    "",
-    `📅 Report Generated: ${new Date().toLocaleString()}`
-  ].join("\n");
-  
-  try {
-    await navigator.clipboard.writeText(tableContent);
-    toast.success(`Copied ${offersToExport.length} offers to clipboard!`);
-  } catch (err) {
-    console.error("Failed to copy:", err);
-    toast.error("Failed to copy to clipboard");
-  }
-};
-  const handleExportExcel = () => {
-    const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
+    // Create header row
+    const headerRow = headers.map(h => h.name.padEnd(h.width)).join(" │ ");
+    const separator = "─".repeat(headerRow.length);
     
+    // Format each offer row
+    const offerRows = offersToExport.map((offer: any) => {
+      // Format trader info
+      const traderInfo = `${offer.traderName || "N/A"} (${offer.traderId?.substring(0, 6) || "N/A"}...)`;
+      const formattedTrader = traderInfo.length > 16 
+        ? traderInfo.substring(0, 13) + "..." 
+        : traderInfo;
+      
+      // Format price with ₹ symbol
+      const formatPrice = (price: number) => 
+        price ? `₹${price.toLocaleString('en-IN')}` : "N/A";
+      
+      const offeredPrice = formatPrice(offer.offeredPrice || 0);
+      
+      // Format status with emoji
+      const status = offer.status || "N/A";
+      const statusEmoji = status === "accepted" ? "✅" : 
+                         status === "rejected" ? "❌" : 
+                         status === "pending" ? "⏳" : 
+                         status === "countered" ? "💰" : "";
+      
+      // Format counter offer info
+      let counterInfo = "No Counter";
+      if (offer.counterPrice || offer.counterQuantity) {
+        const counterPrice = offer.counterPrice ? `₹${offer.counterPrice}` : "";
+        const counterQty = offer.counterQuantity ? `${offer.counterQuantity}` : "";
+        counterInfo = `${counterPrice} / ${counterQty}`.replace(/ \/ $/, "").replace(/^ \//, "");
+      }
+      
+      // Create row values with padding
+      const rowValues = [
+        (offer.offerId?.substring(0, 10) || "N/A").padEnd(headers[0].width),
+        (offer.productId?.substring(0, 8) || "N/A").padEnd(headers[1].width),
+        formattedTrader.padEnd(headers[2].width),
+        offeredPrice.padEnd(headers[3].width),
+        (offer.quantity || 0).toString().padEnd(headers[4].width),
+        `${statusEmoji} ${status}`.padEnd(headers[5].width),
+        counterInfo.padEnd(headers[6].width),
+        (offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A").padEnd(headers[7].width)
+      ];
+      
+      return rowValues.join(" │ ");
+    });
+    
+    // Calculate statistics
+    const stats = offersToExport.reduce((acc: any, offer: any) => {
+      acc.totalValue += (offer.offeredPrice || 0) * (offer.quantity || 0);
+      acc.totalQuantity += offer.quantity || 0;
+      acc.statusCounts[offer.status] = (acc.statusCounts[offer.status] || 0) + 1;
+      acc.hasCounter += (offer.counterPrice || offer.counterQuantity) ? 1 : 0;
+      return acc;
+    }, {
+      totalValue: 0,
+      totalQuantity: 0,
+      statusCounts: {},
+      hasCounter: 0
+    });
+    
+    // Build complete table with analytics
+    const tableContent = [
+      "💰 OFFERS & COUNTER-OFFERS",
+      "=".repeat(headerRow.length),
+      headerRow,
+      separator,
+      ...offerRows,
+      separator,
+      "",
+      "📊 OFFER ANALYTICS",
+      `• Total Offers: ${offersToExport.length}`,
+      `• Total Quantity Offered: ${stats.totalQuantity.toLocaleString('en-IN')}`,
+      `• Total Offer Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
+      `• Average Price per Unit: ₹${stats.totalQuantity > 0 ? (stats.totalValue / stats.totalQuantity).toFixed(2) : 0}`,
+      "",
+      "📈 STATUS DISTRIBUTION",
+      ...Object.entries(stats.statusCounts).map(([status, count]: [string, any]) => 
+        `• ${status}: ${count} (${Math.round((count / offersToExport.length) * 100)}%)`
+      ),
+      "",
+      "💱 COUNTER OFFER STATS",
+      `• Offers with Counter: ${stats.hasCounter}`,
+      `• Counter Rate: ${Math.round((stats.hasCounter / offersToExport.length) * 100)}%`,
+      `• Without Counter: ${offersToExport.length - stats.hasCounter}`,
+      "",
+      "🔍 DATA SOURCE",
+      `• Source: ${filteredOffers.length > 0 ? 'Filtered Results' : 'All Offers'}`,
+      `• Farmers: ${new Set(offersToExport.map((o: any) => o.farmerId)).size}`,
+      `• Products: ${new Set(offersToExport.map((o: any) => o.productId)).size}`,
+      `• Traders: ${new Set(offersToExport.map((o: any) => o.traderId)).size}`,
+      "",
+      `📅 Report Generated: ${new Date().toLocaleString()}`
+    ].join("\n");
+    
+    try {
+      await navigator.clipboard.writeText(tableContent);
+      toast.success(`Copied ${offersToExport.length} offers to clipboard!`);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      toast.error("Failed to copy to clipboard");
+    }
+  };
+
+  const handleExportExcel = async () => {
+    let offersToExport = allOffers;
+    
+    // If allOffers is empty, fetch export data
+    if (offersToExport.length === 0) {
+      toast.loading("Fetching data for export...", { id: "export" });
+      offersToExport = await fetchExportData();
+      toast.dismiss("export");
+    }
+    
+    if (offersToExport.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+
     const data = offersToExport.map((offer) => {
       const totalValue = (offer.offeredPrice || 0) * (offer.quantity || 0);
       return {
         "Product ID": offer.productId,
         "Farmer ID": offer.farmerId,
+        "Farmer Name": offer.farmerInfo?.farmerName || 'N/A',
+        "Farmer Mobile": offer.farmerInfo?.farmerMobile || 'N/A',
+        "Farmer Address": offer.farmerInfo?.farmerAddress || 'N/A',
         "Offer ID": offer.offerId,
         "Trader ID": offer.traderId,
         "Trader Name": offer.traderName,
@@ -1898,10 +2561,22 @@ const TraderBidsReport: React.FC = () => {
     toast.success("Excel file exported!");
   };
 
-  const handleExportCSV = () => {
-    const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
+  const handleExportCSV = async () => {
+    let offersToExport = allOffers;
     
-    const headers = ["Product ID", "Trader Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
+    // If allOffers is empty, fetch export data
+    if (offersToExport.length === 0) {
+      toast.loading("Fetching data for export...", { id: "export" });
+      offersToExport = await fetchExportData();
+      toast.dismiss("export");
+    }
+    
+    if (offersToExport.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
+    
+    const headers = ["Product ID", "Trader Name", "Farmer Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
     
     const csvContent = [
       headers.join(","),
@@ -1909,6 +2584,7 @@ const TraderBidsReport: React.FC = () => {
         return [
           `"${offer.productId}"`,
           `"${offer.traderName}"`,
+          `"${offer.farmerInfo?.farmerName || 'N/A'}"`,
           offer.offeredPrice,
           offer.quantity,
           `"${offer.status}"`,
@@ -1926,18 +2602,31 @@ const TraderBidsReport: React.FC = () => {
     toast.success("CSV file exported!");
   };
 
-  const handleExportPDF = () => {
-    const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
+  const handleExportPDF = async () => {
+    let offersToExport = allOffers;
+    
+    // If allOffers is empty, fetch export data
+    if (offersToExport.length === 0) {
+      toast.loading("Fetching data for export...", { id: "export" });
+      offersToExport = await fetchExportData();
+      toast.dismiss("export");
+    }
+    
+    if (offersToExport.length === 0) {
+      toast.error("No data to export");
+      return;
+    }
     
     const doc = new jsPDF('landscape');
     doc.text("Trader Bids Report", 14, 16);
     
-    const tableColumn = ["Product ID", "Trader", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
+    const tableColumn = ["Product ID", "Trader", "Farmer", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
     const tableRows: any = offersToExport.map((offer) => {
       const total = (offer.offeredPrice || 0) * (offer.quantity || 0);
       return [
         offer.productId,
         offer.traderName,
+        offer.farmerInfo?.farmerName || 'N/A',
         `₹${offer.offeredPrice.toLocaleString()}`,
         offer.quantity.toLocaleString(),
         `₹${total.toLocaleString()}`,
@@ -1959,8 +2648,20 @@ const TraderBidsReport: React.FC = () => {
     toast.success("PDF file exported!");
   };
 
-  const handlePrint = () => {
-    const offersToExport = filteredOffers.length > 0 ? filteredOffers : allOffers;
+  const handlePrint = async () => {
+    let offersToExport = allOffers;
+    
+    // If allOffers is empty, fetch export data
+    if (offersToExport.length === 0) {
+      toast.loading("Fetching data for export...", { id: "export" });
+      offersToExport = await fetchExportData();
+      toast.dismiss("export");
+    }
+    
+    if (offersToExport.length === 0) {
+      toast.error("No data to print");
+      return;
+    }
     
     const printContent = `
       <!DOCTYPE html>
@@ -1977,6 +2678,8 @@ const TraderBidsReport: React.FC = () => {
           .status-accepted { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
           .status-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
           .status-countered { background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+          .farmer-info { background-color: #f0fdf4; padding: 8px; border-radius: 6px; margin: 5px 0; }
+          .farmer-label { font-weight: bold; color: #166534; }
           @media print { 
             @page { size: landscape; } 
             body { margin: 0; padding: 20px; }
@@ -1993,7 +2696,7 @@ const TraderBidsReport: React.FC = () => {
             <tr>
               <th>Product ID</th>
               <th>Trader</th>
-              <th>Farmer ID</th>
+              <th>Farmer</th>
               <th>Price</th>
               <th>Quantity</th>
               <th>Total Value</th>
@@ -2013,7 +2716,16 @@ const TraderBidsReport: React.FC = () => {
                 <tr>
                   <td>${offer.productId}</td>
                   <td>${offer.traderName}<br><small>ID: ${offer.traderId}</small></td>
-                  <td>${offer.farmerId}</td>
+                  <td>
+                    ${offer.farmerInfo ? `
+                      <div class="farmer-info">
+                        <div><span class="farmer-label">Name:</span> ${offer.farmerInfo.farmerName}</div>
+                        <div><span class="farmer-label">ID:</span> ${offer.farmerInfo.farmerId}</div>
+                        <div><span class="farmer-label">Mobile:</span> ${offer.farmerInfo.farmerMobile}</div>
+                        <div><span class="farmer-label">Address:</span> ${offer.farmerInfo.farmerAddress}</div>
+                      </div>
+                    ` : offer.farmerId}
+                  </td>
                   <td>₹${offer.offeredPrice.toLocaleString()}</td>
                   <td>${offer.quantity.toLocaleString()}</td>
                   <td>₹${total.toLocaleString()}</td>
@@ -2102,12 +2814,15 @@ const TraderBidsReport: React.FC = () => {
     setSortField('createdAt');
     setSortOrder('desc');
     setCurrentPage(1);
+    fetchOffers();
+    fetchTotalStats();
   };
 
   // Apply search and filters
   const applyFilters = () => {
     setCurrentPage(1);
     fetchOffers();
+    fetchTotalStats();
   };
 
   if (loading && offers.length === 0) {
@@ -2176,13 +2891,14 @@ const TraderBidsReport: React.FC = () => {
         ))}
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - FIXED: Now showing total from database, not just current page */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
         <div className="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 text-xs">Total Bids</p>
               <p className="text-xl font-bold text-gray-900">{totalOffers}</p>
+              <p className="text-xs text-gray-400 mt-1">Showing {displayOffers.length} on this page</p>
             </div>
             <FaGavel className="text-blue-500 text-xl" />
           </div>
@@ -2251,7 +2967,7 @@ const TraderBidsReport: React.FC = () => {
             <input
               type="text"
               className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-              placeholder="Search by trader name, product ID..."
+              placeholder="Search by trader name, product ID, farmer name..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
@@ -2371,6 +3087,9 @@ const TraderBidsReport: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Trader Details
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  Farmer Details
+                </th>
                 <th 
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 whitespace-nowrap"
                   onClick={() => handleSort('offeredPrice')}
@@ -2403,7 +3122,7 @@ const TraderBidsReport: React.FC = () => {
                     {/* Offer ID */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm font-medium text-blue-600">{offer.offerId}</div>
-                      <div className="text-xs text-gray-500">Farmer: {offer.farmerId}</div>
+                      <div className="text-xs text-gray-500">Farmer ID: {offer.farmerId}</div>
                     </td>
 
                     {/* Product Details */}
@@ -2428,6 +3147,58 @@ const TraderBidsReport: React.FC = () => {
                           <div className="text-xs text-gray-500 truncate">{offer.traderId}</div>
                         </div>
                       </div>
+                    </td>
+
+                    {/* Farmer Details */}
+                    <td className="px-4 py-3">
+                      {offer.farmerInfo ? (
+                        <div className="space-y-1 min-w-0">
+                          {/* Farmer ID and Name */}
+                          <div className="flex items-center">
+                            <FaUserTag className="text-green-500 mr-2 flex-shrink-0 text-xs" />
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium text-gray-900 truncate">
+                                {offer.farmerInfo.farmerName}
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">
+                                ID: {offer.farmerInfo.farmerId}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Mobile Number */}
+                          {offer.farmerInfo.farmerMobile !== 'N/A' && (
+                            <div className="flex items-center text-xs text-gray-600 ml-6">
+                              <FaMobileAlt className="mr-1 flex-shrink-0" />
+                              <span className="truncate">{offer.farmerInfo.farmerMobile}</span>
+                            </div>
+                          )}
+                          
+                          {/* Address */}
+                          {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+                            <div className="flex items-start text-xs text-gray-600 ml-6">
+                              <FaHome className="mr-1 flex-shrink-0 mt-0.5" />
+                              <span className="truncate">{offer.farmerInfo.farmerAddress}</span>
+                            </div>
+                          )}
+                          
+                          {/* Show when no address is available */}
+                          {(offer.farmerInfo.farmerAddress === 'N/A' || offer.farmerInfo.farmerAddress === '') && (
+                            <div className="flex items-center text-xs text-gray-400 italic ml-6">
+                              <FaHome className="mr-1 flex-shrink-0" />
+                              <span>No address available</span>
+                            </div>
+                          )}
+                        </div>
+                      ) : offer.farmerId ? (
+                        <div className="text-xs text-gray-500 italic">
+                          Loading farmer details...
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400 italic">
+                          No farmer assigned
+                        </div>
+                      )}
                     </td>
 
                     {/* Bid Details */}
@@ -2551,6 +3322,34 @@ const TraderBidsReport: React.FC = () => {
                 </div>
               </div>
 
+              {/* Farmer Info in Mobile View */}
+              {offer.farmerInfo && (
+                <div className="mb-2 p-2 bg-gray-50 rounded border-l-2 border-green-500">
+                  <div className="text-xs text-gray-500 mb-1">Farmer Details</div>
+                  <div className="space-y-1">
+                    <div className="flex items-center">
+                      <FaUserTag className="text-green-500 mr-2 text-xs flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{offer.farmerInfo.farmerName}</div>
+                        <div className="text-xs text-gray-500 truncate">ID: {offer.farmerInfo.farmerId}</div>
+                      </div>
+                    </div>
+                    {offer.farmerInfo.farmerMobile !== 'N/A' && (
+                      <div className="flex items-center text-xs text-gray-600 ml-6">
+                        <FaMobileAlt className="mr-1 flex-shrink-0" />
+                        <span className="truncate">{offer.farmerInfo.farmerMobile}</span>
+                      </div>
+                    )}
+                    {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+                      <div className="flex items-start text-xs text-gray-600 ml-6">
+                        <FaHome className="mr-1 flex-shrink-0 mt-0.5" />
+                        <span className="truncate">{offer.farmerInfo.farmerAddress}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="truncate">
                   <div className="text-xs text-gray-500">Trader</div>
@@ -2578,14 +3377,40 @@ const TraderBidsReport: React.FC = () => {
                 </div>
               </div>
 
-              <div className="mb-2">
-                <div className="text-xs text-gray-500 mb-1">Farmer ID</div>
-                <div className="text-xs font-medium">{offer.farmerId}</div>
-              </div>
-
               {/* Expanded Content */}
               {expandedOffer === offer.offerId && (
                 <div className="mt-3 pt-3 border-t border-gray-200 space-y-3">
+                  {/* Farmer Details in Expanded View */}
+                  {offer.farmerInfo && (
+                    <div className="bg-green-50 p-2 rounded">
+                      <div className="text-xs text-gray-500 mb-2">Farmer Information</div>
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <div className="text-xs text-gray-600">Name</div>
+                            <div className="text-sm font-medium">{offer.farmerInfo.farmerName}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-600">ID</div>
+                            <div className="text-sm font-medium">{offer.farmerInfo.farmerId}</div>
+                          </div>
+                        </div>
+                        {offer.farmerInfo.farmerMobile !== 'N/A' && (
+                          <div>
+                            <div className="text-xs text-gray-600">Mobile</div>
+                            <div className="text-sm font-medium">{offer.farmerInfo.farmerMobile}</div>
+                          </div>
+                        )}
+                        {offer.farmerInfo.farmerAddress !== 'N/A' && offer.farmerInfo.farmerAddress !== '' && (
+                          <div>
+                            <div className="text-xs text-gray-600">Address</div>
+                            <div className="text-sm font-medium">{offer.farmerInfo.farmerAddress}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Counter Offer Details */}
                   {(offer.counterPrice || offer.counterQuantity) && (
                     <div>
@@ -2668,7 +3493,7 @@ const TraderBidsReport: React.FC = () => {
             </FormControl>
           </div>
 
-          {/* Pagination component */}
+          {/* Pagination component - FIXED: Using correct page value */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="text-xs text-gray-600">
               Page {currentPage} of {totalPages}
@@ -2798,6 +3623,38 @@ const TraderBidsReport: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Farmer Information Section */}
+              {currentOffer.farmerInfo && (
+                <div className="bg-yellow-50 p-3 rounded">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FaUserTag className="text-yellow-600" />
+                    Farmer Information
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 text-sm">Farmer ID:</span>
+                      <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 text-sm">Name:</span>
+                      <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 text-sm">Mobile:</span>
+                      <span className="font-medium text-sm">{currentOffer.farmerInfo.farmerMobile}</span>
+                    </div>
+                    {currentOffer.farmerInfo.farmerAddress && currentOffer.farmerInfo.farmerAddress !== 'N/A' && (
+                      <div>
+                        <div className="text-gray-600 text-sm mb-1">Address:</div>
+                        <div className="font-medium text-sm text-gray-900">
+                          {currentOffer.farmerInfo.farmerAddress}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Bid Amount Details */}
               <div className="bg-gray-50 p-3 rounded">

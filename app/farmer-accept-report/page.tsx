@@ -1421,7 +1421,7 @@ export default function FarmerAcceptReport() {
               <tbody className="bg-white divide-y divide-gray-100">
                 {reportData.map((item, index) => (
                   <tr 
-                    key={item._id || index} 
+                    key={ index} 
                     className="hover:bg-gray-50 transition-all duration-200 hover:shadow-sm"
                   >
                     <td className="px-6 py-5">
@@ -1587,7 +1587,7 @@ export default function FarmerAcceptReport() {
         <div className="lg:hidden space-y-4">
           {reportData.map((item, index) => (
             <div 
-              key={item._id || index}
+              key={index}
               className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-all duration-200"
             >
               {/* Card Header */}
