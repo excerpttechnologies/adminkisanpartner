@@ -6,6 +6,7 @@
 
 
 
+
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -24,6 +25,9 @@
 //   FaTrashRestore,
 //   FaHistory,
 //   FaTrashAlt,
+//   FaChevronDown,
+//   FaChevronRight,
+//   FaMapMarkerAlt,
 // } from "react-icons/fa";
 // import * as XLSX from "xlsx";
 // import jsPDF from "jspdf";
@@ -50,6 +54,7 @@
 //   district?: string;
 //   taluka?: string;
 //   commodity?: string[];
+//   subCategories?: string[];
 // }
 
 // interface ApiResponse {
@@ -71,6 +76,7 @@
 //   name: string;
 //   stateId: string;
 // }
+
 // interface Taluka {
 //   _id: string;
 //   name: string;
@@ -81,16 +87,36 @@
 //   };
 // }
 
+// interface LocationData {
+//   pinCode: string;
+//   state: string;
+//   district: string;
+//   taluk: string;
+// }
 
-// const COMMODITIES = ["Wheat", "Rice", "Cotton", "Sugarcane"];
+// interface CommodityCategory {
+//   _id: string;
+//   categoryName: string;
+//   categoryId: string;
+//   image: string;
+//   subCategories: SubCategory[];
+// }
+
+// interface SubCategory {
+//   _id: string;
+//   subCategoryName: string;
+//   categoryId: string;
+//   image: string;
+//   subCategoryId: string;
+// }
 
 // /* ================= PAGE ================= */
 
 // export default function SubAdminAccountsPage() {
 //   const [allModules, setAllModules] = useState<string[]>([]);
 //   const [modules, setModules] = useState<string[]>(["All"]);
-//   const [allSubAdmins, setAllSubAdmins] = useState<SubAdmin[]>([]); // Store all data
-//   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]); // Store filtered data
+//   const [allSubAdmins, setAllSubAdmins] = useState<SubAdmin[]>([]);
+//   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
 //   const [search, setSearch] = useState("");
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -101,6 +127,11 @@
 //   const [states, setStates] = useState<State[]>([]);
 //   const [districts, setDistricts] = useState<District[]>([]);
 //   const [talukas, setTalukas] = useState<Taluka[]>([]);
+//   const [allLocations, setAllLocations] = useState<LocationData[]>([]);
+  
+//   // Commodities state
+//   const [commodityCategories, setCommodityCategories] = useState<CommodityCategory[]>([]);
+//   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   
 //   // Filter states
 //   const [stateFilter, setStateFilter] = useState<string>("");
@@ -114,6 +145,11 @@
 //   // Filtered dropdowns for filters
 //   const [filteredDistrictsForFilter, setFilteredDistrictsForFilter] = useState<District[]>([]);
 //   const [filteredTalukasForFilter, setFilteredTalukasForFilter] = useState<Taluka[]>([]);
+
+//   // PIN Code lookup
+//   const [pincode, setPincode] = useState("");
+//   const [pincodeLoading, setPincodeLoading] = useState(false);
+//   const [pincodeError, setPincodeError] = useState("");
 
 //   const [open, setOpen] = useState(false);
 //   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -135,6 +171,7 @@
 //     district: "",
 //     taluka: "",
 //     commodity: [] as string[],
+//     subCategories: [] as string[],
 //   });
 
 //   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -148,7 +185,7 @@
       
 //       const params = new URLSearchParams({
 //         page: page.toString(),
-//         limit: "10000", // Fetch all data for manual filtering
+//         limit: "10000",
 //         search: searchQuery,
 //         showDeleted: showDeleted.toString(),
 //       });
@@ -160,17 +197,17 @@
 //           ? response.data.data 
 //           : [response.data.data];
         
-//         setAllSubAdmins(data); // Store all data
+//         setAllSubAdmins(data);
         
 //         // Apply manual filtering
 //         const filteredData = applyManualFilters(data);
 //         setSubAdmins(filteredData);
         
 //         if (response.data.total !== undefined) {
-//           setTotalAdmins(filteredData.length); // Use filtered count
+//           setTotalAdmins(filteredData.length);
 //           setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
 //         }
-//         setCurrentPage(1); // Reset to first page after filtering
+//         setCurrentPage(1);
 //       }
 //     } catch (err: any) {
 //       console.error("Error fetching sub-admins:", err);
@@ -183,11 +220,185 @@
 //     }
 //   };
 
+//   const fetchCommodities = async () => {
+//     try {
+//       const response = await axios.get("/api/commodities");
+//       if (response.data.success) {
+//         setCommodityCategories(response.data.data);
+//         // Expand all categories by default
+//         const expanded = new Set<string>();
+//         response.data.data.forEach((category: CommodityCategory) => {
+//           expanded.add(category._id);
+//         });
+//         setExpandedCategories(expanded);
+//       }
+//     } catch (err) {
+//       console.error("Error fetching commodities:", err);
+//       toast.error("Failed to load commodities");
+//     }
+//   };
+
+//   // Fetch all location data from the new API
+//   const fetchAllLocations = async () => {
+//     try {
+//       const response = await axios.get("/api/states-details?limit=10000");
+//       if (response.data.success) {
+//         const locations = response.data.data;
+//         setAllLocations(locations);
+        
+//         // Extract unique states, districts, and talukas
+//         const uniqueStates = Array.from(
+//           new Set(locations.map((loc: LocationData) => loc.state))
+//         )
+//           .filter(state => state && state.trim() !== "")
+//           .map((state, index) => ({
+//             _id: `state-${index + 1}`,
+//             name: state,
+//           }));
+        
+//         setStates(uniqueStates);
+        
+//         // Extract districts
+//         const districtMap = new Map();
+//         locations.forEach((loc: LocationData, index: number) => {
+//           if (loc.district && loc.district.trim() !== "" && loc.state) {
+//             const state = uniqueStates.find(s => s.name === loc.state);
+//             if (state) {
+//               const key = `${loc.state}-${loc.district}`;
+//               if (!districtMap.has(key)) {
+//                 districtMap.set(key, {
+//                   _id: `district-${districtMap.size + 1}`,
+//                   name: loc.district,
+//                   stateId: state._id,
+//                   stateName: loc.state,
+//                 });
+//               }
+//             }
+//           }
+//         });
+        
+//         const districtsArray = Array.from(districtMap.values());
+//         setDistricts(districtsArray);
+        
+//         // Extract talukas
+//         const talukaMap = new Map();
+//         locations.forEach((loc: LocationData, index: number) => {
+//           if (loc.taluk && loc.taluk.trim() !== "" && loc.district && loc.state) {
+//             const district = districtsArray.find(d => 
+//               d.name === loc.district && d.stateName === loc.state
+//             );
+//             if (district) {
+//               const key = `${loc.state}-${loc.district}-${loc.taluk}`;
+//               if (!talukaMap.has(key)) {
+//                 talukaMap.set(key, {
+//                   _id: `taluka-${talukaMap.size + 1}`,
+//                   name: loc.taluk,
+//                   district: {
+//                     _id: district._id,
+//                     name: district.name,
+//                     stateId: district.stateId,
+//                   },
+//                 });
+//               }
+//             }
+//           }
+//         });
+        
+//         const talukasArray = Array.from(talukaMap.values());
+//         setTalukas(talukasArray);
+//       }
+//     } catch (err) {
+//       console.error("Error fetching locations:", err);
+//       toast.error("Failed to load location data");
+//     }
+//   };
+
+//   // Fetch PIN code details from the new API
+//   const fetchPinCodeDetails = async (pincode: string) => {
+//     try {
+//       setPincodeLoading(true);
+//       setPincodeError("");
+      
+//       if (!pincode || pincode.length !== 6 || !/^\d+$/.test(pincode)) {
+//         setPincodeError("Please enter a valid 6-digit PIN code");
+//         return false;
+//       }
+
+//       const response = await axios.get(`/api/states-details?pincode=${pincode}&action=lookup-pin`);
+      
+//       if (response.data.success) {
+//         const data = response.data.data;
+        
+//         // Find state by name from our extracted states
+//         const foundState = states.find(s => 
+//           s.name.toLowerCase() === data.state.toLowerCase()
+//         );
+        
+//         if (foundState) {
+//           // Update form with found state
+//           setForm(prev => ({ 
+//             ...prev, 
+//             state: foundState._id,
+//             district: "",
+//             taluka: ""
+//           }));
+          
+//           // Wait a moment for state to update, then find district
+//           setTimeout(() => {
+//             const foundDistrict = districts.find(d => 
+//               d.name.toLowerCase() === data.district.toLowerCase() && 
+//               d.stateId === foundState._id
+//             );
+            
+//             if (foundDistrict) {
+//               setForm(prev => ({ 
+//                 ...prev, 
+//                 district: foundDistrict._id,
+//                 taluka: ""
+//               }));
+              
+//               // Find taluka
+//               setTimeout(() => {
+//                 const foundTaluka = talukas.find(t => 
+//                   t.name.toLowerCase() === data.taluk.toLowerCase() && 
+//                   t.district._id === foundDistrict._id
+//                 );
+                
+//                 if (foundTaluka) {
+//                   setForm(prev => ({ ...prev, taluka: foundTaluka._id }));
+//                   toast.success(`Location found: ${data.state}, ${data.district}, ${data.taluk}`);
+//                 } else {
+//                   // Taluka not found in our data, but we still have state and district
+//                   toast.success(`Location found: ${data.state}, ${data.district}`);
+//                 }
+//               }, 100);
+//             } else {
+//               toast.success(`Location found: ${data.state}`);
+//             }
+//           }, 100);
+          
+//           return true;
+//         } else {
+//           setPincodeError(`State "${data.state}" not found in our database`);
+//           return false;
+//         }
+//       } else {
+//         setPincodeError(response.data.error || "Failed to fetch PIN code details");
+//         return false;
+//       }
+//     } catch (err: any) {
+//       console.error("Error fetching PIN code details:", err);
+//       setPincodeError(err.response?.data?.error || "Failed to fetch PIN code details");
+//       return false;
+//     } finally {
+//       setPincodeLoading(false);
+//     }
+//   };
+
 //   // Apply manual filters to data
 //   const applyManualFilters = (data: SubAdmin[]): SubAdmin[] => {
 //     let filtered = [...data];
 
-//     // Apply state filter
 //     if (stateFilter) {
 //       const selectedState = states.find(s => s._id === stateFilter);
 //       if (selectedState) {
@@ -197,7 +408,6 @@
 //       }
 //     }
 
-//     // Apply district filter
 //     if (districtFilter) {
 //       const selectedDistrict = districts.find(d => d._id === districtFilter);
 //       if (selectedDistrict) {
@@ -207,7 +417,6 @@
 //       }
 //     }
 
-//     // Apply taluka filter
 //     if (talukaFilter) {
 //       const selectedTaluka = talukas.find(t => t._id === talukaFilter);
 //       if (selectedTaluka) {
@@ -217,7 +426,6 @@
 //       }
 //     }
 
-//     // Apply text search
 //     if (search.trim()) {
 //       const searchTerm = search.toLowerCase().trim();
 //       filtered = filtered.filter(admin => 
@@ -230,39 +438,6 @@
 //     }
 
 //     return filtered;
-//   };
-
-//   const fetchStates = async () => {
-//     try {
-//       const response = await axios.get("/api/states");
-//       if (response.data.success) {
-//         setStates(response.data.data);
-//       }
-//     } catch (err) {
-//       console.error("Error fetching states:", err);
-//     }
-//   };
-
-//   const fetchDistricts = async () => {
-//     try {
-//       const response = await axios.get("/api/districts");
-//       if (response.data.success) {
-//         setDistricts(response.data.data);
-//       }
-//     } catch (err) {
-//       console.error("Error fetching districts:", err);
-//     }
-//   };
-
-//   const fetchTalukas = async () => {
-//     try {
-// const response = await axios.get("/api/talukas?limit=10000");
-//       if (response.data.success) {
-//         setTalukas(response.data.data || []);
-//       }
-//     } catch (err) {
-//       console.error("Error fetching talukas:", err);
-//     }
 //   };
 
 //   const createSubAdmin = async (adminData: any) => {
@@ -319,9 +494,8 @@
 
 //   useEffect(() => {
 //     fetchSubAdmins(currentPage, "");
-//     fetchStates();
-//     fetchDistricts();
-//     fetchTalukas();
+//     fetchAllLocations();
+//     fetchCommodities();
 //   }, [showDeleted]);
 
 //   useEffect(() => {
@@ -336,7 +510,11 @@
 //       const filtered = districts.filter(district => district.stateId === form.state);
 //       setFilteredDistricts(filtered);
 //       // Reset district and taluka when state changes
-//       setForm(prev => ({ ...prev, district: "", taluka: "" }));
+//       if (editing && !form.district) {
+//         // Keep district if editing and district exists
+//       } else {
+//         setForm(prev => ({ ...prev, district: "", taluka: "" }));
+//       }
 //     } else {
 //       setFilteredDistricts([]);
 //     }
@@ -346,13 +524,16 @@
 //   useEffect(() => {
 //     if (form.district) {
 //       const selectedDistrict = districts.find(d => d._id === form.district);
-//      const filtered = talukas.filter(taluka => {
-//   return taluka.district?._id === form.district;
-// });
-
+//       const filtered = talukas.filter(taluka => {
+//         return taluka.district?._id === form.district;
+//       });
 //       setFilteredTalukas(filtered);
 //       // Reset taluka when district changes
-//       setForm(prev => ({ ...prev, taluka: "" }));
+//       if (editing && !form.taluka) {
+//         // Keep taluka if editing and taluka exists
+//       } else {
+//         setForm(prev => ({ ...prev, taluka: "" }));
+//       }
 //     } else {
 //       setFilteredTalukas([]);
 //     }
@@ -363,12 +544,10 @@
 //     if (stateFilter) {
 //       const filtered = districts.filter(district => district.stateId === stateFilter);
 //       setFilteredDistrictsForFilter(filtered);
-//       // Reset district and taluka filters when state changes
 //       setDistrictFilter("");
 //       setTalukaFilter("");
 //     } else {
 //       setFilteredDistrictsForFilter([]);
-//       // Reset district and taluka filters when state is cleared
 //       setDistrictFilter("");
 //       setTalukaFilter("");
 //     }
@@ -378,16 +557,13 @@
 //   useEffect(() => {
 //     if (districtFilter) {
 //       const selectedDistrict = districts.find(d => d._id === districtFilter);
-//      const filtered = talukas.filter(taluka => {
-//   return taluka.district?._id === districtFilter;
-// });
-
+//       const filtered = talukas.filter(taluka => {
+//         return taluka.district?._id === districtFilter;
+//       });
 //       setFilteredTalukasForFilter(filtered);
-//       // Reset taluka filter when district changes
 //       setTalukaFilter("");
 //     } else {
 //       setFilteredTalukasForFilter([]);
-//       // Reset taluka filter when district is cleared
 //       setTalukaFilter("");
 //     }
 //   }, [districtFilter, districts, talukas]);
@@ -399,7 +575,7 @@
 //       setSubAdmins(filteredData);
 //       setTotalAdmins(filteredData.length);
 //       setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
-//       setCurrentPage(1); // Reset to first page when filters change
+//       setCurrentPage(1);
 //     }
 //   }, [search, stateFilter, districtFilter, talukaFilter, allSubAdmins]);
 
@@ -493,6 +669,7 @@
 //         district: selectedDistrict?.name || "",
 //         taluka: selectedTaluka?.name || "",
 //         commodity: form.commodity,
+//         subCategories: form.subCategories,
 //       };
       
 //       if (form.password && form.password.trim()) {
@@ -507,7 +684,6 @@
 //         toast.success("Sub-admin created successfully!");
 //       }
       
-//       // Refresh data after save
 //       await fetchSubAdmins(currentPage, "");
 //       reset();
 //     } catch (err: any) {
@@ -522,7 +698,6 @@
 //       await deleteSubAdminAPI(selectedAdmin._id);
 //       toast.success("Sub-admin moved to trash successfully!");
 //       setDeleteOpen(false);
-//       // Refresh data after delete
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error deleting sub-admin:", error);
@@ -537,7 +712,6 @@
 //       await restoreSubAdminAPI(adminToRestore._id);
 //       toast.success("Sub-admin restored successfully!");
 //       setRestoreOpen(false);
-//       // Refresh data after restore
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error restoring sub-admin:", error);
@@ -552,7 +726,6 @@
 //       await permanentDeleteSubAdminAPI(adminToDeletePermanently._id);
 //       toast.success("Sub-admin permanently deleted!");
 //       setPermanentDeleteOpen(false);
-//       // Refresh data after permanent delete
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error permanently deleting sub-admin:", error);
@@ -561,6 +734,91 @@
 //   };
 
 //   /* ================= HELPER FUNCTIONS ================= */
+
+//   const handleLookupPinCode = async () => {
+//     if (!pincode) {
+//       setPincodeError("Please enter a PIN code");
+//       return;
+//     }
+    
+//     const success = await fetchPinCodeDetails(pincode);
+//     if (success) {
+//       setPincode("");
+//     }
+//   };
+
+//   const toggleCategory = (categoryId: string) => {
+//     setExpandedCategories(prev => {
+//       const newSet = new Set(prev);
+//       if (newSet.has(categoryId)) {
+//         newSet.delete(categoryId);
+//       } else {
+//         newSet.add(categoryId);
+//       }
+//       return newSet;
+//     });
+//   };
+
+//   const handleCategoryCheckboxChange = (categoryId: string) => {
+//     const category = commodityCategories.find(c => c._id === categoryId);
+//     if (!category) return;
+
+//     const allSubCategoryIds = category.subCategories.map(sub => sub.subCategoryName);
+//     const allSelected = allSubCategoryIds.every(id => 
+//       form.commodity.includes(`${category.categoryName}:${id}`)
+//     );
+
+//     if (allSelected) {
+//       // Remove all subcategories of this category
+//       setForm(prev => ({
+//         ...prev,
+//         commodity: prev.commodity.filter(item => !item.startsWith(`${category.categoryName}:`)),
+//         subCategories: prev.subCategories.filter(item => !item.startsWith(`${category.categoryName}:`))
+//       }));
+//     } else {
+//       // Add all subcategories of this category
+//       const newCommodities = allSubCategoryIds.map(id => `${category.categoryName}:${id}`);
+//       setForm(prev => ({
+//         ...prev,
+//         commodity: [...prev.commodity.filter(item => !item.startsWith(`${category.categoryName}:`)), ...newCommodities],
+//         subCategories: [...prev.subCategories.filter(item => !item.startsWith(`${category.categoryName}:`)), ...newCommodities]
+//       }));
+//     }
+//   };
+
+//   const handleSubCategoryCheckboxChange = (categoryName: string, subCategoryName: string) => {
+//     const fullId = `${categoryName}:${subCategoryName}`;
+    
+//     if (form.commodity.includes(fullId)) {
+//       // Remove subcategory
+//       setForm(prev => ({
+//         ...prev,
+//         commodity: prev.commodity.filter(item => item !== fullId),
+//         subCategories: prev.subCategories.filter(item => item !== fullId)
+//       }));
+//     } else {
+//       // Add subcategory
+//       setForm(prev => ({
+//         ...prev,
+//         commodity: [...prev.commodity, fullId],
+//         subCategories: [...prev.subCategories, fullId]
+//       }));
+//     }
+//   };
+
+//   const isCategoryChecked = (categoryId: string): boolean => {
+//     const category = commodityCategories.find(c => c._id === categoryId);
+//     if (!category) return false;
+
+//     const allSubCategoryIds = category.subCategories.map(sub => sub.subCategoryName);
+//     return allSubCategoryIds.length > 0 && allSubCategoryIds.every(id => 
+//       form.commodity.includes(`${category.categoryName}:${id}`)
+//     );
+//   };
+
+//   const isSubCategoryChecked = (categoryName: string, subCategoryName: string): boolean => {
+//     return form.commodity.includes(`${categoryName}:${subCategoryName}`);
+//   };
 
 //   const loadAdminForEdit = (admin: SubAdmin) => {
 //     setEditing(admin);
@@ -581,14 +839,20 @@
 //       displayModules.includes(module)
 //     );
     
-//     // Find selected state by name
+//     // Find selected state by name from our extracted states
 //     const selectedState = states.find(s => s.name.toLowerCase() === admin.state?.toLowerCase());
     
 //     // Find selected district by name
-//     const selectedDistrict = districts.find(d => d.name.toLowerCase() === admin.district?.toLowerCase());
+//     const selectedDistrict = districts.find(d => 
+//       d.name.toLowerCase() === admin.district?.toLowerCase() &&
+//       d.stateName === admin.state
+//     );
     
 //     // Find selected taluka by name
-//     const selectedTaluka = talukas.find(t => t.name.toLowerCase() === admin.taluka?.toLowerCase());
+//     const selectedTaluka = talukas.find(t => 
+//       t.name.toLowerCase() === admin.taluka?.toLowerCase() &&
+//       t.district.name === admin.district
+//     );
 
 //     setForm({
 //       name: admin.name,
@@ -599,6 +863,7 @@
 //       district: selectedDistrict?._id || "",
 //       taluka: selectedTaluka?._id || "",
 //       commodity: admin.commodity || [],
+//       subCategories: admin.subCategories || [],
 //     });
     
 //     setOpen(true);
@@ -637,20 +902,6 @@
 //     }
 //   };
 
-//   const handleCommodityChange = (commodity: string) => {
-//     if (form.commodity.includes(commodity)) {
-//       setForm(p => ({
-//         ...p,
-//         commodity: p.commodity.filter(c => c !== commodity),
-//       }));
-//     } else {
-//       setForm(p => ({
-//         ...p,
-//         commodity: [...p.commodity, commodity],
-//       }));
-//     }
-//   };
-
 //   const areAllModulesSelected = () => {
 //     return form.pageAccess.includes("All") || 
 //            (allModules.length > 0 && allModules.every(module => 
@@ -661,7 +912,6 @@
 //   const toggleDeletedView = () => {
 //     setShowDeleted(!showDeleted);
 //     setCurrentPage(1);
-//     // Clear filters when switching views
 //     setStateFilter("");
 //     setDistrictFilter("");
 //     setTalukaFilter("");
@@ -683,9 +933,12 @@
 //       state: "",
 //       district: "",
 //       taluka: "",
-//       commodity: []
+//       commodity: [],
+//       subCategories: []
 //     });
 //     setErrors({});
+//     setPincode("");
+//     setPincodeError("");
 //   };
 
 //   const handleResetFilters = () => {
@@ -694,7 +947,6 @@
 //     setDistrictFilter("");
 //     setTalukaFilter("");
 //     setCurrentPage(1);
-//     // Re-fetch all data without filters
 //     fetchSubAdmins(1, "");
 //     setRowsPerPage(10);
 //     setShowDeleted(false);
@@ -734,7 +986,6 @@
 //     const printDate = new Date().toLocaleDateString();
 //     const printTime = new Date().toLocaleTimeString();
     
-//     // Build filter info text
 //     let filterInfo = "";
 //     if (stateFilter) {
 //       const state = states.find(s => s._id === stateFilter);
@@ -752,7 +1003,7 @@
 //       filterInfo += `Search: "${search}" | `;
 //     }
 //     if (filterInfo) {
-//       filterInfo = filterInfo.slice(0, -3); // Remove last " | "
+//       filterInfo = filterInfo.slice(0, -3);
 //     }
     
 //     const printContent = `
@@ -896,110 +1147,79 @@
 //     printWindow.document.close();
 //   };
 
-//   // const handleCopy = async () => {
-//   //   const currentPageData = getCurrentPageData();
-//   //   if (currentPageData.length === 0) {
-//   //     toast.error("No sub-admins to copy");
-//   //     return;
-//   //   }
+//   const handleCopy = async (): Promise<void> => {
+//     const currentPageData = getCurrentPageData();
+//     if (currentPageData.length === 0) {
+//       toast.error("No sub-admins to copy");
+//       return;
+//     }
 
-//   //   const text = currentPageData.map((admin, index) => 
-//   //     `${index + 1 + (currentPage - 1) * rowsPerPage}\t${admin.name}\t${admin.email}\t********\t${admin.state || '-'}\t${admin.district || '-'}\t${admin.taluka || '-'}\t${admin.commodity?.join(', ') || '-'}\t${admin.pageAccess.join(", ")}\t${admin.isDeleted ? 'Deleted' : 'Active'}`
-//   //   ).join("\n");
+//     const headers = ["Sr.", "Name", "Email", "Password", "State", "District", "Taluka", "Commodity", "Page Access", "Status"];
     
-//   //   try {
-//   //     await navigator.clipboard.writeText(text);
-//   //     toast.success("Sub-admins data copied to clipboard!");
-//   //   } catch (err) {
-//   //     toast.error("Failed to copy to clipboard");
-//   //   }
-//   // };
-
-
-
-//    const handleCopy = async (): Promise<void> => {
-//   const currentPageData = getCurrentPageData();
-//   if (currentPageData.length === 0) {
-//     toast.error("No sub-admins to copy");
-//     return;
-//   }
-
-//   // Headers for the table
-//   const headers = ["Sr.", "Name", "Email", "Password", "State", "District", "Taluka", "Commodity", "Page Access", "Status"];
-  
-//   // Define column widths (adjust as needed)
-//   const colWidths = [6, 20, 25, 10, 15, 15, 15, 20, 25, 12];
-  
-//   // Create separator line
-//   const createSeparator = (): string => {
-//     const totalWidth = colWidths.reduce((sum, width) => sum + width + 3, -3);
-//     return "─".repeat(Math.min(totalWidth, 150));
+//     const colWidths = [6, 20, 25, 10, 15, 15, 15, 20, 25, 12];
+    
+//     const createSeparator = (): string => {
+//       const totalWidth = colWidths.reduce((sum, width) => sum + width + 3, -3);
+//       return "─".repeat(Math.min(totalWidth, 150));
+//     };
+    
+//     const formatRow = (admin: any, index: number): string => {
+//       const rowNum = index + 1 + (currentPage - 1) * rowsPerPage;
+      
+//       const commodity = admin.commodity?.join(', ') || '-';
+//       const trimmedCommodity = commodity.length > 17 ? commodity.substring(0, 14) + '...' : commodity;
+      
+//       const pageAccess = admin.pageAccess?.join(', ') || '-';
+//       const trimmedAccess = pageAccess.length > 22 ? pageAccess.substring(0, 19) + '...' : pageAccess;
+      
+//       const values = [
+//         rowNum.toString(),
+//         admin.name || '-',
+//         admin.email || '-',
+//         '********',
+//         admin.state || '-',
+//         admin.district || '-',
+//         admin.taluka || '-',
+//         trimmedCommodity,
+//         trimmedAccess,
+//         admin.isDeleted ? '❌ Deleted' : '✅ Active'
+//       ];
+      
+//       return values.map((val, i) => val.padEnd(colWidths[i])).join(" │ ");
+//     };
+    
+//     const formatHeader = (): string => {
+//       return headers.map((header, i) => header.padEnd(colWidths[i])).join(" │ ");
+//     };
+    
+//     const tableContent = [
+//       `📋 SUB-ADMINS LIST - Page ${currentPage}`,
+//       createSeparator(),
+//       formatHeader(),
+//       createSeparator(),
+//       ...currentPageData.map((admin, index) => formatRow(admin, index)),
+//       createSeparator(),
+//       "",
+//       "📊 SUMMARY",
+//       `• Current Page: ${currentPage}`,
+//       `• Records on Page: ${currentPageData.length}`,
+//       `• Active: ${currentPageData.filter(a => !a.isDeleted).length}`,
+//       `• Deleted: ${currentPageData.filter(a => a.isDeleted).length}`,
+//       `• Generated: ${new Date().toLocaleString()}`,
+//       "",
+//       "📝 Note: Data copied from current page view",
+//       "    Use pagination to copy other pages"
+//     ].join("\n");
+    
+//     try {
+//       await navigator.clipboard.writeText(tableContent);
+//       toast.success(`Copied ${currentPageData.length} sub-admins to clipboard!`);
+//     } catch (err) {
+//       console.error("Failed to copy:", err);
+//       toast.error("Failed to copy to clipboard");
+//     }
 //   };
-  
-//   // Format a single row
-//   const formatRow = (admin: any, index: number): string => {
-//     const rowNum = index + 1 + (currentPage - 1) * rowsPerPage;
-    
-//     // Get commodity as string
-//     const commodity = admin.commodity?.join(', ') || '-';
-//     const trimmedCommodity = commodity.length > 17 ? commodity.substring(0, 14) + '...' : commodity;
-    
-//     // Get page access as string
-//     const pageAccess = admin.pageAccess?.join(', ') || '-';
-//     const trimmedAccess = pageAccess.length > 22 ? pageAccess.substring(0, 19) + '...' : pageAccess;
-    
-//     // Prepare all values
-//     const values = [
-//       rowNum.toString(),
-//       admin.name || '-',
-//       admin.email || '-',
-//       '********',
-//       admin.state || '-',
-//       admin.district || '-',
-//       admin.taluka || '-',
-//       trimmedCommodity,
-//       trimmedAccess,
-//       admin.isDeleted ? '❌ Deleted' : '✅ Active'
-//     ];
-    
-//     // Apply padding to each value
-//     return values.map((val, i) => val.padEnd(colWidths[i])).join(" │ ");
-//   };
-  
-//   // Format header row
-//   const formatHeader = (): string => {
-//     return headers.map((header, i) => header.padEnd(colWidths[i])).join(" │ ");
-//   };
-  
-//   // Build the complete table content
-//   const separator = createSeparator();
-//   const tableContent = [
-//     `📋 SUB-ADMINS LIST - Page ${currentPage}`,
-//     separator,
-//     formatHeader(),
-//     separator,
-//     ...currentPageData.map((admin, index) => formatRow(admin, index)),
-//     separator,
-//     "",
-//     "📊 SUMMARY",
-//     `• Current Page: ${currentPage}`,
-//     `• Records on Page: ${currentPageData.length}`,
-//     `• Active: ${currentPageData.filter(a => !a.isDeleted).length}`,
-//     `• Deleted: ${currentPageData.filter(a => a.isDeleted).length}`,
-//     `• Generated: ${new Date().toLocaleString()}`,
-//     "",
-//     "📝 Note: Data copied from current page view",
-//     "    Use pagination to copy other pages"
-//   ].join("\n");
-  
-//   try {
-//     await navigator.clipboard.writeText(tableContent);
-//     toast.success(`Copied ${currentPageData.length} sub-admins to clipboard!`);
-//   } catch (err) {
-//     console.error("Failed to copy:", err);
-//     toast.error("Failed to copy to clipboard");
-//   }
-// };
+
 //   const handleExcel = () => {
 //     const currentPageData = getCurrentPageData();
 //     if (currentPageData.length === 0) {
@@ -1068,7 +1288,6 @@
 //       const doc = new jsPDF();
 //       doc.text("Sub-Admins Management Report", 14, 16);
       
-//       // Add filter info
 //       let filterText = "";
 //       if (stateFilter) {
 //         const state = states.find(s => s._id === stateFilter);
@@ -1086,7 +1305,7 @@
 //         filterText += `Search: "${search}" | `;
 //       }
 //       if (filterText) {
-//         filterText = filterText.slice(0, -3); // Remove last " | "
+//         filterText = filterText.slice(0, -3);
 //         doc.text(`Filters: ${filterText}`, 14, 24);
 //       }
       
@@ -1124,7 +1343,6 @@
 
 //   return (
 //     <div className="p-[.6rem] relative text-black text-sm md:p-1 overflow-x-auto min-h-screen">
-//       {/* Loading Overlay */}
 //       {loading && (
 //         <div className="min-h-screen absolute w-full top-0 left-0 bg-[#e9e7e773] z-[100] flex items-center justify-center">
 //           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -1345,12 +1563,12 @@
 //                     <td className="p-[.6rem] text-sm">{admin.taluka || '-'}</td>
 //                     <td className="p-[.6rem] text-sm">
 //                       <div className="flex flex-wrap gap-1">
-//                         {admin.commodity?.map(commodity => (
+//                         {admin.commodity?.map((commodity, idx) => (
 //                           <span 
-//                             key={commodity} 
+//                             key={idx} 
 //                             className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs"
 //                           >
-//                             {commodity}
+//                             {commodity.split(':')[1] || commodity}
 //                           </span>
 //                         )) || '-'}
 //                       </div>
@@ -1494,12 +1712,12 @@
 //                   <div>
 //                     <div className="text-sm text-gray-500">Commodities</div>
 //                     <div className="flex flex-wrap gap-1 mt-1">
-//                       {admin.commodity?.map(commodity => (
+//                       {admin.commodity?.map((commodity, idx) => (
 //                         <span 
-//                           key={commodity} 
+//                           key={idx} 
 //                           className="bg-yellow-50 text-yellow-700 px-2 py-1 rounded text-xs"
 //                         >
-//                           {commodity}
+//                           {commodity.split(':')[1] || commodity}
 //                         </span>
 //                       )) || '-'}
 //                     </div>
@@ -1597,7 +1815,7 @@
 //         </div>
 //       )}
 
-//       {/* ADD/EDIT MODAL - REMAINS THE SAME */}
+//       {/* ADD/EDIT MODAL */}
 //       {open && (
 //         <Modal 
 //           title={editing ? "Edit Sub-Admin" : "Add New Sub-Admin"} 
@@ -1632,6 +1850,46 @@
 //               placeholder={editing ? "Leave blank to keep current password" : "Enter password (min 6 characters)"}
 //               required={!editing}
 //             />
+
+//             {/* PIN Code Lookup Section */}
+//             <div className="mb-6 p-4 bg-blue-50 rounded border border-blue-200">
+//               <div className="flex items-center gap-2 mb-2">
+//                 <FaMapMarkerAlt className="text-blue-600" />
+//                 <h3 className="text-sm font-semibold text-blue-800">Quick Fill from PIN Code</h3>
+//               </div>
+//               <div className="flex gap-2">
+//                 <div className="flex-1">
+//                   <input
+//                     type="text"
+//                     value={pincode}
+//                     onChange={(e) => {
+//                       const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+//                       setPincode(value);
+//                       if (pincodeError) setPincodeError("");
+//                     }}
+//                     placeholder="Enter 6-digit PIN code"
+//                     className={`border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+//                       pincodeError ? "border-red-500" : "border-gray-300"
+//                     }`}
+//                   />
+//                   {pincodeError && <p className="text-red-500 text-xs mt-1">{pincodeError}</p>}
+//                 </div>
+//                 <button
+//                   onClick={handleLookupPinCode}
+//                   disabled={pincodeLoading || pincode.length !== 6}
+//                   className={`px-4 py-2 rounded font-medium flex items-center gap-2 ${
+//                     pincodeLoading || pincode.length !== 6
+//                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+//                       : "bg-blue-500 text-white hover:bg-blue-600"
+//                   }`}
+//                 >
+//                   {pincodeLoading ? "Looking up..." : "Lookup"}
+//                 </button>
+//               </div>
+//               <p className="text-xs text-blue-600 mt-2">
+//                 Enter a PIN code to automatically fill State, District, and Taluka fields
+//               </p>
+//             </div>
 
 //             {/* State Dropdown */}
 //             <div className="mb-4">
@@ -1706,20 +1964,60 @@
 //               <label className="block text-sm font-medium text-gray-700 mb-2">
 //                 Select Commodities <span className="text-red-500">*</span>
 //               </label>
-//               <div className="border rounded p-3">
-//                 <div className="grid grid-cols-2 gap-2">
-//                   {COMMODITIES.map(commodity => (
-//                     <label key={commodity} className="flex items-center gap-2 text-sm">
-//                       <input
-//                         type="checkbox"
-//                         checked={form.commodity.includes(commodity)}
-//                         onChange={() => handleCommodityChange(commodity)}
-//                         className="rounded"
-//                       />
-//                       {commodity}
-//                     </label>
-//                   ))}
-//                 </div>
+//               <div className="border rounded p-3 max-h-60 overflow-y-auto">
+//                 {commodityCategories.length === 0 ? (
+//                   <div className="text-center py-4 text-gray-500">
+//                     Loading commodities...
+//                   </div>
+//                 ) : (
+//                   commodityCategories.map(category => (
+//                     <div key={category._id} className="mb-3 last:mb-0">
+//                       {/* Category Header */}
+//                       <div className="flex items-center gap-2 mb-1">
+//                         <button
+//                           onClick={() => toggleCategory(category._id)}
+//                           className="p-1 text-gray-500 hover:text-gray-700"
+//                         >
+//                           {expandedCategories.has(category._id) ? 
+//                             <FaChevronDown size={12} /> : 
+//                             <FaChevronRight size={12} />
+//                           }
+//                         </button>
+//                         <label className="flex items-center gap-2 text-sm font-medium">
+//                           <input
+//                             type="checkbox"
+//                             checked={isCategoryChecked(category._id)}
+//                             onChange={() => handleCategoryCheckboxChange(category._id)}
+//                             className="rounded"
+//                           />
+//                           {category.categoryName}
+//                           <span className="text-xs text-gray-500">
+//                             ({category.subCategories.length})
+//                           </span>
+//                         </label>
+//                       </div>
+                      
+//                       {/* Subcategories */}
+//                       {expandedCategories.has(category._id) && category.subCategories.length > 0 && (
+//                         <div className="ml-7 pl-1 border-l-2 border-gray-200">
+//                           <div className="grid grid-cols-2 gap-1 mt-1">
+//                             {category.subCategories.map(subCategory => (
+//                               <label key={subCategory._id} className="flex items-center gap-2 text-sm">
+//                                 <input
+//                                   type="checkbox"
+//                                   checked={isSubCategoryChecked(category.categoryName, subCategory.subCategoryName)}
+//                                   onChange={() => handleSubCategoryCheckboxChange(category.categoryName, subCategory.subCategoryName)}
+//                                   className="rounded"
+//                                 />
+//                                 <span className="truncate">{subCategory.subCategoryName}</span>
+//                               </label>
+//                             ))}
+//                           </div>
+//                         </div>
+//                       )}
+//                     </div>
+//                   ))
+//                 )}
 //               </div>
 //               {errors.commodity && <p className="text-red-500 text-xs mt-1">{errors.commodity}</p>}
 //             </div>
@@ -1776,7 +2074,7 @@
 //         </Modal>
 //       )}
 
-//       {/* VIEW DETAILS MODAL - REMAINS THE SAME */}
+//       {/* VIEW DETAILS MODAL */}
 //       {viewOpen && selectedAdmin && (
 //         <Modal 
 //           title="Sub-Admin Details" 
@@ -1792,12 +2090,12 @@
 //             <div>
 //               <div className="font-medium text-gray-600 mb-2">Commodities:</div>
 //               <div className="flex flex-wrap gap-1">
-//                 {selectedAdmin.commodity?.map(commodity => (
+//                 {selectedAdmin.commodity?.map((commodity, idx) => (
 //                   <span 
-//                     key={commodity} 
+//                     key={idx} 
 //                     className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded text-sm"
 //                   >
-//                     {commodity}
+//                     {commodity.split(':')[1] || commodity}
 //                   </span>
 //                 )) || '-'}
 //               </div>
@@ -1847,7 +2145,7 @@
 //         </Modal>
 //       )}
 
-//       {/* SOFT DELETE MODAL - REMAINS THE SAME */}
+//       {/* SOFT DELETE MODAL */}
 //       {deleteOpen && selectedAdmin && (
 //         <Modal 
 //           title="Move to Trash?" 
@@ -1878,7 +2176,7 @@
 //         </Modal>
 //       )}
 
-//       {/* RESTORE MODAL - REMAINS THE SAME */}
+//       {/* RESTORE MODAL */}
 //       {restoreOpen && adminToRestore && (
 //         <Modal 
 //           title="Restore Sub-Admin?" 
@@ -1909,7 +2207,7 @@
 //         </Modal>
 //       )}
 
-//       {/* PERMANENT DELETE MODAL - REMAINS THE SAME */}
+//       {/* PERMANENT DELETE MODAL */}
 //       {permanentDeleteOpen && adminToDeletePermanently && (
 //         <Modal 
 //           title="Delete Permanently?" 
@@ -2007,6 +2305,15 @@
 
 
 
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -2065,25 +2372,14 @@ interface ApiResponse {
   total?: number;
 }
 
-interface State {
+interface StateDetails {
   _id: string;
-  name: string;
-}
-
-interface District {
-  _id: string;
-  name: string;
-  stateId: string;
-}
-
-interface Taluka {
-  _id: string;
-  name: string;
-  district: {
-    _id: string;
-    name: string;
-    stateId: string;
-  };
+  pinCode: string;
+  state: string;
+  district: string;
+  taluk: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface CommodityCategory {
@@ -2116,9 +2412,12 @@ export default function SubAdminAccountsPage() {
   const [totalAdmins, setTotalAdmins] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [states, setStates] = useState<State[]>([]);
-  const [districts, setDistricts] = useState<District[]>([]);
-  const [talukas, setTalukas] = useState<Taluka[]>([]);
+  const [stateDetails, setStateDetails] = useState<StateDetails[]>([]);
+  
+  // Extract unique states, districts, and talukas
+  const [states, setStates] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [talukas, setTalukas] = useState<string[]>([]);
   
   // Commodities state
   const [commodityCategories, setCommodityCategories] = useState<CommodityCategory[]>([]);
@@ -2130,12 +2429,12 @@ export default function SubAdminAccountsPage() {
   const [talukaFilter, setTalukaFilter] = useState<string>("");
   
   // Filtered dropdowns for form
-  const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
-  const [filteredTalukas, setFilteredTalukas] = useState<Taluka[]>([]);
+  const [filteredDistricts, setFilteredDistricts] = useState<string[]>([]);
+  const [filteredTalukas, setFilteredTalukas] = useState<string[]>([]);
   
   // Filtered dropdowns for filters
-  const [filteredDistrictsForFilter, setFilteredDistrictsForFilter] = useState<District[]>([]);
-  const [filteredTalukasForFilter, setFilteredTalukasForFilter] = useState<Taluka[]>([]);
+  const [filteredDistrictsForFilter, setFilteredDistrictsForFilter] = useState<string[]>([]);
+  const [filteredTalukasForFilter, setFilteredTalukasForFilter] = useState<string[]>([]);
 
   const [open, setOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -2224,38 +2523,53 @@ export default function SubAdminAccountsPage() {
     }
   };
 
+  const fetchStateDetails = async () => {
+    try {
+      const response = await axios.get<{success: boolean; data: StateDetails[]}>("/api/states-details");
+      if (response.data.success && response.data.data) {
+        setStateDetails(response.data.data);
+        
+        // Extract unique values
+        const uniqueStates = Array.from(new Set(response.data.data.map(item => item.state))).sort();
+        setStates(uniqueStates);
+        
+        // Extract all districts for initial setup
+        const allDistricts = Array.from(new Set(response.data.data.map(item => item.district))).sort();
+        setDistricts(allDistricts);
+        
+        // Extract all talukas for initial setup
+        const allTalukas = Array.from(new Set(response.data.data.map(item => item.taluk))).sort();
+        setTalukas(allTalukas);
+      }
+    } catch (err) {
+      console.error("Error fetching state details:", err);
+      toast.error("Failed to load location data");
+    }
+  };
+
   // Apply manual filters to data
   const applyManualFilters = (data: SubAdmin[]): SubAdmin[] => {
     let filtered = [...data];
 
     // Apply state filter
     if (stateFilter) {
-      const selectedState = states.find(s => s._id === stateFilter);
-      if (selectedState) {
-        filtered = filtered.filter(admin => 
-          admin.state?.toLowerCase() === selectedState.name.toLowerCase()
-        );
-      }
+      filtered = filtered.filter(admin => 
+        admin.state?.toLowerCase() === stateFilter.toLowerCase()
+      );
     }
 
     // Apply district filter
     if (districtFilter) {
-      const selectedDistrict = districts.find(d => d._id === districtFilter);
-      if (selectedDistrict) {
-        filtered = filtered.filter(admin => 
-          admin.district?.toLowerCase() === selectedDistrict.name.toLowerCase()
-        );
-      }
+      filtered = filtered.filter(admin => 
+        admin.district?.toLowerCase() === districtFilter.toLowerCase()
+      );
     }
 
     // Apply taluka filter
     if (talukaFilter) {
-      const selectedTaluka = talukas.find(t => t._id === talukaFilter);
-      if (selectedTaluka) {
-        filtered = filtered.filter(admin => 
-          admin.taluka?.toLowerCase() === selectedTaluka.name.toLowerCase()
-        );
-      }
+      filtered = filtered.filter(admin => 
+        admin.taluka?.toLowerCase() === talukaFilter.toLowerCase()
+      );
     }
 
     // Apply text search
@@ -2271,39 +2585,6 @@ export default function SubAdminAccountsPage() {
     }
 
     return filtered;
-  };
-
-  const fetchStates = async () => {
-    try {
-      const response = await axios.get("/api/states");
-      if (response.data.success) {
-        setStates(response.data.data);
-      }
-    } catch (err) {
-      console.error("Error fetching states:", err);
-    }
-  };
-
-  const fetchDistricts = async () => {
-    try {
-      const response = await axios.get("/api/districts");
-      if (response.data.success) {
-        setDistricts(response.data.data);
-      }
-    } catch (err) {
-      console.error("Error fetching districts:", err);
-    }
-  };
-
-  const fetchTalukas = async () => {
-    try {
-      const response = await axios.get("/api/talukas?limit=10000");
-      if (response.data.success) {
-        setTalukas(response.data.data || []);
-      }
-    } catch (err) {
-      console.error("Error fetching talukas:", err);
-    }
   };
 
   const createSubAdmin = async (adminData: any) => {
@@ -2360,9 +2641,7 @@ export default function SubAdminAccountsPage() {
 
   useEffect(() => {
     fetchSubAdmins(currentPage, "");
-    fetchStates();
-    fetchDistricts();
-    fetchTalukas();
+    fetchStateDetails();
     fetchCommodities();
   }, [showDeleted]);
 
@@ -2375,34 +2654,43 @@ export default function SubAdminAccountsPage() {
   // Filter districts based on selected state (for form)
   useEffect(() => {
     if (form.state) {
-      const filtered = districts.filter(district => district.stateId === form.state);
+      const filtered = Array.from(new Set(
+        stateDetails
+          .filter(item => item.state === form.state)
+          .map(item => item.district)
+      )).sort();
       setFilteredDistricts(filtered);
       // Reset district and taluka when state changes
       setForm(prev => ({ ...prev, district: "", taluka: "" }));
     } else {
       setFilteredDistricts([]);
     }
-  }, [form.state, districts]);
+  }, [form.state, stateDetails]);
 
   // Filter talukas based on selected district (for form)
   useEffect(() => {
     if (form.district) {
-      const selectedDistrict = districts.find(d => d._id === form.district);
-      const filtered = talukas.filter(taluka => {
-        return taluka.district?._id === form.district;
-      });
+      const filtered = Array.from(new Set(
+        stateDetails
+          .filter(item => item.district === form.district)
+          .map(item => item.taluk)
+      )).sort();
       setFilteredTalukas(filtered);
       // Reset taluka when district changes
       setForm(prev => ({ ...prev, taluka: "" }));
     } else {
       setFilteredTalukas([]);
     }
-  }, [form.district, districts, talukas]);
+  }, [form.district, stateDetails]);
 
   // Filter districts based on selected state (for filter)
   useEffect(() => {
     if (stateFilter) {
-      const filtered = districts.filter(district => district.stateId === stateFilter);
+      const filtered = Array.from(new Set(
+        stateDetails
+          .filter(item => item.state === stateFilter)
+          .map(item => item.district)
+      )).sort();
       setFilteredDistrictsForFilter(filtered);
       // Reset district and taluka filters when state changes
       setDistrictFilter("");
@@ -2413,15 +2701,16 @@ export default function SubAdminAccountsPage() {
       setDistrictFilter("");
       setTalukaFilter("");
     }
-  }, [stateFilter, districts]);
+  }, [stateFilter, stateDetails]);
 
   // Filter talukas based on selected district (for filter)
   useEffect(() => {
     if (districtFilter) {
-      const selectedDistrict = districts.find(d => d._id === districtFilter);
-      const filtered = talukas.filter(taluka => {
-        return taluka.district?._id === districtFilter;
-      });
+      const filtered = Array.from(new Set(
+        stateDetails
+          .filter(item => item.district === districtFilter)
+          .map(item => item.taluk)
+      )).sort();
       setFilteredTalukasForFilter(filtered);
       // Reset taluka filter when district changes
       setTalukaFilter("");
@@ -2430,7 +2719,7 @@ export default function SubAdminAccountsPage() {
       // Reset taluka filter when district is cleared
       setTalukaFilter("");
     }
-  }, [districtFilter, districts, talukas]);
+  }, [districtFilter, stateDetails]);
 
   // Apply filters when filter states change
   useEffect(() => {
@@ -2521,17 +2810,13 @@ export default function SubAdminAccountsPage() {
         pageAccessToSave = form.pageAccess;
       }
 
-      const selectedState = states.find(s => s._id === form.state);
-      const selectedDistrict = districts.find(d => d._id === form.district);
-      const selectedTaluka = talukas.find(t => t._id === form.taluka);
-
       const adminData: any = {
         name: form.name.trim(),
         email: form.email.trim(),
         pageAccess: pageAccessToSave,
-        state: selectedState?.name || "",
-        district: selectedDistrict?.name || "",
-        taluka: selectedTaluka?.name || "",
+        state: form.state,
+        district: form.district,
+        taluka: form.taluka,
         commodity: form.commodity,
         subCategories: form.subCategories,
       };
@@ -2694,24 +2979,15 @@ export default function SubAdminAccountsPage() {
     const hasAllModules = allModules.every(module => 
       displayModules.includes(module)
     );
-    
-    // Find selected state by name
-    const selectedState = states.find(s => s.name.toLowerCase() === admin.state?.toLowerCase());
-    
-    // Find selected district by name
-    const selectedDistrict = districts.find(d => d.name.toLowerCase() === admin.district?.toLowerCase());
-    
-    // Find selected taluka by name
-    const selectedTaluka = talukas.find(t => t.name.toLowerCase() === admin.taluka?.toLowerCase());
 
     setForm({
       name: admin.name,
       email: admin.email,
       password: "",
       pageAccess: hasAllModules ? ["All"] : displayModules,
-      state: selectedState?._id || "",
-      district: selectedDistrict?._id || "",
-      taluka: selectedTaluka?._id || "",
+      state: admin.state || "",
+      district: admin.district || "",
+      taluka: admin.taluka || "",
       commodity: admin.commodity || [],
       subCategories: admin.subCategories || [],
     });
@@ -2839,16 +3115,13 @@ export default function SubAdminAccountsPage() {
     // Build filter info text
     let filterInfo = "";
     if (stateFilter) {
-      const state = states.find(s => s._id === stateFilter);
-      filterInfo += `State: ${state?.name || ''} | `;
+      filterInfo += `State: ${stateFilter} | `;
     }
     if (districtFilter) {
-      const district = districts.find(d => d._id === districtFilter);
-      filterInfo += `District: ${district?.name || ''} | `;
+      filterInfo += `District: ${districtFilter} | `;
     }
     if (talukaFilter) {
-      const taluka = talukas.find(t => t._id === talukaFilter);
-      filterInfo += `Taluka: ${taluka?.name || ''} | `;
+      filterInfo += `Taluka: ${talukaFilter} | `;
     }
     if (search) {
       filterInfo += `Search: "${search}" | `;
@@ -3153,16 +3426,13 @@ export default function SubAdminAccountsPage() {
       // Add filter info
       let filterText = "";
       if (stateFilter) {
-        const state = states.find(s => s._id === stateFilter);
-        filterText += `State: ${state?.name || ''} | `;
+        filterText += `State: ${stateFilter} | `;
       }
       if (districtFilter) {
-        const district = districts.find(d => d._id === districtFilter);
-        filterText += `District: ${district?.name || ''} | `;
+        filterText += `District: ${districtFilter} | `;
       }
       if (talukaFilter) {
-        const taluka = talukas.find(t => t._id === talukaFilter);
-        filterText += `Taluka: ${taluka?.name || ''} | `;
+        filterText += `Taluka: ${talukaFilter} | `;
       }
       if (search) {
         filterText += `Search: "${search}" | `;
@@ -3273,8 +3543,8 @@ export default function SubAdminAccountsPage() {
             >
               <option value="">All States</option>
               {states.map(state => (
-                <option key={state._id} value={state._id}>
-                  {state.name}
+                <option key={state} value={state}>
+                  {state}
                 </option>
               ))}
             </select>
@@ -3293,8 +3563,8 @@ export default function SubAdminAccountsPage() {
             >
               <option value="">All Districts</option>
               {filteredDistrictsForFilter.map(district => (
-                <option key={district._id} value={district._id}>
-                  {district.name}
+                <option key={district} value={district}>
+                  {district}
                 </option>
               ))}
             </select>
@@ -3313,8 +3583,8 @@ export default function SubAdminAccountsPage() {
             >
               <option value="">All Talukas</option>
               {filteredTalukasForFilter.map(taluka => (
-                <option key={taluka._id} value={taluka._id}>
-                  {taluka.name}
+                <option key={taluka} value={taluka}>
+                  {taluka}
                 </option>
               ))}
             </select>
@@ -3729,8 +3999,8 @@ export default function SubAdminAccountsPage() {
               >
                 <option value="">Select State</option>
                 {states.map(state => (
-                  <option key={state._id} value={state._id}>
-                    {state.name}
+                  <option key={state} value={state}>
+                    {state}
                   </option>
                 ))}
               </select>
@@ -3752,8 +4022,8 @@ export default function SubAdminAccountsPage() {
               >
                 <option value="">Select District</option>
                 {filteredDistricts.map(district => (
-                  <option key={district._id} value={district._id}>
-                    {district.name}
+                  <option key={district} value={district}>
+                    {district}
                   </option>
                 ))}
               </select>
@@ -3775,8 +4045,8 @@ export default function SubAdminAccountsPage() {
               >
                 <option value="">Select Taluka</option>
                 {filteredTalukas.map(taluka => (
-                  <option key={taluka._id} value={taluka._id}>
-                    {taluka.name}
+                  <option key={taluka} value={taluka}>
+                    {taluka}
                   </option>
                 ))}
               </select>

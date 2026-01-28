@@ -283,6 +283,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 import { usePathname, useRouter } from "next/navigation";
 import { MENU_CONFIG, getIconComponent } from "@/app/config/menu.config";
 
@@ -296,6 +297,14 @@ const Sidebar = () => {
   useEffect(() => {
     fetchUser();
   }, []);
+
+
+  useEffect(()=>{
+    const getUniqueData=async()=>{
+      await axios.get('/api/store-unique')
+    }
+    getUniqueData()
+  },[])
 
   const fetchUser = async () => {
     try {

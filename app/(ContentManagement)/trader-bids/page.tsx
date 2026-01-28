@@ -1904,6 +1904,7 @@ import {
   FaHome
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { getAdminSessionAction } from '@/app/actions/auth-actions';
 
 interface FarmerInfo {
   farmerId?: string;
@@ -2089,6 +2090,10 @@ const TraderBidsReport: React.FC = () => {
     };
   }, [API_BASE, farmerDetailsCache]);
 
+  const [user,setUser]=useState<{
+    role:string,
+    taluka:string
+  }>()
   // Fetch offers with server-side pagination and sorting - FIXED: Fetch total stats separately
   const fetchOffers = useCallback(async (isForExport = false) => {
     // Don't set loading for export calls
@@ -2109,6 +2114,12 @@ const TraderBidsReport: React.FC = () => {
       params.append('limit', itemsPerPage.toString());
     } else {
       params.append('limit', '10000');
+    }
+
+    const session=await getAdminSessionAction()
+    setUser(session?.admin)
+    if(session?.admin?.role== "subadmin"){
+      params.append('taluk', session?.admin?.taluka);
     }
     
     params.append('sortBy', sortField);
@@ -2891,7 +2902,10 @@ const TraderBidsReport: React.FC = () => {
         ))}
       </div>
 
-      {/* Stats Cards - FIXED: Now showing total from database, not just current page */}
+
+{
+  user?.role == "admin" &&<>
+    
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
         <div className="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
@@ -2949,7 +2963,7 @@ const TraderBidsReport: React.FC = () => {
           </div>
         </div>
       </div>
-
+    </>  }
       {/* Filters Section */}
       <div className="bg-white rounded-lg shadow mb-4 p-3">
         <div className="flex items-center gap-2 mb-3">
@@ -2994,7 +3008,10 @@ const TraderBidsReport: React.FC = () => {
             </select>
           </div>
 
-          {/* Trader ID Filter */}
+{
+  user?.role == "admin" &&<>
+  
+  {/* Trader ID Filter */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaUserTie className="text-gray-400" />
@@ -3045,6 +3062,10 @@ const TraderBidsReport: React.FC = () => {
               onChange={(e) => setFarmerIdFilter(e.target.value)}
             />
           </div>
+  
+  </>
+}
+          
         </div>
 
         {/* Action Buttons */}

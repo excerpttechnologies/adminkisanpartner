@@ -5,11 +5,6 @@
 
 
 
-
-
-
-
-
 // /* eslint-disable @typescript-eslint/no-explicit-any */
 // "use client";
 
@@ -93,286 +88,6 @@
 //   onSubmit: (data: any) => void;
 //   defaultData?: Labour | null;
 // }
-
-// // function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormModalProps) {
-// //   const [form, setForm] = useState({
-// //     name: "",
-// //     villageName: "",
-// //     contactNumber: "",
-// //     email: "",
-// //     workTypes: "",
-// //     experience: "",
-// //     availability: "",
-// //     address: "",
-// //     maleRequirement: 0,
-// //     femaleRequirement: 0,
-// //     isActive: true,
-// //   });
-
-// //   const [errors, setErrors] = useState<Record<string, string>>({});
-
-// //   // FIX: Update form when defaultData changes
-// //   useEffect(() => {
-// //     if (defaultData) {
-// //       setForm({
-// //         name: defaultData.name || "",
-// //         villageName: defaultData.villageName || "",
-// //         contactNumber: defaultData.contactNumber || "",
-// //         email: defaultData.email || "",
-// //         workTypes: defaultData.workTypes?.join(", ") || "",
-// //         experience: defaultData.experience || "",
-// //         availability: defaultData.availability || "",
-// //         address: defaultData.address || "",
-// //         maleRequirement: defaultData.maleRequirement || 0,
-// //         femaleRequirement: defaultData.femaleRequirement || 0,
-// //         isActive: defaultData.isActive ?? true,
-// //       });
-// //     } else {
-// //       // Reset form when adding new labour
-// //       setForm({
-// //         name: "",
-// //         villageName: "",
-// //         contactNumber: "",
-// //         email: "",
-// //         workTypes: "",
-// //         experience: "",
-// //         availability: "",
-// //         address: "",
-// //         maleRequirement: 0,
-// //         femaleRequirement: 0,
-// //         isActive: true,
-// //       });
-// //     }
-// //     // Clear errors when modal opens/closes
-// //     setErrors({});
-// //   }, [defaultData, open]); // Added open to dependency array
-
-// //   const validateForm = () => {
-// //     const newErrors: Record<string, string> = {};
-    
-// //     if (!form.name.trim()) {
-// //       newErrors.name = "Name is required";
-// //     }
-    
-// //     if (!form.contactNumber.trim()) {
-// //       newErrors.contactNumber = "Contact number is required";
-// //     } else if (!/^\d{10}$/.test(form.contactNumber.replace(/\D/g, ''))) {
-// //       newErrors.contactNumber = "Enter a valid 10-digit phone number";
-// //     }
-    
-// //     if (form.email && !/^\S+@\S+\.\S+$/.test(form.email)) {
-// //       newErrors.email = "Invalid email format";
-// //     }
-    
-// //     if (form.maleRequirement < 0) {
-// //       newErrors.maleRequirement = "Cannot be negative";
-// //     }
-    
-// //     if (form.femaleRequirement < 0) {
-// //       newErrors.femaleRequirement = "Cannot be negative";
-// //     }
-    
-// //     setErrors(newErrors);
-// //     return Object.keys(newErrors).length === 0;
-// //   };
-
-// //   const handleSubmit = () => {
-// //     if (!validateForm()) {
-// //       toast.error("Please fix the errors in the form");
-// //       return;
-// //     }
-
-// //     const formData = {
-// //       ...form,
-// //       workTypes: form.workTypes ? form.workTypes.split(",").map(item => item.trim()).filter(item => item) : [],
-// //       maleRequirement: Number(form.maleRequirement) || 0,
-// //       femaleRequirement: Number(form.femaleRequirement) || 0,
-// //     };
-
-// //     onSubmit(formData);
-// //   };
-
-// //   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-// //     const { name, value } = e.target;
-    
-// //     // Clear error for this field
-// //     if (errors[name]) {
-// //       setErrors(prev => ({ ...prev, [name]: "" }));
-// //     }
-    
-// //     setForm(prev => ({
-// //       ...prev,
-// //       [name]: value
-// //     }));
-// //   };
-
-// //   return (
-// //     <Modal open={open} onClose={onClose}>
-// //       <Box sx={modalStyle}>
-// //         <Typography variant="h6" className="mb-6">
-// //           {defaultData ? "Edit Labour" : "Add New Labour"}
-// //         </Typography>
-        
-// //         <div className="space-y-4">
-// //           {/* Name */}
-// //           <TextField
-// //             label="Full Name *"
-// //             name="name"
-// //             value={form.name}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //             error={!!errors.name}
-// //             helperText={errors.name}
-// //           />
-
-// //           <div className="grid grid-cols-2 my-2 gap-4">
-// //             {/* Contact Number */}
-// //             <TextField
-// //               label="Contact Number *"
-// //               name="contactNumber"
-// //               value={form.contactNumber}
-// //               onChange={handleChange}
-// //               fullWidth
-// //               size="small"
-// //               error={!!errors.contactNumber}
-// //               helperText={errors.contactNumber}
-// //             />
-
-// //             {/* Email */}
-// //             <TextField
-// //               label="Email"
-// //               name="email"
-// //               type="email"
-// //               value={form.email}
-// //               onChange={handleChange}
-// //               fullWidth
-// //               size="small"
-// //               error={!!errors.email}
-// //               helperText={errors.email}
-// //             />
-// //           </div>
-
-// //           {/* Village Name */}
-// //          <div>
-// //            <TextField
-// //             label="Village Name"
-// //             name="villageName"
-// //             value={form.villageName}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //           />
-// //          </div>
-
-// //          <div>
-// //            {/* Address */}
-// //           <TextField
-// //             label="Address"
-// //             name="address"
-// //             value={form.address}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //             multiline
-// //             rows={2}
-// //           />
-// //          </div>
-
-// //           <div>
-// //             {/* Work Types */}
-// //           <TextField
-// //             label="Work Types (comma separated)"
-// //             name="workTypes"
-// //             value={form.workTypes}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //             placeholder="e.g., Planting, Harvesting, Weeding"
-// //           />
-// //           </div>
-
-// //           {/* Requirements */}
-// //           <div className="grid grid-cols-2 gap-4">
-// //             <TextField
-// //               label="Male Requirement"
-// //               name="maleRequirement"
-// //               type="number"
-// //               value={form.maleRequirement}
-// //               onChange={handleChange}
-// //               fullWidth
-// //               size="small"
-// //               inputProps={{ min: 0 }}
-// //               error={!!errors.maleRequirement}
-// //               helperText={errors.maleRequirement}
-// //             />
-
-// //             <TextField
-// //               label="Female Requirement"
-// //               name="femaleRequirement"
-// //               type="number"
-// //               value={form.femaleRequirement}
-// //               onChange={handleChange}
-// //               fullWidth
-// //               size="small"
-// //               inputProps={{ min: 0 }}
-// //               error={!!errors.femaleRequirement}
-// //               helperText={errors.femaleRequirement}
-// //             />
-// //           </div>
-
-// //           {/* Experience */}
-// //          <div>
-// //            <TextField
-// //             label="Experience"
-// //             name="experience"
-// //             value={form.experience}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //             placeholder="e.g., 5 years in farming"
-// //           />
-// //          </div>
-
-// //           {/* Availability */}
-// //           <TextField
-// //             label="Availability"
-// //             name="availability"
-// //             value={form.availability}
-// //             onChange={handleChange}
-// //             fullWidth
-// //             size="small"
-// //             placeholder="e.g., Full-time, Part-time, Seasonal"
-// //           />
-
-// //           {/* Active Status */}
-// //           <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
-// //             <input
-// //               type="checkbox"
-// //               id="isActive"
-// //               name="isActive"
-// //               checked={form.isActive}
-// //               onChange={(e) => setForm(prev => ({ ...prev, isActive: e.target.checked }))}
-// //               className="h-4 w-4 text-blue-600 rounded"
-// //             />
-// //             <label htmlFor="isActive" className="text-sm text-gray-700">
-// //               Active Labour
-// //             </label>
-// //           </div>
-// //         </div>
-
-// //         <div className="flex justify-end gap-3 mt-8 pt-4 border-t">
-// //           <Button onClick={onClose} variant="outlined">
-// //             Cancel
-// //           </Button>
-// //           <Button onClick={handleSubmit} variant="contained" color="primary">
-// //             {defaultData ? "Update" : "Create"}
-// //           </Button>
-// //         </div>
-// //       </Box>
-// //     </Modal>
-// //   );
-// // }
 
 // function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormModalProps) {
 //   const [form, setForm] = useState({
@@ -661,7 +376,6 @@
 //     </Modal>
 //   );
 // }
-
 
 // /* ================= MAIN COMPONENT ================= */
 
@@ -1260,7 +974,7 @@
 //       )}
 
 //       {/* Header Section */}
-//       <div className="mb-3 flex justify-between items-center">
+//       <div className="mb-3 flex flex-wrap justify-between items-center">
 //         <div>
 //           <h1 className="text-2xl font-bold text-gray-800">Labour Management</h1>
 //           <p className="text-gray-600 mt-2">
@@ -1359,12 +1073,12 @@
 //             >
 //               Reset
 //             </button>
-//             <button
+//             {/* <button
 //               onClick={getLabours}
 //               className="flex-1 px-4 w-fit py-2 bg-gradient-to-r from-green-600 to-green-600 text-white rounded-lg hover:from-green-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg font-medium"
 //             >
 //               Apply
-//             </button>
+//             </button> */}
 //           </div>
 
 //           {/* Export Buttons Section (Desktop) */}
@@ -1490,8 +1204,7 @@
 //                         </div>
 //                         <div className="text-center">
 //                           <div className="font-bold text-green-700">
-//                             {/* {labour?.maleRequirement + labour?.femaleRequirement} */}
-//                             {Number(labour.maleRequirement || 0) + Number(labour.femaleRequirement || 0)}
+//                             {labour.maleRequirement + labour.femaleRequirement}
 //                           </div>
 //                           <div className="text-xs text-gray-500">Total</div>
 //                         </div>
@@ -1572,10 +1285,15 @@
 //                 <div className="flex justify-between items-start mb-3">
 //                   <div>
 //                     <span className="font-bold text-gray-800">#{index + 1 + (page - 1) * limit}</span>
-//                     <h3 className="text-lg font-semibold mt-1">{labour.name}</h3>
+//                     <h3 className=" font-semibold text-sm mt-1 text-gray-600 flex gap-x-2 items-center "><FaUser className="text-xs"/> {labour.name}</h3>
 //                     <div className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-//                       <FaPhone /> {labour.contactNumber}
+//                       <FaPhone className="text-xs"/> {labour.contactNumber}
 //                     </div>
+//                     {labour.email && (
+//                         <div className="text-gray-500 text-xs flex items-center gap-1 mt-1">
+//                           <FaEnvelope className="text-xs" /> {labour.email}
+//                         </div>
+//                       )}
 //                   </div>
 //                   <button
 //                     onClick={() => toggleActiveStatus(labour)}
@@ -1862,13 +1580,6 @@
 
 
 
-
-
-
-
-
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -1907,6 +1618,7 @@ import { utils, writeFile } from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import toast from "react-hot-toast";
+import { getAdminSessionAction } from "@/app/actions/auth-actions";
 
 /* ================= TYPES ================= */
 
@@ -1914,17 +1626,22 @@ interface Labour {
   _id: string;
   name: string;
   villageName?: string;
+  state?: string;
+  district?: string;
+  taluku?: string;
   contactNumber: string;
   email?: string;
   workTypes?: string[];
   experience?: string;
   availability?: string;
   address?: string;
-  maleRequirement: number;
-  femaleRequirement: number;
+  maleRequirement?: number;
+  femaleRequirement?: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  totalPresentDays?: number;
+  __v?: number;
 }
 
 /* ================= MODAL STYLE ================= */
@@ -1956,6 +1673,9 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
   const [form, setForm] = useState({
     name: "",
     villageName: "",
+    state: "",
+    district: "",
+    taluku: "",
     contactNumber: "",
     email: "",
     workTypes: "",
@@ -1968,13 +1688,17 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
 
-  // FIX: Update form when defaultData changes
+  // Update form when defaultData changes
   useEffect(() => {
     if (defaultData) {
       setForm({
         name: defaultData.name || "",
         villageName: defaultData.villageName || "",
+        state: defaultData.state || "",
+        district: defaultData.district || "",
+        taluku: defaultData.taluku || "",
         contactNumber: defaultData.contactNumber || "",
         email: defaultData.email || "",
         workTypes: defaultData.workTypes?.join(", ") || "",
@@ -1990,6 +1714,9 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
       setForm({
         name: "",
         villageName: "",
+        state: "",
+        district: "",
+        taluku: "",
         contactNumber: "",
         email: "",
         workTypes: "",
@@ -2003,7 +1730,7 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
     }
     // Clear errors when modal opens/closes
     setErrors({});
-  }, [defaultData, open]); // Added open to dependency array
+  }, [defaultData, open]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -2084,26 +1811,26 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
             helperText={errors.name}
           />
 
-          <div className="grid grid-cols-2 my-2 gap-4">
+          <div className="grid grid-cols-2 my-3 gap-4">
             {/* Contact Number */}
-           <TextField
-  label="Contact Number *"
-  name="contactNumber"
-  value={form.contactNumber}
-  onChange={(e) => {
-    const value = e.target.value.replace(/\D/g, ""); // only digits
-    setForm({ ...form, contactNumber: value });
-  }}
-  fullWidth
-  size="small"
-  inputProps={{
-    inputMode: "numeric",
-    pattern: "[0-9]*",
-    maxLength: 10
-  }}
-  error={!!errors.contactNumber}
-  helperText={errors.contactNumber}
-/>
+            <TextField
+              label="Contact Number *"
+              name="contactNumber"
+              value={form.contactNumber}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ""); // only digits
+                setForm({ ...form, contactNumber: value });
+              }}
+              fullWidth
+              size="small"
+              inputProps={{
+                inputMode: "numeric",
+                pattern: "[0-9]*",
+                maxLength: 10
+              }}
+              error={!!errors.contactNumber}
+              helperText={errors.contactNumber}
+            />
 
             {/* Email */}
             <TextField
@@ -2120,19 +1847,45 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
           </div>
 
           {/* Village Name */}
-         <div>
-           <TextField
-            label="Village Name"
-            name="villageName"
-            value={form.villageName}
-            onChange={handleChange}
-            fullWidth
-            size="small"
-          />
-         </div>
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="Village Name"
+              name="villageName"
+              value={form.villageName}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="State"
+              name="state"
+              value={form.state}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            />
+          </div>
 
-         <div>
-           {/* Address */}
+          <div className="grid grid-cols-2 gap-4">
+            <TextField
+              label="District"
+              name="district"
+              value={form.district}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Taluku"
+              name="taluku"
+              value={form.taluku}
+              onChange={handleChange}
+              fullWidth
+              size="small"
+            />
+          </div>
+
+          {/* Address */}
           <TextField
             label="Address"
             name="address"
@@ -2143,11 +1896,10 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
             multiline
             rows={2}
           />
-         </div>
 
-          <div>
-            {/* Work Types */}
-          <TextField
+          {/* Work Types */}
+          <div className="my-2">
+            <TextField
             label="Work Types (comma separated)"
             name="workTypes"
             value={form.workTypes}
@@ -2159,7 +1911,7 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
           </div>
 
           {/* Requirements */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Male Requirement"
               name="maleRequirement"
@@ -2185,11 +1937,10 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
               error={!!errors.femaleRequirement}
               helperText={errors.femaleRequirement}
             />
-          </div>
+          </div> */}
 
           {/* Experience */}
-         <div>
-           <TextField
+          <TextField
             label="Experience"
             name="experience"
             value={form.experience}
@@ -2198,10 +1949,10 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
             size="small"
             placeholder="e.g., 5 years in farming"
           />
-         </div>
 
           {/* Availability */}
-          <TextField
+          <div className="my-2">
+            <TextField
             label="Availability"
             name="availability"
             value={form.availability}
@@ -2210,6 +1961,7 @@ function LabourFormModal({ open, onClose, onSubmit, defaultData }: LabourFormMod
             size="small"
             placeholder="e.g., Full-time, Part-time, Seasonal"
           />
+          </div>
 
           {/* Active Status */}
           <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
@@ -2257,22 +2009,37 @@ export default function LabourManagementPage() {
   const [limit, setLimit] = useState(10);
   const [loading, setLoading] = useState(false);
   const [loadingOverlay, setLoadingOverlay] = useState(false);
+  const [user,setUser]=useState<{role:string,taluka:string}>()
 
   /* ================= GET LABOURS ================= */
 
   const getLabours = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("/api/labours", {
-        params: {
+      const params = {
           search,
           page,
           limit,
-        },
+          taluk:""
+        }
+       const session = await getAdminSessionAction();
+                                  setUser(session?.admin)
+                                  if(session?.admin?.role == "subadmin"){
+                                   params.taluk = session?.admin?.taluka;
+            }
+          
+      const res = await axios.get("/api/labours", {
+       params
       });
       
       if (res.data.success) {
-        setLabours(res.data.data || []);
+        const transformedData = (res.data.data || []).map((item: any) => ({
+          ...item,
+          maleRequirement: item.maleRequirement || 0,
+          femaleRequirement: item.femaleRequirement || 0,
+        }));
+        
+        setLabours(transformedData);
         setTotalPages(res.data.totalPages || 1);
         setTotalLabours(res.data.total || 0);
       } else {
@@ -2296,7 +2063,12 @@ export default function LabourManagementPage() {
     if (!currentLabour) return;
     setLoadingOverlay(true);
     try {
-      const response = await axios.put(`/api/labours/${currentLabour._id}`, data);
+      // Remove undefined fields from the data
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+      );
+
+      const response = await axios.put(`/api/labours/${currentLabour._id}`, cleanedData);
       if (response.data.success) {
         getLabours();
         toast.success("Labour updated successfully!");
@@ -2341,7 +2113,12 @@ export default function LabourManagementPage() {
   const handleCreate = async (data: any) => {
     setLoadingOverlay(true);
     try {
-      const response = await axios.post("/api/labours", data);
+      // Remove undefined fields from the data
+      const cleanedData = Object.fromEntries(
+        Object.entries(data).filter(([_, value]) => value !== undefined)
+      );
+
+      const response = await axios.post("/api/labours", cleanedData);
       if (response.data.success) {
         getLabours();
         toast.success("Labour created successfully!");
@@ -2360,6 +2137,7 @@ export default function LabourManagementPage() {
   /* ================= TOGGLE ACTIVE STATUS ================= */
 
   const toggleActiveStatus = async (labour: Labour) => {
+    setLoadingOverlay(true);
     try {
       await axios.put(`/api/labours/${labour._id}`, {
         isActive: !labour.isActive
@@ -2369,6 +2147,8 @@ export default function LabourManagementPage() {
     } catch (error: any) {
       console.error("Error toggling status:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
+    } finally {
+      setLoadingOverlay(false);
     }
   };
 
@@ -2378,7 +2158,6 @@ export default function LabourManagementPage() {
     if (!dateString) return "";
     try {
       const date = new Date(dateString);
-      // Format as YYYY-MM-DD HH:MM:SS (Excel-friendly format)
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
@@ -2401,7 +2180,7 @@ export default function LabourManagementPage() {
 
     try {
       // Create table header
-      const headers = ["Sr.", "Name", "Contact", "Email", "Village", "Work Types", "Experience", "Availability", "Male Req", "Female Req", "Total", "Status", "Address", "Created Date"];
+      const headers = ["Sr.", "Name", "Contact", "Email", "Village", "State", "District", "Work Types", "Experience", "Availability", "Male Req", "Female Req", "Total", "Status", "Address", "Created Date"];
       
       // Create table rows
       const rows = labours.map((labour, index) => [
@@ -2410,12 +2189,14 @@ export default function LabourManagementPage() {
         `'${labour.contactNumber}` || "", // Add apostrophe to keep full number
         labour.email || "",
         labour.villageName || "N/A",
+        labour.state || "N/A",
+        labour.district || "N/A",
         (labour.workTypes || []).join(", ") || "N/A",
         labour.experience || "N/A",
         labour.availability || "N/A",
-        labour.maleRequirement.toString(),
-        labour.femaleRequirement.toString(),
-        (labour.maleRequirement + labour.femaleRequirement).toString(),
+        (labour.maleRequirement || 0).toString(),
+        (labour.femaleRequirement || 0).toString(),
+        ((labour.maleRequirement || 0) + (labour.femaleRequirement || 0)).toString(),
         labour.isActive ? "Active" : "Inactive",
         labour.address || "",
         formatDateForCSV(labour.createdAt)
@@ -2476,13 +2257,16 @@ export default function LabourManagementPage() {
     }
 
     try {
-      // Create CSV header - simplified column names
+      // Create CSV header
       const headers = [
         "Sr.", 
         "Name", 
         "Contact Number", 
         "Email", 
         "Village", 
+        "State", 
+        "District", 
+        "Taluku", 
         "Work Types", 
         "Experience", 
         "Availability", 
@@ -2491,12 +2275,12 @@ export default function LabourManagementPage() {
         "Total Required", 
         "Status", 
         "Address", 
-        "Created Date"  // FIXED: Added Created Date column
+        "Created Date"
       ];
       
       // Create CSV rows
       const rows = labours.map((labour, index) => {
-        const totalRequirement = labour.maleRequirement + labour.femaleRequirement;
+        const totalRequirement = (labour.maleRequirement || 0) + (labour.femaleRequirement || 0);
         const workTypes = (labour.workTypes || []).join("; ") || "";
         
         return [
@@ -2505,15 +2289,18 @@ export default function LabourManagementPage() {
           `="${labour.contactNumber}"` || "", // Force text format for phone numbers
           labour.email || "",
           labour.villageName || "",
+          labour.state || "",
+          labour.district || "",
+          labour.taluku || "",
           workTypes,
           labour.experience || "",
           labour.availability || "",
-          labour.maleRequirement.toString(),
-          labour.femaleRequirement.toString(),
+          (labour.maleRequirement || 0).toString(),
+          (labour.femaleRequirement || 0).toString(),
           totalRequirement.toString(),
           labour.isActive ? "Active" : "Inactive",
           labour.address || "",
-          formatDateForCSV(labour.createdAt) // FIXED: Added created date
+          formatDateForCSV(labour.createdAt)
         ];
       });
       
@@ -2526,7 +2313,6 @@ export default function LabourManagementPage() {
             
             // Escape cells that contain special characters
             if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n') || cellStr.includes('\r')) {
-              // Escape double quotes by doubling them
               return `"${cellStr.replace(/"/g, '""')}"`;
             }
             return cellStr;
@@ -2568,17 +2354,20 @@ export default function LabourManagementPage() {
         "Sr.": index + 1 + (page - 1) * limit,
         "Name": labour.name,
         "Village": labour.villageName || "N/A",
+        "State": labour.state || "N/A",
+        "District": labour.district || "N/A",
+        "Taluku": labour.taluku || "N/A",
         "Contact": `="${labour.contactNumber}"`, // Force text format
         "Email": labour.email || "N/A",
         "Work Types": (labour.workTypes || []).join(", "),
         "Experience": labour.experience || "N/A",
         "Availability": labour.availability || "N/A",
-        "Male Required": labour.maleRequirement,
-        "Female Required": labour.femaleRequirement,
-        "Total Required": labour.maleRequirement + labour.femaleRequirement,
+        "Male Required": labour.maleRequirement || 0,
+        "Female Required": labour.femaleRequirement || 0,
+        "Total Required": (labour.maleRequirement || 0) + (labour.femaleRequirement || 0),
         "Status": labour.isActive ? "Active" : "Inactive",
         "Address": labour.address || "",
-        "Created Date": formatDateForCSV(labour.createdAt) // Added Created Date
+        "Created Date": formatDateForCSV(labour.createdAt)
       }));
 
       const ws = utils.json_to_sheet(data);
@@ -2604,14 +2393,15 @@ export default function LabourManagementPage() {
       const doc = new jsPDF();
       doc.text("Labour Management Report", 14, 16);
       
-      const tableColumn = ["Sr.", "Name", "Contact", "Work Types", "Male", "Female", "Status", "Created Date"];
+      const tableColumn = ["Sr.", "Name", "Contact", "Village", "Work Types", "Male", "Female", "Status", "Created Date"];
       const tableRows = labours.map((labour, index) => [
         index + 1 + (page - 1) * limit,
         labour.name,
         labour.contactNumber,
+        labour.villageName || "N/A",
         (labour.workTypes || []).slice(0, 2).join(", "),
-        labour.maleRequirement,
-        labour.femaleRequirement,
+        labour.maleRequirement || 0,
+        labour.femaleRequirement || 0,
         labour.isActive ? "Active" : "Inactive",
         new Date(labour.createdAt).toLocaleDateString()
       ]);
@@ -2757,12 +2547,13 @@ export default function LabourManagementPage() {
               <th>Name</th>
               <th>Contact</th>
               <th>Village</th>
+              <th>State</th>
+              <th>District</th>
               <th>Work Types</th>
               <th>Male Required</th>
               <th>Female Required</th>
               <th>Total</th>
               <th>Status</th>
-              <th>Experience</th>
               <th>Created Date</th>
             </tr>
           </thead>
@@ -2773,18 +2564,19 @@ export default function LabourManagementPage() {
                 <td><strong>${labour.name}</strong></td>
                 <td>${labour.contactNumber}<br/><small>${labour.email || ''}</small></td>
                 <td>${labour.villageName || 'N/A'}</td>
+                <td>${labour.state || 'N/A'}</td>
+                <td>${labour.district || 'N/A'}</td>
                 <td>
                   <div class="work-types">
                     ${(labour.workTypes || []).map((type: string) => `<span class="work-chip">${type}</span>`).join('')}
                   </div>
                 </td>
-                <td><strong>${labour.maleRequirement}</strong></td>
-                <td><strong>${labour.femaleRequirement}</strong></td>
-                <td><strong class="total-count">${labour.maleRequirement + labour.femaleRequirement}</strong></td>
+                <td><strong>${labour.maleRequirement || 0}</strong></td>
+                <td><strong>${labour.femaleRequirement || 0}</strong></td>
+                <td><strong class="total-count">${(labour.maleRequirement || 0) + (labour.femaleRequirement || 0)}</strong></td>
                 <td class="${labour.isActive ? 'status-active' : 'status-inactive'}">
                   ${labour.isActive ? 'Active' : 'Inactive'}
                 </td>
-                <td>${labour.experience || 'N/A'}</td>
                 <td>${formatDateForCSV(labour.createdAt)}</td>
               </tr>
             `).join('')}
@@ -2936,12 +2728,6 @@ export default function LabourManagementPage() {
             >
               Reset
             </button>
-            {/* <button
-              onClick={getLabours}
-              className="flex-1 px-4 w-fit py-2 bg-gradient-to-r from-green-600 to-green-600 text-white rounded-lg hover:from-green-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg font-medium"
-            >
-              Apply
-            </button> */}
           </div>
 
           {/* Export Buttons Section (Desktop) */}
@@ -3001,8 +2787,9 @@ export default function LabourManagementPage() {
                 <tr className="*:text-zinc-800">
                   <th className="p-[.6rem] text-sm text-left font-semibold">Sr.</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Labour Details</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">Location</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Work Types</th>
-                  <th className="p-[.6rem] text-sm text-left font-semibold">Requirements</th>
+                  {/* <th className="p-[.6rem] text-sm text-left font-semibold">Requirements</th> */}
                   <th className="p-[.6rem] text-sm text-left font-semibold">Status</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Actions</th>
                 </tr>
@@ -3021,9 +2808,21 @@ export default function LabourManagementPage() {
                           <FaEnvelope className="text-xs" /> {labour.email}
                         </div>
                       )}
+                    </td>
+                    <td className="p-[.6rem] text-sm">
                       {labour.villageName && (
-                        <div className="text-gray-500 text-xs flex items-center gap-1 mt-1">
-                          <FaMapMarkerAlt className="text-xs" /> {labour.villageName}
+                        <div className="text-gray-600">{labour.villageName}</div>
+                      )}
+                      {labour.state && (
+                        <div className="text-gray-500 text-xs">
+                          {labour.state}
+                          {labour.district && `, ${labour.district}`}
+                          {labour.taluku && `, ${labour.taluku}`}
+                        </div>
+                      )}
+                      {labour.address && (
+                        <div className="text-gray-500 text-xs truncate max-w-xs" title={labour.address}>
+                          <FaMapMarkerAlt className="inline mr-1" /> {labour.address}
                         </div>
                       )}
                     </td>
@@ -3048,36 +2847,41 @@ export default function LabourManagementPage() {
                           Exp: {labour.experience}
                         </div>
                       )}
-                    </td>
-                    <td className="p-[.6rem] text-sm">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <div className="flex items-center gap-1">
-                            <FaUser className="text-blue-500" />
-                            <span className="font-semibold">{labour.maleRequirement}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">Male</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="flex items-center gap-1">
-                            <FaUserFriends className="text-pink-500" />
-                            <span className="font-semibold">{labour.femaleRequirement}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">Female</div>
-                        </div>
-                        <div className="text-center">
-                          <div className="font-bold text-green-700">
-                            {labour.maleRequirement + labour.femaleRequirement}
-                          </div>
-                          <div className="text-xs text-gray-500">Total</div>
-                        </div>
-                      </div>
                       {labour.availability && (
                         <div className="text-xs text-gray-500 mt-1">
                           Avail: {labour.availability}
                         </div>
                       )}
                     </td>
+                    {/* <td className="p-[.6rem] text-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="text-center">
+                          <div className="flex items-center gap-1">
+                            <FaUser className="text-blue-500" />
+                            <span className="font-semibold">{labour.maleRequirement || 0}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">Male</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center gap-1">
+                            <FaUserFriends className="text-pink-500" />
+                            <span className="font-semibold">{labour.femaleRequirement || 0}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">Female</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="font-bold text-green-700">
+                            {(labour.maleRequirement || 0) + (labour.femaleRequirement || 0)}
+                          </div>
+                          <div className="text-xs text-gray-500">Total</div>
+                        </div>
+                      </div>
+                      {labour.totalPresentDays !== undefined && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Present Days: {labour.totalPresentDays}
+                        </div>
+                      )}
+                    </td> */}
                     <td className="p-[.6rem] text-sm">
                       <button
                         onClick={() => toggleActiveStatus(labour)}
@@ -3148,15 +2952,23 @@ export default function LabourManagementPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <span className="font-bold text-gray-800">#{index + 1 + (page - 1) * limit}</span>
-                    <h3 className=" font-semibold text-sm mt-1 text-gray-600 flex gap-x-2 items-center "><FaUser className="text-xs"/> {labour.name}</h3>
+                    <h3 className="font-semibold text-sm mt-1 text-gray-600 flex gap-x-2 items-center">
+                      <FaUser className="text-xs"/> {labour.name}
+                    </h3>
                     <div className="text-sm text-gray-600 flex items-center gap-1 mt-1">
                       <FaPhone className="text-xs"/> {labour.contactNumber}
                     </div>
                     {labour.email && (
-                        <div className="text-gray-500 text-xs flex items-center gap-1 mt-1">
-                          <FaEnvelope className="text-xs" /> {labour.email}
-                        </div>
-                      )}
+                      <div className="text-gray-500 text-xs flex items-center gap-1 mt-1">
+                        <FaEnvelope className="text-xs" /> {labour.email}
+                      </div>
+                    )}
+                    {labour.villageName && (
+                      <div className="text-gray-500 text-xs flex items-center gap-1 mt-1">
+                        <FaMapMarkerAlt className="text-xs" /> {labour.villageName}
+                        {labour.state && `, ${labour.state}`}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={() => toggleActiveStatus(labour)}
@@ -3171,21 +2983,16 @@ export default function LabourManagementPage() {
                 </div>
                 
                 <div className="space-y-3">
-                  <div>
-                    <div className="text-sm text-gray-500">Village</div>
-                    <div>{labour.villageName || "N/A"}</div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* <div className="grid grid-cols-2 gap-3">
                     <div>
                       <div className="text-sm text-gray-500">Male Required</div>
-                      <div className="font-bold text-blue-600">{labour.maleRequirement}</div>
+                      <div className="font-bold text-blue-600">{labour.maleRequirement || 0}</div>
                     </div>
                     <div>
                       <div className="text-sm text-gray-500">Female Required</div>
-                      <div className="font-bold text-pink-600">{labour.femaleRequirement}</div>
+                      <div className="font-bold text-pink-600">{labour.femaleRequirement || 0}</div>
                     </div>
-                  </div>
+                  </div> */}
                   
                   <div>
                     <div className="text-sm text-gray-500">Work Types</div>
@@ -3197,6 +3004,20 @@ export default function LabourManagementPage() {
                       ))}
                     </div>
                   </div>
+                  
+                  {labour.experience && (
+                    <div>
+                      <div className="text-sm text-gray-500">Experience</div>
+                      <div className="text-sm">{labour.experience}</div>
+                    </div>
+                  )}
+                  
+                  {labour.availability && (
+                    <div>
+                      <div className="text-sm text-gray-500">Availability</div>
+                      <div className="text-sm">{labour.availability}</div>
+                    </div>
+                  )}
                   
                   <div className="flex gap-2 pt-3">
                     <button 
@@ -3308,20 +3129,41 @@ export default function LabourManagementPage() {
                       <span>{currentLabour.email}</span>
                     </div>
                   )}
+                </div>
+                
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="text-sm text-gray-500 mb-2">Location Details</div>
                   {currentLabour.villageName && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <FaMapMarkerAlt className="text-sm text-gray-500" />
-                      <span>{currentLabour.villageName}</span>
+                    <div className="mb-1">
+                      <span className="font-medium">Village: </span>
+                      {currentLabour.villageName}
+                    </div>
+                  )}
+                  {currentLabour.state && (
+                    <div className="mb-1">
+                      <span className="font-medium">State: </span>
+                      {currentLabour.state}
+                    </div>
+                  )}
+                  {currentLabour.district && (
+                    <div className="mb-1">
+                      <span className="font-medium">District: </span>
+                      {currentLabour.district}
+                    </div>
+                  )}
+                  {currentLabour.taluku && (
+                    <div className="mb-1">
+                      <span className="font-medium">Taluku: </span>
+                      {currentLabour.taluku}
+                    </div>
+                  )}
+                  {currentLabour.address && (
+                    <div className="mt-2">
+                      <div className="text-sm text-gray-500 mb-1">Address:</div>
+                      <div>{currentLabour.address}</div>
                     </div>
                   )}
                 </div>
-                
-                {currentLabour.address && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="text-sm text-gray-500 mb-1">Address</div>
-                    <div>{currentLabour.address}</div>
-                  </div>
-                )}
                 
                 <div className="grid grid-cols-2 gap-3">
                   {currentLabour.experience && (
@@ -3338,25 +3180,31 @@ export default function LabourManagementPage() {
                   )}
                 </div>
                 
-                <div className="bg-gray-50 p-3 rounded-lg">
+                {/* <div className="bg-gray-50 p-3 rounded-lg">
                   <div className="text-sm text-gray-500 mb-2">Work Requirements</div>
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div className="text-center">
                       <div className="text-sm text-gray-500">Male</div>
-                      <div className="font-bold text-blue-700 text-xl">{currentLabour.maleRequirement}</div>
+                      <div className="font-bold text-blue-700 text-xl">{currentLabour.maleRequirement || 0}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm text-gray-500">Female</div>
-                      <div className="font-bold text-pink-700 text-xl">{currentLabour.femaleRequirement}</div>
+                      <div className="font-bold text-pink-700 text-xl">{currentLabour.femaleRequirement || 0}</div>
                     </div>
                     <div className="text-center">
                       <div className="text-sm text-gray-500">Total</div>
                       <div className="font-bold text-green-700 text-2xl">
-                        {currentLabour.maleRequirement + currentLabour.femaleRequirement}
+                        {(currentLabour.maleRequirement || 0) + (currentLabour.femaleRequirement || 0)}
                       </div>
                     </div>
                   </div>
-                </div>
+                  {currentLabour.totalPresentDays !== undefined && (
+                    <div>
+                      <div className="text-sm text-gray-500">Total Present Days</div>
+                      <div className="font-medium">{currentLabour.totalPresentDays}</div>
+                    </div>
+                  )}
+                </div> */}
                 
                 {(currentLabour.workTypes || []).length > 0 && (
                   <div className="bg-gray-50 p-3 rounded-lg">

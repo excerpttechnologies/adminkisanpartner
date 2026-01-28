@@ -47,6 +47,10 @@ export async function proxy(request: NextRequest) {
   // Get admin session
   const session = await getAdminSession();
 
+
+
+  console.log("admin data",session)
+
   // Allow access to public API routes
   if (isPublicApiRoute) {
     return NextResponse.next();

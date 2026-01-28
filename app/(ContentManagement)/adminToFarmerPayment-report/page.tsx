@@ -38,6 +38,7 @@ import {
   FaClock
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { getAdminSessionAction } from '@/app/actions/auth-actions';
 
 // Interfaces
 interface FarmerPayment {
@@ -52,6 +53,12 @@ interface FarmerPayment {
   paymentAmount?: number;
   paymentMethod?: string;
   paidDate?: string;
+  farmerState?:string;
+  farmerDistrict?:string;
+  farmerTaluka?:string;
+  farmerMobile?:string;
+  farmerAddress?:string;
+  farmerPincode?:string;
 }
 
 const FarmerPaymentsReport: React.FC = () => {
@@ -88,6 +95,11 @@ const FarmerPaymentsReport: React.FC = () => {
   // Mobile view state
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
+  const[user,setUser]=useState<{
+        taluka:string,
+        role:string
+      }>()
+
   const API_BASE ='/api';
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -105,6 +117,13 @@ const FarmerPaymentsReport: React.FC = () => {
     params.append('limit', itemsPerPage.toString());
     params.append('sortBy', sortField);
     params.append('order', sortOrder);
+
+    const session = await getAdminSessionAction();
+                                setUser(session?.admin)
+                                if(session?.admin?.role == "subadmin"){
+                                 params.append('taluk',session?.admin?.taluka)
+                               }
+        
 
     try {
       const response = await axios.get(`${API_BASE}/adminToFarmerPayment?${params.toString()}`);
@@ -668,6 +687,9 @@ const handleCopyToClipboard = async (): Promise<void> => {
       </div>
 
       {/* Stats Cards */}
+
+         {
+  user?.role == "admin" &&<>
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-3">
         <div className="bg-white rounded shadow p-4 border-l-4 border-blue-500">
           <div className="flex items-center justify-between">
@@ -706,8 +728,12 @@ const handleCopyToClipboard = async (): Promise<void> => {
           </div>
         </div>
       </div>
-
+</>}
       {/* Additional Stats */}
+
+
+              {
+  user?.role == "admin" &&<>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
         <div className="bg-white rounded shadow p-4">
           <div className="flex items-center justify-between">
@@ -737,6 +763,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
           </div>
         </div>
       </div>
+      </>}
 
       {/* Filters */}
       <div className="bg-white rounded shadow mb-6 p-4">
@@ -790,33 +817,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
             </select>
           </div>
 
-          {/* Date Range - Start Date */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaCalendarAlt className="text-gray-400" />
-            </div>
-            <input
-              type="date"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              value={dateRangeFilter.start}
-              onChange={(e) => setDateRangeFilter(prev => ({ ...prev, start: e.target.value }))}
-              placeholder="From Date"
-            />
-          </div>
-
-          {/* Date Range - End Date */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaCalendarAlt className="text-gray-400" />
-            </div>
-            <input
-              type="date"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              value={dateRangeFilter.end}
-              onChange={(e) => setDateRangeFilter(prev => ({ ...prev, end: e.target.value }))}
-              placeholder="To Date"
-            />
-          </div>
+         
 
           {/* Sorting Selector */}
           <div className="relative">
@@ -1271,6 +1272,26 @@ const handleCopyToClipboard = async (): Promise<void> => {
                             <span className="text-gray-600">Farmer ID:</span>
                             <span className="font-medium">{currentItem.farmerId}</span>
                           </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Farmer State:</span>
+                            <span className="font-medium">{currentItem.farmerState}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Farmer District:</span>
+                            <span className="font-medium">{currentItem.farmerDistrict}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Farmer Taluka:</span>
+                            <span className="font-medium">{currentItem.farmerTaluka}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Farmer Mobile:</span>
+                            <span className="font-medium">{currentItem.farmerMobile}</span>
+                          </div>
+                           <div className="flex justify-between">
+                            <span className="text-gray-600">Farmer Pincode:</span>
+                            <span className="font-medium">{currentItem.farmerPincode}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1391,3 +1412,22 @@ const handleCopyToClipboard = async (): Promise<void> => {
 };
 
 export default FarmerPaymentsReport;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

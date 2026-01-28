@@ -661,7 +661,8 @@ export async function GET(req: NextRequest) {
         { "personalInfo.villageGramaPanchayat": { $regex: search, $options: "i" } },
         { "personalInfo.taluk": { $regex: search, $options: "i" } },
         { "personalInfo.pincode": { $regex: search, $options: "i" } },
-        { farmerId: { $regex: search, $options: "i" } }
+        { farmerId: { $regex: search, $options: "i" } },
+        { traderId: { $regex: search, $options: "i" } }
       );
     }
 
@@ -674,7 +675,7 @@ export async function GET(req: NextRequest) {
     }
 
      if (taluk) {
-      filter["personalInfo.taluk"] = { $regex: taluk, $options: "i" };
+      filter["personalInfo.taluk"] = taluk;
     }
 
     // Add registrationStatus filter if provided

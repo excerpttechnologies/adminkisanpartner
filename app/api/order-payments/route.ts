@@ -3,6 +3,13 @@
 
 
 
+
+
+
+
+
+
+
 // import { NextRequest, NextResponse } from 'next/server';
 // import dbConnect from '@/app/lib/Db';
 // import mongoose from 'mongoose';
@@ -65,7 +72,8 @@
 //           { traderId: { $regex: searchRegex } },
 //           { traderName: { $regex: searchRegex } },
 //           { 'traderToAdminPayment.paymentStatus': { $regex: searchRegex } },
-//           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } }
+//           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } },
+//           { farmerId: { $regex: searchRegex } } // Added farmerId to search
 //         ]
 //       };
       
@@ -110,6 +118,7 @@
 //           orderId: 1,
 //           traderId: 1,
 //           traderName: 1,
+//           farmerId: 1, // Added farmerId field
           
 //           // Trader to Admin Payment fields (EXACT fields you requested)
 //           traderToAdminPayment: {
@@ -147,7 +156,7 @@
 //       { $limit: limit }
 //     );
 
-//     console.log('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
+//     //console.log('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
 
 //     // Execute query for data
 //     const orders = await Order.aggregate(pipeline);
@@ -170,7 +179,8 @@
 //           { traderId: { $regex: searchRegex } },
 //           { traderName: { $regex: searchRegex } },
 //           { 'traderToAdminPayment.paymentStatus': { $regex: searchRegex } },
-//           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } }
+//           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } },
+//           { farmerId: { $regex: searchRegex } } // Added farmerId to search for count
 //         ]
 //       };
       
@@ -229,6 +239,7 @@
 //       orderId: order.orderId || null,
 //       traderId: order.traderId || null,
 //       traderName: order.traderName || null,
+//       farmerId: order.farmerId || null, // Added farmerId to transformed data
 //       traderToAdminPayment: {
 //         totalAmount: order.traderToAdminPayment?.totalAmount || 0,
 //         paidAmount: order.traderToAdminPayment?.paidAmount || 0,
@@ -283,17 +294,10 @@
 
 
 
-
-
-
-
-
-
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/app/lib/Db';
 import mongoose from 'mongoose';
+import Farmer from '@/app/models/Farmer';
 
 // Define a simple schema since we're using strict: false
 const OrderSchema = new mongoose.Schema({}, { 
@@ -315,15 +319,50 @@ export async function GET(request: NextRequest) {
     const paymentStatus = searchParams.get('paymentStatus');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    const search = searchParams.get('search'); // New search parameter
+    const search = searchParams.get('search');
+    
+    // NEW: State, District, Taluka filters
+    const state = searchParams.get('state');
+    const district = searchParams.get('district');
+    const taluka = searchParams.get('taluk');
+    
+    // Pagination
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
-    // Build match conditions
+    // Step 1: Get traders filtered by state, district, taluka
+    let filteredTraderIds: string[] = [];
+    
+    if (state || district || taluka) {
+      const traderFilter: any = { role: 'trader', isActive: true };
+      
+      if (state) traderFilter["personalInfo.state"] = state;
+      if (district) traderFilter["personalInfo.district"] = district;
+      if (taluka) traderFilter["personalInfo.taluk"] = taluka;
+      
+      const filteredTraders = await Farmer.find(traderFilter)
+        .select('traderId')
+        .lean();
+      
+      filteredTraderIds = filteredTraders.map(t => t.traderId).filter(Boolean);
+      
+      console.log(`Location filter: ${filteredTraderIds.length} traders found for state=${state}, district=${district}, taluka=${taluka}`);
+    }
+
+    // Build match conditions for orders
     const matchConditions: any = {};
     
-    if (traderId) matchConditions.traderId = traderId;
+    if (traderId) {
+      matchConditions.traderId = traderId;
+    } else if (filteredTraderIds.length > 0) {
+      // Apply geographic filter if traderId is not specified
+      matchConditions.traderId = { $in: filteredTraderIds };
+    } else if (state || district || taluka) {
+      // If geographic filter provided but no matching traders, return empty
+      matchConditions.traderId = { $in: [] };
+    }
+    
     if (orderId) matchConditions.orderId = orderId;
     if (paymentStatus) matchConditions['traderToAdminPayment.paymentStatus'] = paymentStatus;
     
@@ -354,12 +393,13 @@ export async function GET(request: NextRequest) {
           { traderName: { $regex: searchRegex } },
           { 'traderToAdminPayment.paymentStatus': { $regex: searchRegex } },
           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } },
-          { farmerId: { $regex: searchRegex } } // Added farmerId to search
+          { farmerId: { $regex: searchRegex } },
+          // Also search in farmer name if available in the order document
+          { farmerName: { $regex: searchRegex } }
         ]
       };
       
-      // For numeric fields, we need to check if they can be converted to string for regex search
-      // We'll use $expr to handle this
+      // For numeric fields
       searchMatch.$or.push(
         {
           $expr: {
@@ -390,8 +430,71 @@ export async function GET(request: NextRequest) {
       pipeline.push({ $match: searchMatch });
     }
     
-    // Continue with the rest of the pipeline
+    // Lookup trader details from Farmer collection
     pipeline.push(
+      {
+        $lookup: {
+          from: 'farmers',
+          let: { orderTraderId: '$traderId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $or: [
+                    { $eq: ['$traderId', '$$orderTraderId'] },
+                    { $eq: ['$farmerId', '$$orderTraderId'] }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                // Trader details
+                traderId: 1,
+                farmerId: 1,
+                role: 1,
+                personalInfo: 1,
+                bankDetails: 1,
+                registrationStatus: 1,
+                isActive: 1,
+                commodities: 1,
+                nearestMarkets: 1,
+                subcategories: 1,
+                registeredAt: 1,
+                updatedAt: 1,
+                
+                // Geographic fields for easy access
+                state: '$personalInfo.state',
+                district: '$personalInfo.district',
+                taluk: '$personalInfo.taluk',
+                mobileNo: '$personalInfo.mobileNo',
+                email: '$personalInfo.email',
+                address: '$personalInfo.address'
+              }
+            }
+          ],
+          as: 'traderDetails'
+        }
+      },
+      
+      // Add trader details to each order
+      {
+        $addFields: {
+          traderDetails: { $arrayElemAt: ['$traderDetails', 0] }
+        }
+      },
+      
+      // Filter by geographic criteria again (in case lookup brought in wrong traders)
+      ...(state || district || taluka ? [
+        {
+          $match: {
+            ...(state ? { 'traderDetails.state': state } : {}),
+            ...(district ? { 'traderDetails.district': district } : {}),
+            ...(taluka ? { 'traderDetails.taluk': taluka } : {})
+          }
+        }
+      ] : []),
+      
       // Project ONLY the fields you specified
       {
         $project: {
@@ -399,9 +502,12 @@ export async function GET(request: NextRequest) {
           orderId: 1,
           traderId: 1,
           traderName: 1,
-          farmerId: 1, // Added farmerId field
+          farmerId: 1,
           
-          // Trader to Admin Payment fields (EXACT fields you requested)
+          // Trader details
+          traderDetails: 1,
+          
+          // Trader to Admin Payment fields
           traderToAdminPayment: {
             totalAmount: 1,
             paidAmount: 1,
@@ -437,8 +543,6 @@ export async function GET(request: NextRequest) {
       { $limit: limit }
     );
 
-    //console.log('Aggregation pipeline:', JSON.stringify(pipeline, null, 2));
-
     // Execute query for data
     const orders = await Order.aggregate(pipeline);
     
@@ -461,7 +565,7 @@ export async function GET(request: NextRequest) {
           { traderName: { $regex: searchRegex } },
           { 'traderToAdminPayment.paymentStatus': { $regex: searchRegex } },
           { 'traderToAdminPayment.paymentHistory.paymentMethod': { $regex: searchRegex } },
-          { farmerId: { $regex: searchRegex } } // Added farmerId to search for count
+          { farmerId: { $regex: searchRegex } }
         ]
       };
       
@@ -515,12 +619,90 @@ export async function GET(request: NextRequest) {
       }
     };
 
+    // Get unique trader IDs for fetching filter options
+    const uniqueTraderIds = [...new Set(orders.map(o => o.traderId).filter(Boolean))];
+    
+    // Get filter options for state, district, taluka
+    let stateOptions: string[] = [];
+    let districtOptions: string[] = [];
+    let talukaOptions: string[] = [];
+    
+    // Get all traders with orders
+    const tradersWithOrders = await Order.distinct('traderId', matchConditions);
+    
+    if (tradersWithOrders.length > 0) {
+      // Get unique states from these traders
+      const traderDetails = await Farmer.find({ 
+        $or: [
+          { traderId: { $in: tradersWithOrders } },
+          { farmerId: { $in: tradersWithOrders } }
+        ],
+        role: 'trader',
+        "personalInfo.state": { $exists: true, $ne: "" }
+      }).select('personalInfo.state personalInfo.district personalInfo.taluk').lean();
+      
+      stateOptions = [...new Set(traderDetails
+        .map(t => t.personalInfo?.state)
+        .filter(Boolean))].sort();
+      
+      // Get districts based on selected state
+      if (state) {
+        districtOptions = [...new Set(traderDetails
+          .filter(t => t.personalInfo?.state === state)
+          .map(t => t.personalInfo?.district)
+          .filter(Boolean))].sort();
+      }
+      
+      // Get taluks based on selected district
+      if (district) {
+        talukaOptions = [...new Set(traderDetails
+          .filter(t => t.personalInfo?.district === district)
+          .map(t => t.personalInfo?.taluk)
+          .filter(Boolean))].sort();
+      }
+    }
+
     // Transform data to ensure all requested fields exist (even if null)
     const transformedOrders = orders.map(order => ({
       orderId: order.orderId || null,
       traderId: order.traderId || null,
       traderName: order.traderName || null,
-      farmerId: order.farmerId || null, // Added farmerId to transformed data
+      farmerId: order.farmerId || null,
+      
+      // Trader details
+      traderDetails: order.traderDetails ? {
+        // Basic info
+        traderId: order.traderDetails.traderId || null,
+        farmerId: order.traderDetails.farmerId || null,
+        role: order.traderDetails.role || null,
+        registrationStatus: order.traderDetails.registrationStatus || null,
+        isActive: order.traderDetails.isActive || false,
+        
+        // Personal info
+        personalInfo: order.traderDetails.personalInfo || {},
+        
+        // Bank details
+        bankDetails: order.traderDetails.bankDetails || {},
+        
+        // Arrays
+        commodities: order.traderDetails.commodities || [],
+        nearestMarkets: order.traderDetails.nearestMarkets || [],
+        subcategories: order.traderDetails.subcategories || [],
+        
+        // Timestamps
+        registeredAt: order.traderDetails.registeredAt || null,
+        updatedAt: order.traderDetails.updatedAt || null,
+        
+        // Geographic fields
+        state: order.traderDetails.state || order.traderDetails.personalInfo?.state || null,
+        district: order.traderDetails.district || order.traderDetails.personalInfo?.district || null,
+        taluk: order.traderDetails.taluk || order.traderDetails.personalInfo?.taluk || null,
+        mobileNo: order.traderDetails.mobileNo || order.traderDetails.personalInfo?.mobileNo || null,
+        email: order.traderDetails.email || order.traderDetails.personalInfo?.email || null,
+        address: order.traderDetails.address || order.traderDetails.personalInfo?.address || null
+      } : null,
+      
+      // Payment info
       traderToAdminPayment: {
         totalAmount: order.traderToAdminPayment?.totalAmount || 0,
         paidAmount: order.traderToAdminPayment?.paidAmount || 0,
@@ -532,6 +714,8 @@ export async function GET(request: NextRequest) {
           paidDate: payment.paidDate || null
         }))
       },
+      
+      // Timestamps
       createdAt: order.createdAt || null,
       updatedAt: order.updatedAt || null
     }));
@@ -546,13 +730,25 @@ export async function GET(request: NextRequest) {
         total,
         totalPages: Math.ceil(total / limit)
       },
+      filters: {
+        geographic: {
+          states: stateOptions,
+          districts: districtOptions,
+          taluks: talukaOptions
+        },
+        applied: {
+          state,
+          district,
+          taluka
+        }
+      },
       query: {
         traderId,
         orderId,
         paymentStatus,
         startDate,
         endDate,
-        search // Include search parameter in response
+        search
       }
     });
     

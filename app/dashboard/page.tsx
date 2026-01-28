@@ -359,7 +359,7 @@ export default function DashboardPage() {
   /* ================= UI ================= */
 
   return (
-    <div className="p-2 bg-gray-50 min-h-[90vh] space-y-3">
+    <div className="p-2 bg-gray-50 min-h-[90vh] space-y-3 xl:w-[83vw] lg:w-[75vw]">
 
       {/* ===== METRIC CARDS ===== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">

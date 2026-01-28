@@ -1169,7 +1169,7 @@ export default function LandingPage() {
                 className="flex items-center space-x-2 border-2 border-green-600 text-green-600 hover:bg-green-50 px-6 py-3 rounded font-medium transition-all duration-300 hover:shadow-md"
               >
                 <FaLock className="text-sm" />
-                <span>Admin Login</span>
+                <span> Login</span>
               </Link>
             </div>
 
@@ -1191,7 +1191,7 @@ export default function LandingPage() {
                   className="w-full flex items-center justify-center space-x-2 border-2 border-green-600 text-green-600 px-6 py-3 rounded font-medium"
                 >
                   <FaLock />
-                  <span>Admin Login</span>
+                  <span> Login</span>
                 </Link>
               </div>
               <div className="flex flex-col gap-4 mt-3">
@@ -1870,7 +1870,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-lg font-bold mb-6">Quick Links</h4>
               <ul className="space-y-3 text-gray-400 text-sm">
-                <li><Link href="/admin/login" className="hover:text-green-400 transition">Admin Login</Link></li>
+                <li><Link href="/admin/login" className="hover:text-green-400 transition"> Login</Link></li>
               </ul>
             </div>
             
