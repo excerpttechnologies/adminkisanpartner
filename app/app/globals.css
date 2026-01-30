@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+*::-webkit-scrollbar{
+  display: none;
+}
+
+.recharts-wrapper:focus,
+.recharts-wrapper *:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* globals.css */
+.input {
+  @apply w-full h-10 px-3 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500;
+}
+.btn-primary {
+  @apply px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700;
+}
+.btn-secondary {
+  @apply px-4 py-2 border rounded-lg;
+}
+/* If you set width, add: */
+
+
+/* If you set height, add: */
+img {
+  height: 60px;
+  width: auto;
+}
+body{
+  color: #0a0a0a;
+}
+
+
+.input-field {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.5);
+}
+
+.input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* table {
+  table-layout: fixed;
+  width: 100%;
+} */
