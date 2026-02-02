@@ -1196,7 +1196,7 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-col gap-4 mt-3">
                   <Link 
-                    href="https://play.google.com/store/apps/details?id=com.kisan.app" 
+                    href="https://play.google.com/store/apps/details?id=com.karthikbidurur.todaycrops" 
                     target="_blank"
                     className="inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-2 rounded-lg font-semibold text-lg shadow-xs hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                   >
@@ -1365,7 +1365,7 @@ export default function LandingPage() {
                 {/* Mobile CTA Button */}
                 <div className="flex flex-col gap-4">
                   <Link 
-                    href="https://play.google.com/store/apps/details?id=com.kisan.app" 
+                    href="https://play.google.com/store/apps/details?id=com.karthikbidurur.todaycrops" 
                     target="_blank"
                     className="inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                   >
@@ -1421,7 +1421,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link 
-                    href="https://play.google.com/store/apps/details?id=com.kisan.app" 
+                    href="https://play.google.com/store/apps/details?id=com.karthikbidurur.todaycrops" 
                     target="_blank"
                     className="inline-flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 animate-bounce-gentle"
                   >
@@ -1886,7 +1886,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-lg font-bold mb-6">Download App</h4>
               <Link 
-                href="https://play.google.com/store/apps/details?id=com.kisan.app" 
+                href="https://play.google.com/store/apps/details?id=com.karthikbidurur.todaycrops" 
                 target="_blank"
                 className="inline-flex items-center bg-gray-800 hover:bg-gray-700 px-6 py-3 rounded transition-all duration-300"
               >

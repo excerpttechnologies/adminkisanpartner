@@ -1330,6 +1330,7 @@ import {
   FaShippingFast
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { AiOutlineClose } from 'react-icons/ai';
 
 // Interfaces
 interface TransporterDetails {
@@ -2002,6 +2003,7 @@ const OrdersReport: React.FC = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />
+            { searchInput.length >0 &&<AiOutlineClose onClick={()=>setSearchInput("")} className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5" />}
           </div>
 
           {/* Order ID Filter */}

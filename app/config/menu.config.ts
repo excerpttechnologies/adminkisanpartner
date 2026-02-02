@@ -115,7 +115,7 @@ export const MENU_CONFIG: MenuSection[] = [
        
         { name: "Farmer Trans Management", path: "/orders-details", icon: "MdReceiptLong" },
          { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
-           { name: "Transport-vehicle-management", path: "transport-vehicle-management", icon: "MdLocalShipping" },
+           { name: "Transport-vehicle-management", path: "transport-vehicle-management", icon: "MdLocalShipping", allowSubAdmin: false  },
          { name: "All Transporters", path: "/transporters", icon: "MdLocalShipping" },
     ],
 },
@@ -161,9 +161,9 @@ export const MENU_CONFIG: MenuSection[] = [
       // { name: "Acres", path: "/acres", icon: "MdLandscape" },
       // { name: "Seeds", path: "/seeds", icon: "MdEco" },
       // { name: "Settings", path: "/settings", icon: "MdSettings" },
-      { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote" },
-      { name: "Market", path: "/market", icon: "MdStore" },
-      { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten" },
+      { name: "Commission  Form", path: "/commission-form", icon: "MdRequestQuote", allowSubAdmin: false },
+      { name: "Market", path: "/market", icon: "MdStore", allowSubAdmin: false },
+      { name: "Quantity Type", path: "/quantity-type", icon: "MdStraighten", allowSubAdmin: false },
     ],
   },
   {
@@ -173,7 +173,7 @@ export const MENU_CONFIG: MenuSection[] = [
       // { name: "District", path: "/district", icon: "MdOutlineMap" },
       // { name: "Taluk ", path: "/taluka", icon: "MdOutlinePlace" },
 
-
+ { name: "Audit Logs", path: "/audit-logs", icon: "MdOutlineLocationCity", allowSubAdmin: false },
        { name: "States", path: "/states-details", icon: "MdOutlineLocationCity", allowSubAdmin: false },
       { name: "My Profile", path: "/my-profile", icon: "MdPersonOutline" },
       { name: "Logout", path: "/logout", icon: "MdLogout", moduleId: "logout" },

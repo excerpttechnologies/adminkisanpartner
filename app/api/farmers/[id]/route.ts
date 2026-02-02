@@ -459,26 +459,28 @@
 
 
 
-import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/app/lib/Db";
-import Farmer from "@/app/models/Farmer";
-import bcrypt from "bcryptjs";
+// import { NextRequest, NextResponse } from "next/server";
+// import connectDB from "@/app/lib/Db";
+// import Farmer from "@/app/models/Farmer";
+// import bcrypt from "bcryptjs";
 
-/* ================= VIEW ================= */
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-     const {id}=await params
-  await connectDB();
-  const farmer = await Farmer.findById(id);
+// /* ================= VIEW ================= */
+// export async function GET(
+//   req: NextRequest,
+//   { params }: { params: Promise<{ id: string }> }
+// ) {
+//      const {id}=await params
+//   await connectDB();
+//   const farmer = await Farmer.findById(id);
 
-  if (!farmer) {
-    return NextResponse.json({ success: false }, { status: 404 });
-  }
+//   if (!farmer) {
+//     return NextResponse.json({ success: false }, { status: 404 });
+//   }
 
-  return NextResponse.json({ success: true, data: farmer });
-}
+//   return NextResponse.json({ success: true, data: farmer });
+// }
+
+
 
 
 // export async function PUT(
@@ -488,7 +490,7 @@ export async function GET(
 //   try {
 //     const { id } = await params;
 //     const { searchParams } = new URL(req.url);
-//     const status = searchParams.get("status") === "true";
+//     const statusOnly = searchParams.get("status") === "true";
 
 //     await connectDB();
 //     const body = await req.json();
@@ -496,10 +498,13 @@ export async function GET(
 //     let updated;
 
 //     /* ================= STATUS UPDATE ONLY ================= */
-//     if (status) {
+//     if (statusOnly) {
 //       updated = await Farmer.findByIdAndUpdate(
 //         id,
-//         { $set: { registrationStatus: body.registrationStatus } },
+//         { $set: { 
+//           registrationStatus: body.registrationStatus,
+//           isActive:true
+//          } },
 //         { new: true }
 //       );
 //     } else {
@@ -507,18 +512,24 @@ export async function GET(
 //       const role = body.role || "farmer";
 
 //       /* ================= PASSWORD VALIDATION ================= */
-//       if (body?.security?.password && body.security.password.length < 6) {
+//       if (body.security?.password && body.security.password.length < 6) {
 //         return NextResponse.json(
-//           { success: false, message: "Password must be at least 6 characters long" },
+//           {
+//             success: false,
+//             message: "Password must be at least 6 characters long",
+//           },
 //           { status: 400 }
 //         );
 //       }
 
 //       /* ================= MOBILE VALIDATION ================= */
 //       if (mobileNo) {
-//         if (mobileNo.length !== 10) {
+//         if (!/^\d{10}$/.test(mobileNo)) {
 //           return NextResponse.json(
-//             { success: false, message: "Mobile number must be 10 digits" },
+//             {
+//               success: false,
+//               message: "Mobile number must be exactly 10 digits",
+//             },
 //             { status: 400 }
 //           );
 //         }
@@ -531,8 +542,38 @@ export async function GET(
 
 //         if (existingUser) {
 //           return NextResponse.json(
-//             { success: false, message: "Mobile number already exists" },
+//             {
+//               success: false,
+//               message: "Mobile number already exists",
+//             },
 //             { status: 409 }
+//           );
+//         }
+//       }
+
+//       /* ================= MPIN VALIDATION (FIXED) ================= */
+//       const rawMpin = body.security?.mpin;
+//       let mpin: string | undefined;
+
+//       if (rawMpin !== undefined) {
+//         if (typeof rawMpin === "number") {
+//           mpin = rawMpin.toString();
+//         } else if (typeof rawMpin === "string") {
+//           mpin = rawMpin.trim();
+//         } else {
+//           return NextResponse.json(
+//             { success: false, message: "MPIN must be a 4-digit number" },
+//             { status: 400 }
+//           );
+//         }
+
+//         if (!/^\d{4}$/.test(mpin)) {
+//           return NextResponse.json(
+//             {
+//               success: false,
+//               message: "MPIN must be exactly 4 digits Number",
+//             },
+//             { status: 400 }
 //           );
 //         }
 //       }
@@ -540,14 +581,14 @@ export async function GET(
 //       /* ================= SAFE UPDATE OBJECT ================= */
 //       const setData: any = {};
 
-//       // normal fields
+//       // copy non-security fields
 //       Object.keys(body).forEach((key) => {
 //         if (key !== "security") {
 //           setData[key] = body[key];
 //         }
 //       });
 
-//       // security fields (NO overwrite)
+//       /* ================= SECURITY UPDATE ================= */
 //       if (body.security?.password) {
 //         setData["security.password"] = await bcrypt.hash(
 //           body.security.password,
@@ -555,11 +596,8 @@ export async function GET(
 //         );
 //       }
 
-//       if (body.security?.mpin) {
-//         setData["security.mpin"] = await bcrypt.hash(
-//           body.security.mpin,
-//           10
-//         );
+//       if (mpin !== undefined) {
+//         setData["security.mpin"] = await bcrypt.hash(mpin, 10);
 //       }
 
 //       if (body.security?.referralCode !== undefined) {
@@ -580,7 +618,11 @@ export async function GET(
 //       );
 //     }
 
-//     return NextResponse.json({ success: true, data: updated });
+//     return NextResponse.json({
+//       success: true,
+//       message: "User updated successfully",
+//       data: updated,
+//     });
 //   } catch (error: any) {
 //     console.error(error);
 //     return NextResponse.json(
@@ -589,6 +631,52 @@ export async function GET(
 //     );
 //   }
 // }
+
+
+// /* ================= DELETE ================= */
+// export async function DELETE(
+//   req: NextRequest,
+//   { params }: { params: Promise<{ id: string }> }
+// ) {
+//     const {id}=await params
+//     console.log(id)
+//   await connectDB();
+//   await Farmer.findByIdAndDelete(id);
+
+//   return NextResponse.json({ success: true });
+// }
+
+
+
+
+//updated by sagar
+
+
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/app/lib/Db";
+import Farmer from "@/app/models/Farmer";
+import bcrypt from "bcryptjs";
+import { getAdminSession } from "@/app/lib/auth";
+import { createAuditLog,getChanges  } from "@/app/_utils/auditLogger";
+
+/* ================= VIEW ================= */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+     const {id}=await params
+  await connectDB();
+  const farmer = await Farmer.findById(id);
+
+  if (!farmer) {
+    return NextResponse.json({ success: false }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true, data: farmer });
+}
+
+
+
 
 
 export async function PUT(
@@ -602,122 +690,160 @@ export async function PUT(
 
     await connectDB();
     const body = await req.json();
+    const session = await getAdminSession();
 
     let updated;
 
     /* ================= STATUS UPDATE ONLY ================= */
     if (statusOnly) {
-      updated = await Farmer.findByIdAndUpdate(
-        id,
-        { $set: { 
-          registrationStatus: body.registrationStatus,
-          isActive:true
-         } },
-        { new: true }
-      );
-    } else {
-      const mobileNo = body.personalInfo?.mobileNo;
-      const role = body.role || "farmer";
+  // ✅ get OLD data
+  const oldFarmer = await Farmer.findById(id).lean();
 
-      /* ================= PASSWORD VALIDATION ================= */
-      if (body.security?.password && body.security.password.length < 6) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Password must be at least 6 characters long",
-          },
-          { status: 400 }
-        );
-      }
+  if (!oldFarmer) {
+    return NextResponse.json(
+      { success: false, message: "User not found" },
+      { status: 404 }
+    );
+  }
 
-      /* ================= MOBILE VALIDATION ================= */
-      if (mobileNo) {
-        if (!/^\d{10}$/.test(mobileNo)) {
-          return NextResponse.json(
-            {
-              success: false,
-              message: "Mobile number must be exactly 10 digits",
-            },
-            { status: 400 }
-          );
-        }
+  updated = await Farmer.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        registrationStatus: body.registrationStatus,
+        isActive: true,
+      },
+    },
+    { new: true }
+  );
 
-        const existingUser = await Farmer.findOne({
-          "personalInfo.mobileNo": mobileNo,
-          role,
-          _id: { $ne: id },
-        });
+  // ✅ capture changes
+  const changes = {
+    registrationStatus: {
+      old: oldFarmer.registrationStatus,
+      new: body.registrationStatus,
+    },
+  };
 
-        if (existingUser) {
-          return NextResponse.json(
-            {
-              success: false,
-              message: "Mobile number already exists",
-            },
-            { status: 409 }
-          );
-        }
-      }
+  if (session && updated) {
 
-      /* ================= MPIN VALIDATION (FIXED) ================= */
-      const rawMpin = body.security?.mpin;
-      let mpin: string | undefined;
+     const data:{
+        role:string;
+        farmerId:string;
+        traderId:string;
+      }=updated;
+    try {
+      await createAuditLog({
+        request: req,
+        actorId: session.admin._id,
+        actorRole: session.admin.role,
+        action: "UPDATE_"+`${data.role=="farmer"?"FARMER":"TRADER"} STATUS `,
+        module: `${data.role=="farmer"?"Farmer":"Trader"}`,
+        targetId: updated._id,
+        description: ` ${data.role=="farmer"?"Farmer":"Trader"} ${data?.role=="farmer"?data.farmerId : data.traderId} status updated by ${session.admin.name}`,
 
-      if (rawMpin !== undefined) {
-        if (typeof rawMpin === "number") {
-          mpin = rawMpin.toString();
-        } else if (typeof rawMpin === "string") {
-          mpin = rawMpin.trim();
-        } else {
-          return NextResponse.json(
-            { success: false, message: "MPIN must be a 4-digit number" },
-            { status: 400 }
-          );
-        }
-
-        if (!/^\d{4}$/.test(mpin)) {
-          return NextResponse.json(
-            {
-              success: false,
-              message: "MPIN must be exactly 4 digits Number",
-            },
-            { status: 400 }
-          );
-        }
-      }
-
-      /* ================= SAFE UPDATE OBJECT ================= */
-      const setData: any = {};
-
-      // copy non-security fields
-      Object.keys(body).forEach((key) => {
-        if (key !== "security") {
-          setData[key] = body[key];
-        }
+        changes, // ✅ NOW ADMIN CAN SEE OLD vs NEW
       });
+    } catch (err) {
+      console.error("AUDIT LOG FAILED (STATUS UPDATE):", err);
+    }
+  }
+}
 
-      /* ================= SECURITY UPDATE ================= */
-      if (body.security?.password) {
-        setData["security.password"] = await bcrypt.hash(
-          body.security.password,
-          10
-        );
-      }
 
-      if (mpin !== undefined) {
-        setData["security.mpin"] = await bcrypt.hash(mpin, 10);
-      }
+else {
+  // ✅ STEP 1: get OLD data FIRST
+  const oldFarmer = await Farmer.findById(id).lean();
 
-      if (body.security?.referralCode !== undefined) {
-        setData["security.referralCode"] = body.security.referralCode;
-      }
+  if (!oldFarmer) {
+    return NextResponse.json(
+      { success: false, message: "User not found" },
+      { status: 404 }
+    );
+  }
 
-      updated = await Farmer.findByIdAndUpdate(
-        id,
-        { $set: setData },
-        { new: true }
+  const mobileNo = body.personalInfo?.mobileNo;
+  const role = body.role || "farmer";
+
+  if (body.security?.password && body.security.password.length < 6) {
+    return NextResponse.json(
+      { success: false, message: "Password must be at least 6 characters long" },
+      { status: 400 }
+    );
+  }
+
+  if (mobileNo) {
+    if (!/^\d{10}$/.test(mobileNo)) {
+      return NextResponse.json(
+        { success: false, message: "Mobile number must be exactly 10 digits" },
+        { status: 400 }
       );
     }
+
+    const existingUser = await Farmer.findOne({
+      "personalInfo.mobileNo": mobileNo,
+      role,
+      _id: { $ne: id },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { success: false, message: "Mobile number already exists" },
+        { status: 409 }
+      );
+    }
+  }
+
+  const setData: any = {};
+  Object.keys(body).forEach((key) => {
+    if (key !== "security") setData[key] = body[key];
+  });
+
+  if (body.security?.password) {
+    setData["security.password"] = await bcrypt.hash(body.security.password, 10);
+  }
+
+  if (body.security?.mpin) {
+    setData["security.mpin"] = await bcrypt.hash(
+      body.security.mpin.toString(),
+      10
+    );
+  }
+
+  // ✅ STEP 2: calculate changes BEFORE update
+  const changes = getChanges(oldFarmer, setData);
+
+  // ✅ STEP 3: update
+  updated = await Farmer.findByIdAndUpdate(
+    id,
+    { $set: setData },
+    { new: true }
+  );
+
+  // ✅ STEP 4: audit log
+  if (session && updated) {
+
+    const data:{
+        role:string;
+        farmerId:string;
+        traderId:string;
+      }=updated;
+    try {
+      await createAuditLog({
+        request: req,
+        actorId: session.admin._id,
+        actorRole: session.admin.role,
+        action: "UPDATE_" + `${data.role=="farmer"?"FARMER":"TRADER"}`,
+        module: `${data.role=="farmer"?"Farmer":"Trader"}`,
+        targetId: updated._id,
+        description: `${data.role=="farmer"?"Farmer":"Trader"} ${data?.role=="farmer"?data.farmerId : data.traderId} updated by ${session.admin.name}`,
+        changes,
+      });
+    } catch (err) {
+      console.error("AUDIT LOG FAILED (UPDATE):", err);
+    }
+  }
+}
 
     if (!updated) {
       return NextResponse.json(
@@ -749,11 +875,28 @@ export async function DELETE(
     const {id}=await params
     console.log(id)
   await connectDB();
-  await Farmer.findByIdAndDelete(id);
+ const session = await getAdminSession();
 
-  return NextResponse.json({ success: true });
+const deleted = await Farmer.findByIdAndDelete(id);
+
+if (session && deleted) {
+  try {
+    await createAuditLog({
+      request: req,
+      actorId: session.admin._id,
+      actorRole: session.admin.role,
+      action: "DELETE_FARMER",
+      module: "Farmers",
+      targetId: deleted._id,
+      description: `Farmer ${deleted.farmerId} deleted by ${session.admin.name}`,
+    });
+  } catch (err) {
+    console.error("AUDIT LOG FAILED (DELETE):", err);
+  }
 }
 
+return NextResponse.json({ success: true });
 
+}
 
 

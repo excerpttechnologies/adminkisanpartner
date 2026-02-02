@@ -39,6 +39,7 @@ import {
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { getAdminSessionAction } from '@/app/actions/auth-actions';
+import { AiOutlineClose } from 'react-icons/ai';
 
 // Interfaces
 interface FarmerPayment {
@@ -775,12 +776,13 @@ const handleCopyToClipboard = async (): Promise<void> => {
             </div>
             <input
               type="text"
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               placeholder="Search order, farmer ID, name..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && applyFilters()}
             />
+             { searchInput.length >0 &&<AiOutlineClose onClick={()=>setSearchInput("")} className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5" />}
           </div>
 
           {/* Payment Status Filter */}

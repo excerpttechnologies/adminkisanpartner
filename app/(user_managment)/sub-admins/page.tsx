@@ -2788,9 +2788,9 @@ export default function SubAdminAccountsPage() {
       e.taluka = "Taluka is required";
     }
 
-    if (form.commodity.length === 0) {
-      e.commodity = "Select at least one commodity";
-    }
+    // if (form.commodity.length === 0) {
+    //   e.commodity = "Select at least one commodity";
+    // }
     
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -4054,7 +4054,7 @@ export default function SubAdminAccountsPage() {
             </div>
 
             {/* Commodities Checkboxes */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Commodities <span className="text-red-500">*</span>
               </label>
@@ -4066,7 +4066,7 @@ export default function SubAdminAccountsPage() {
                 ) : (
                   commodityCategories.map(category => (
                     <div key={category._id} className="mb-3 last:mb-0">
-                      {/* Category Header */}
+                      
                       <div className="flex items-center gap-2 mb-1">
                         <button
                           onClick={() => toggleCategory(category._id)}
@@ -4091,7 +4091,7 @@ export default function SubAdminAccountsPage() {
                         </label>
                       </div>
                       
-                      {/* Subcategories */}
+                    
                       {expandedCategories.has(category._id) && category.subCategories.length > 0 && (
                         <div className="ml-7 pl-1 border-l-2 border-gray-200">
                           <div className="grid grid-cols-2 gap-1 mt-1">
@@ -4114,7 +4114,7 @@ export default function SubAdminAccountsPage() {
                 )}
               </div>
               {errors.commodity && <p className="text-red-500 text-xs mt-1">{errors.commodity}</p>}
-            </div>
+            </div> */}
 
             {/* Page Access */}
             <div className="mb-4">
