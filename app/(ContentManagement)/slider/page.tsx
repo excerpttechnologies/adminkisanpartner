@@ -2,6 +2,10 @@
 
 
 
+
+
+
+
 // "use client";
 // import { useEffect, useState } from "react";
 // import SliderModal from "../../_components/SliderModal";
@@ -923,11 +927,6 @@
 
 
 
-
-
-
-
-
 "use client";
 import { useEffect, useState } from "react";
 import SliderModal from "../../_components/SliderModal";
@@ -947,7 +946,9 @@ import {
   ChevronDown,
   ChevronUp,
   User,
-  AlertCircle
+  AlertCircle,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 
 interface Slider {
@@ -1192,100 +1193,250 @@ export default function SliderPage() {
     return pageNumbers;
   };
 
-  const renderPagination = () => {
-    const pageNumbers = getPageNumbers();
+  // Pagination Component
+  const Pagination = () => {
     const showingFrom = ((currentPage - 1) * itemsPerPage) + 1;
     const showingTo = Math.min(currentPage * itemsPerPage, filteredSliders.length);
+    const pageNumbers = getPageNumbers();
     
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-gray-50 border-t border-gray-200">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 bg-white border-t border-gray-200">
+        {/* Items per page selector */}
+        <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Show:</span>
-          <select
-            value={itemsPerPage}
-            onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-            className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-          >
-            <option value={4}>4</option>
-            <option value={8}>8</option>
-            <option value={12}>12</option>
-            <option value={16}>16</option>
-            <option value={20}>20</option>
-          </select>
-          <span className="text-sm text-gray-600">per page</span>
+          <div className="relative">
+            <select
+              value={itemsPerPage}
+              onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+              className="appearance-none px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white pr-8 cursor-pointer"
+            >
+              <option value={4}>4 per page</option>
+              <option value={8}>8 per page</option>
+              <option value={12}>12 per page</option>
+              <option value={16}>16 per page</option>
+              <option value={20}>20 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="text-sm text-gray-600 text-center sm:text-left">
-            Showing <strong>{filteredSliders.length > 0 ? showingFrom : 0}</strong> to{" "}
-            <strong>{showingTo}</strong> of{" "}
-            <strong>{filteredSliders.length}</strong> sliders
-          </div>
+        {/* Page info */}
+        <div className="text-sm text-gray-600">
+          Showing <span className="font-semibold text-gray-900">{showingFrom}</span> to{" "}
+          <span className="font-semibold text-gray-900">{showingTo}</span> of{" "}
+          <span className="font-semibold text-gray-900">{filteredSliders.length}</span> sliders
+        </div>
+
+        {/* Pagination buttons */}
+        <div className="flex items-center gap-1">
+          {/* First Page Button */}
+          <button
+            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg border transition-all duration-200 ${
+              currentPage === 1
+                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-sm bg-white hover:-translate-y-0.5'
+            }`}
+            title="First page"
+          >
+            <ChevronsLeft className="h-4 w-4" />
+          </button>
           
+          {/* Previous Page Button */}
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`p-2 rounded-lg border transition-all duration-200 ${
+              currentPage === 1
+                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-sm bg-white hover:-translate-y-0.5'
+            }`}
+            title="Previous page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          
+          {/* Page numbers */}
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-              className={`p-2 rounded-md border ${currentPage === 1 
-                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' 
-                : 'border-gray-300 text-gray-700 hover:bg-white hover:shadow-sm bg-white'}`}
-              title="First page"
-            >
-              «
-            </button>
-            
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={`p-2 rounded-md border ${currentPage === 1 
-                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' 
-                : 'border-gray-300 text-gray-700 hover:bg-white hover:shadow-sm bg-white'}`}
-              title="Previous page"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            
             {pageNumbers.map((pageNum, index) => (
               pageNum === '...' ? (
-                <span key={index} className="px-3 py-1 text-gray-500 text-sm">
-                  ...
-                </span>
+                <span key={index} className="px-2 text-gray-400">...</span>
               ) : (
                 <button
                   key={index}
                   onClick={() => handlePageChange(pageNum as number)}
-                  className={`px-3 py-1.5 min-w-9 text-sm rounded-md ${
-                    pageNum === currentPage 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  className={`px-3 py-1.5 min-w-[36px] text-sm rounded-lg transition-all duration-200 ${
+                    pageNum === currentPage
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                      : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5'
                   }`}
                 >
                   {pageNum}
                 </button>
               )
             ))}
+          </div>
+          
+          {/* Next Page Button */}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg border transition-all duration-200 ${
+              currentPage === totalPages
+                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-sm bg-white hover:-translate-y-0.5'
+            }`}
+            title="Next page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          
+          {/* Last Page Button */}
+          <button
+            onClick={() => handlePageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className={`p-2 rounded-lg border transition-all duration-200 ${
+              currentPage === totalPages
+                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:shadow-sm bg-white hover:-translate-y-0.5'
+            }`}
+            title="Last page"
+          >
+            <ChevronsRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Mobile Pagination Component
+  const MobilePagination = () => {
+    const showingFrom = ((currentPage - 1) * itemsPerPage) + 1;
+    const showingTo = Math.min(currentPage * itemsPerPage, filteredSliders.length);
+    const pageNumbers = getPageNumbers();
+    
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-4">
+        <div className="flex flex-col gap-4">
+          {/* Stats row */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing <span className="font-semibold">{showingFrom}-{showingTo}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Show:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value={4}>4</option>
+                <option value={8}>8</option>
+                <option value={12}>12</option>
+                <option value={16}>16</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Pagination controls */}
+          <div className="flex items-center justify-between">
+            {/* First & Previous buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg ${
+                  currentPage === 1
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:-translate-y-0.5 transition-all duration-200'
+                }`}
+                title="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm ${
+                  currentPage === 1
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:-translate-y-0.5 transition-all duration-200'
+                }`}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Prev
+              </button>
+            </div>
             
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={`p-2 rounded-md border ${currentPage === totalPages 
-                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' 
-                : 'border-gray-300 text-gray-700 hover:bg-white hover:shadow-sm bg-white'}`}
-              title="Next page"
-            >
-              <ChevronRight size={18} />
-            </button>
+            {/* Page numbers */}
+            <div className="flex items-center gap-1">
+              {pageNumbers.map((pageNum, index) => (
+                pageNum === '...' ? (
+                  <span key={index} className="px-1 text-gray-500">...</span>
+                ) : (
+                  <button
+                    key={index}
+                    onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum)}
+                    className={`px-3 py-1 text-sm rounded-lg min-w-8 transition-all duration-200 ${
+                      pageNum === currentPage
+                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:-translate-y-0.5'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                )
+              ))}
+            </div>
             
-            <button
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-              className={`p-2 rounded-md border ${currentPage === totalPages 
-                ? 'border-gray-200 text-gray-400 cursor-not-allowed bg-gray-100' 
-                : 'border-gray-300 text-gray-700 hover:bg-white hover:shadow-sm bg-white'}`}
-              title="Last page"
-            >
-              »
-            </button>
+            {/* Next & Last buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:-translate-y-0.5 transition-all duration-200'
+                }`}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg ${
+                  currentPage === totalPages
+                    ? 'text-gray-400 cursor-not-allowed bg-gray-100'
+                    : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 hover:-translate-y-0.5 transition-all duration-200'
+                }`}
+                title="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Page jump */}
+          <div className="flex items-center justify-center gap-2 pt-3 border-t border-gray-100">
+            <span className="text-sm text-gray-600">Go to:</span>
+            <input
+              type="number"
+              min="1"
+              max={totalPages}
+              value={currentPage}
+              onChange={(e) => {
+                const page = parseInt(e.target.value);
+                if (!isNaN(page) && page >= 1 && page <= totalPages) {
+                  handlePageChange(page);
+                }
+              }}
+              className="w-16 px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <span className="text-sm text-gray-600">of {totalPages}</span>
           </div>
         </div>
       </div>
@@ -1294,7 +1445,7 @@ export default function SliderPage() {
 
   if (loading && allSliders.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50/20 p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-4"></div>
         <p className="text-gray-600 font-medium">Loading sliders...</p>
       </div>
@@ -1304,59 +1455,71 @@ export default function SliderPage() {
   const currentSliders = getCurrentPageSliders();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/20 p-3 sm:p-6">
       {/* Header Section */}
       <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Slider Management</h1>
-            <p className="text-gray-600 text-sm sm:text-base">
-              Manage your website sliders and banners • {filteredSliders.length} sliders found
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Slider Management</h1>
+            <p className="text-gray-600 mt-1 text-sm sm:text-base">
+              Manage your website sliders and banners
             </p>
           </div>
           <button
             onClick={() => setOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all w-full sm:w-auto"
+            className="group relative px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg sm:rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
           >
-            <Plus size={20} />
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             Add New Slider
           </button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Sliders</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{allSliders.length}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{allSliders.length}</p>
               </div>
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Layers className="h-6 w-6 text-blue-600" />
+                <Layers className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Showing</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{filteredSliders.length}</p>
+                <p className="text-sm font-medium text-gray-600">Filtered</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{filteredSliders.length}</p>
               </div>
               <div className="p-2 bg-green-100 rounded-lg">
-                <Eye className="h-6 w-6 text-green-600" />
+                <Eye className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pages</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{totalPages}</p>
+                <p className="text-sm font-medium text-gray-600">Current Page</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{currentPage}</p>
               </div>
               <div className="p-2 bg-purple-100 rounded-lg">
-                <User className="h-6 w-6 text-purple-600" />
+                <User className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Per Page</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{itemsPerPage}</p>
+              </div>
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
               </div>
             </div>
           </div>
@@ -1392,7 +1555,7 @@ export default function SliderPage() {
             </button>
             <button 
               onClick={handleRefresh}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 text-sm"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -1405,47 +1568,48 @@ export default function SliderPage() {
       <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
               <tr>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   #
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Slider
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Image
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentSliders.map((slider, index) => (
-                <tr key={slider._id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {slider.name}
-                      </div>
+                <tr key={slider._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/20 transition-all duration-200">
+                  <td className="px-6 py-5 whitespace-nowrap text-center">
+                    <div className="w-8 h-8 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg mx-auto">
+                      <span className="text-sm font-bold text-blue-700">{(currentPage - 1) * itemsPerPage + index + 1}</span>
                     </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4">
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full"></div>
+                      <div className="font-bold text-gray-900">{slider.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-5">
                     <div className="flex items-center space-x-3">
                       <img
                         src={slider.image}
                         alt={slider.name}
-                        className="h-16 w-24 object-cover rounded border border-gray-200"
+                        className="h-16 w-24 object-cover rounded-lg border border-gray-200"
                       />
                       <button
                         onClick={() => window.open(slider.image, '_blank')}
@@ -1456,14 +1620,14 @@ export default function SliderPage() {
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <td className="px-6 py-5 whitespace-nowrap">
+                    <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200">
                       {slider.role || "No Role"}
                     </span>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-5 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
+                      <Calendar className="h-4 w-4 text-blue-500" />
                       {new Date(slider.createdAt).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -1471,25 +1635,25 @@ export default function SliderPage() {
                       })}
                     </div>
                   </td>
-                  <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <td className="px-6 py-5 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setEditingSlider(slider)}
-                        className="text-blue-600 hover:text-blue-900 p-1.5 hover:bg-blue-50 rounded transition-colors"
+                        className="p-2.5 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => window.open(slider.image, '_blank')}
-                        className="text-green-600 hover:text-green-900 p-1.5 hover:bg-green-50 rounded transition-colors"
+                        className="p-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm"
                         title="View"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteSlider(slider._id)}
-                        className="text-red-600 hover:text-red-900 p-1.5 hover:bg-red-50 rounded transition-colors"
+                        className="p-2.5 bg-gradient-to-r from-red-100 to-rose-100 hover:from-red-200 hover:to-rose-200 text-red-700 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -1503,23 +1667,23 @@ export default function SliderPage() {
         </div>
         
         {/* Pagination for Desktop */}
-        {totalPages > 1 && renderPagination()}
+        {filteredSliders.length > 0 && <Pagination />}
         
         {/* Empty State for Desktop */}
         {currentSliders.length === 0 && (
-          <div className="text-center py-12 px-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-              <ImageIcon className="h-8 w-8 text-gray-400" />
+          <div className="text-center py-16 px-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full mb-6">
+              <ImageIcon className="h-10 w-10 text-blue-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No sliders found</h3>
-            <p className="text-gray-600 max-w-md mx-auto mb-6">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No sliders found</h3>
+            <p className="text-gray-500 mb-6 max-w-md mx-auto">
               {searchTerm ? "No results match your search criteria. Try a different search term." : "Get started by adding your first slider."}
             </p>
             <button
               onClick={() => setOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all mx-auto"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-lg transition-all duration-200 transform hover:-translate-y-0.5 shadow-md"
             >
-              <Plus size={20} />
+              <Plus className="h-5 w-5 mr-2 inline" />
               Add First Slider
             </button>
           </div>
@@ -1527,294 +1691,172 @@ export default function SliderPage() {
       </div>
 
       {/* Mobile Cards (visible only on mobile) */}
-      <div className="md:hidden">
-        {/* Mobile Pagination Info */}
-        {filteredSliders.length > 0 && (
-          <div className="flex items-center justify-between mb-4 p-3 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Show:</span>
-              <select
-                value={itemsPerPage}
-                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
-              >
-                <option value={4}>4</option>
-                <option value={8}>8</option>
-                <option value={12}>12</option>
-                <option value={16}>16</option>
-              </select>
-            </div>
-          </div>
-        )}
-        
-        <div className="space-y-3">
-          {currentSliders.map((slider, index) => (
-            <div key={slider._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {/* Card Header - Always Visible */}
-              <div className="p-4 border-b border-gray-100">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-lg">
-                        <ImageIcon className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-900 text-sm truncate">{slider.name}</h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {slider.role || "No Role"}
-                          </span>
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(slider.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                      </div>
+      <div className="md:hidden space-y-3">
+        {currentSliders.map((slider, index) => (
+          <div key={slider._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Card Header - Always Visible */}
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                      <ImageIcon className="h-5 w-5 text-blue-600" />
                     </div>
-                    
-                    {/* Image Preview (Always Visible) */}
-                    <div className="mt-3">
-                      <div className="relative overflow-hidden rounded-lg border border-gray-200">
-                        <img
-                          src={slider.image}
-                          alt={slider.name}
-                          className="w-full h-40 object-cover"
-                        />
-                        <button
-                          onClick={() => window.open(slider.image, '_blank')}
-                          className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs flex items-center gap-1"
-                        >
-                          <Eye className="h-3 w-3" />
-                          Full View
-                        </button>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 text-sm truncate">{slider.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200">
+                          {slider.role || "No Role"}
+                        </span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(slider.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
                       </div>
                     </div>
                   </div>
                   
+                  {/* Image Preview (Always Visible) */}
+                  <div className="mt-3">
+                    <div className="relative overflow-hidden rounded-lg border border-gray-200">
+                      <img
+                        src={slider.image}
+                        alt={slider.name}
+                        className="w-full h-40 object-cover"
+                      />
+                      <button
+                        onClick={() => window.open(slider.image, '_blank')}
+                        className="absolute bottom-2 right-2 bg-black/70 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Full View
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => toggleCardExpansion(slider._id)}
+                  className="ml-2 p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  {expandedCard === slider._id ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded Details */}
+            {expandedCard === slider._id && (
+              <div className="p-4 border-t border-gray-100">
+                <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-gray-500 mb-1">Slider ID</div>
+                    <div className="font-medium truncate" title={slider._id}>
+                      #{slider._id.slice(-8)}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-gray-500 mb-1">Serial No.</div>
+                    <div className="font-medium">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-gray-500 mb-1">Created Date</div>
+                    <div className="font-medium">
+                      {new Date(slider.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-gray-500 mb-1">Status</div>
+                    <div className="font-medium text-green-600">
+                      Active
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-4 border-t border-gray-100">
                   <button
-                    onClick={() => toggleCardExpansion(slider._id)}
-                    className="ml-2 p-1.5 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    onClick={() => setEditingSlider(slider)}
+                    className="flex-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:from-purple-600 hover:to-indigo-600 transition-all duration-200"
                   >
-                    {expandedCard === slider._id ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
+                    <Edit2 className="h-4 w-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteSlider(slider._id)}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:from-red-600 hover:to-rose-600 transition-all duration-200"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
                   </button>
                 </div>
               </div>
+            )}
 
-              {/* Expanded Details */}
-              {expandedCard === slider._id && (
-                <div className="p-4 border-t border-gray-100">
-                  <div className="grid grid-cols-2 gap-3 text-xs mb-4">
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-gray-500 mb-1">Slider ID</div>
-                      <div className="font-medium truncate" title={slider._id}>
-                        #{slider._id.slice(-8)}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-gray-500 mb-1">Serial No.</div>
-                      <div className="font-medium">
-                        {(currentPage - 1) * itemsPerPage + index + 1}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-gray-500 mb-1">Created Date</div>
-                      <div className="font-medium">
-                        {new Date(slider.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded">
-                      <div className="text-gray-500 mb-1">Status</div>
-                      <div className="font-medium text-green-600">
-                        Active
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 pt-4 border-t border-gray-100">
-                    <button
-                      onClick={() => setEditingSlider(slider)}
-                      className="flex-1 bg-blue-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSlider(slider._id)}
-                      className="flex-1 bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-red-700 transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Actions - Always Visible */}
-              <div className="flex border-t border-gray-100">
-                <button
-                  onClick={() => setEditingSlider(slider)}
-                  className="flex-1 py-3 text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <Edit2 className="h-4 w-4" />
-                  Edit
-                </button>
-                <div className="w-px bg-gray-100"></div>
-                <button
-                  onClick={() => window.open(slider.image, '_blank')}
-                  className="flex-1 py-3 text-green-600 hover:bg-green-50 transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <Eye className="h-4 w-4" />
-                  View
-                </button>
-                <div className="w-px bg-gray-100"></div>
-                <button
-                  onClick={() => handleDeleteSlider(slider._id)}
-                  className="flex-1 py-3 text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-1 text-sm"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-          
-          {/* Empty State for Mobile */}
-          {currentSliders.length === 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <ImageIcon className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No sliders found</h3>
-              <p className="text-gray-600 mb-6">
-                {searchTerm ? "No results match your search criteria." : "Get started by adding your first slider."}
-              </p>
+            {/* Quick Actions - Always Visible */}
+            <div className="flex border-t border-gray-100">
               <button
-                onClick={() => setOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all w-full"
+                onClick={() => setEditingSlider(slider)}
+                className="flex-1 py-3 text-blue-600 hover:bg-blue-50 transition-colors flex items-center justify-center gap-1 text-sm"
               >
-                <Plus size={20} />
-                Add First Slider
+                <Edit2 className="h-4 w-4" />
+                Edit
+              </button>
+              <div className="w-px bg-gray-100"></div>
+              <button
+                onClick={() => window.open(slider.image, '_blank')}
+                className="flex-1 py-3 text-green-600 hover:bg-green-50 transition-colors flex items-center justify-center gap-1 text-sm"
+              >
+                <Eye className="h-4 w-4" />
+                View
+              </button>
+              <div className="w-px bg-gray-100"></div>
+              <button
+                onClick={() => handleDeleteSlider(slider._id)}
+                className="flex-1 py-3 text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-1 text-sm"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
               </button>
             </div>
-          )}
-        </div>
-
-        {/* Mobile Pagination Controls */}
-        {totalPages > 1 && filteredSliders.length > 0 && (
-          <div className="mt-4 bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex flex-col gap-3">
-              <div className="text-center text-sm text-gray-600">
-                Showing {Math.min(currentPage * itemsPerPage, filteredSliders.length)} of {filteredSliders.length} sliders
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm ${
-                    currentPage === 1
-                      ? 'text-gray-400 cursor-not-allowed bg-gray-100'
-                      : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Prev
-                </button>
-                
-                <div className="flex items-center gap-1">
-                  {getPageNumbers().map((pageNum, index) => (
-                    pageNum === '...' ? (
-                      <span key={index} className="px-1 text-gray-500">...</span>
-                    ) : (
-                      <button
-                        key={index}
-                        onClick={() => typeof pageNum === 'number' && handlePageChange(pageNum)}
-                        className={`px-3 py-1 text-sm rounded-md min-w-8 ${
-                          pageNum === currentPage
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    )
-                  ))}
-                </div>
-                
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm ${
-                    currentPage === totalPages
-                      ? 'text-gray-400 cursor-not-allowed bg-gray-100'
-                      : 'text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200'
-                  }`}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-              
-              {/* Page jump */}
-              <div className="flex items-center justify-center gap-2">
-                <span className="text-sm text-gray-600">Go to page:</span>
-                <input
-                  type="number"
-                  min="1"
-                  max={totalPages}
-                  value={currentPage}
-                  onChange={(e) => {
-                    const page = parseInt(e.target.value);
-                    if (page >= 1 && page <= totalPages) {
-                      handlePageChange(page);
-                    }
-                  }}
-                  className="w-16 px-3 py-1.5 border border-gray-300 rounded-md text-sm text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
+          </div>
+        ))}
+        
+        {/* Empty State for Mobile */}
+        {currentSliders.length === 0 && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center mx-auto mb-4">
+              <ImageIcon className="h-8 w-8 text-blue-400" />
             </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No sliders found</h3>
+            <p className="text-gray-500 mb-6">
+              {searchTerm ? "No results match your search criteria." : "Get started by adding your first slider."}
+            </p>
+            <button
+              onClick={() => setOpen(true)}
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm hover:shadow-md transition-all w-full"
+            >
+              <Plus size={20} />
+              Add First Slider
+            </button>
           </div>
         )}
-      </div>
 
-      {/* Summary Stats */}
-      {filteredSliders.length > 0 && (
-        <div className="mt-6 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Total Sliders</div>
-              <div className="text-2xl font-bold text-gray-900">{allSliders.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Filtered</div>
-              <div className="text-2xl font-bold text-blue-600">{filteredSliders.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Current Page</div>
-              <div className="text-2xl font-bold text-green-600">{currentPage}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-1">Total Pages</div>
-              <div className="text-2xl font-bold text-purple-600">{totalPages}</div>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Mobile Pagination Controls */}
+        {filteredSliders.length > 0 && <MobilePagination />}
+      </div>
 
       {/* Modals */}
       {open && (
@@ -1842,6 +1884,3 @@ export default function SliderPage() {
     </div>
   );
 }
-
-
-

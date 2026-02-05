@@ -7099,7 +7099,7 @@ export default function AgentsPage() {
           actorId: _id,
           actorRole: role,
           action: "CREATE",
-          module: "TRADER",
+          module: "Trader",
           targetId: result._id,
           description: `Trader details:` + `Id :${result.id
 }, Role : ${result.role}, Name :${result.name}, MobileNo :${result.mobileNo}`,

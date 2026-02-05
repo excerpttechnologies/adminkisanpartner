@@ -1,9 +1,19 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { JSX } from 'react';
+import { getAdminSessionAction } from '@/app/actions/auth-actions';
+
+interface AdminSession {
+  _id: string;
+  email: string;
+  role: string;
+  taluka?: string; // Optional for admin, required for subadmin
+  district?: string;
+  name?: string;
+}
+
 interface Notification {
   _id: string;
   type: 'offer' | 'order_created' | 'trader_payment' | 'farmer_payment' | 'transporter_update';
@@ -25,6 +35,7 @@ interface Notification {
   subCategoryName?: string;
   nearestMarket?: string;
   deliveryDate?: string;
+  totalAmount?: number;
   // Order fields
   orderId?: string;
   orderObjectId?: string;
@@ -36,9 +47,6 @@ interface Notification {
   paymentId?: string;
   amount?: number;
   paidDate?: string;
-  totalAmount?: number;
-  paidAmount?: number;
-  remainingAmount?: number;
   paymentStatus?: string;
   razorpayPaymentId?: string;
   razorpayOrderId?: string;
@@ -50,32 +58,198 @@ interface Notification {
   message?: string;
   createdAt: string;
   transporterDetails?: any;
+  
+  // Added fields for taluk information
+  farmerTaluk?: string;
+  traderTaluk?: string;
+}
+
+// Interface for farmer/trader details
+interface UserDetails {
+  _id: string;
+  farmerId?: string;
+  traderId?: string;
+  personalInfo?: {
+    taluk: string;
+    name: string;
+    mobileNo: string;
+    email: string;
+  };
+  taluk?: string; // For trader compatibility
+  name?: string; // For trader compatibility
+  mobile?: string; // For trader compatibility
+  email?: string; // For trader compatibility
 }
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'offers' | 'orders' | 'payments' | 'transporter'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [session, setSession] = useState<AdminSession | null>(null);
   const router = useRouter();
 
+  // Fetch session on component mount
   useEffect(() => {
-    fetchNotifications();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    fetchSession();
   }, []);
+
+  // Fetch notifications when session is available
+  useEffect(() => {
+    if (session) {
+      fetchNotifications();
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
+
+  const fetchSession = async () => {
+    try {
+      const sessionData = await getAdminSessionAction();
+      if (!sessionData) {
+        router.push('/admin/login');
+        return;
+      }
+      setSession(sessionData?.admin as AdminSession);
+    } catch (err: any) {
+      setError('Failed to fetch session');
+      router.push('/admin/login');
+    }
+  };
+
+  // Fetch farmer details by ID
+  const fetchFarmerDetails = async (farmerId: string): Promise<UserDetails | null> => {
+    if (!farmerId || farmerId === 'undefined') return null;
+    
+    try {
+      const response = await fetch(`/api/farmers?search=${farmerId}`);
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.length > 0) {
+        const farmerData = data.data[0];
+        return {
+          _id: farmerData._id || farmerId,
+          farmerId: farmerData.farmerId || farmerId,
+          personalInfo: farmerData.personalInfo ? {
+            taluk: farmerData.personalInfo.taluk || '',
+            name: farmerData.personalInfo.name || '',
+            mobileNo: farmerData.personalInfo.mobileNo || '',
+            email: farmerData.personalInfo.email || ''
+          } : undefined
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching farmer details:', error);
+      return null;
+    }
+  };
+
+  // Fetch trader details by ID
+  const fetchTraderDetails = async (traderId: string): Promise<UserDetails | null> => {
+    if (!traderId || traderId === 'undefined') return null;
+    
+    try {
+      const response = await fetch(`/api/farmers?search=${traderId}`);
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.length > 0) {
+        const traderData = data.data[0];
+        return {
+          _id: traderData._id || traderId,
+          traderId: traderData.traderId || traderId,
+          personalInfo: traderData.personalInfo ? {
+            taluk: traderData.personalInfo.taluk || '',
+            name: traderData.personalInfo.name || '',
+            mobileNo: traderData.personalInfo.mobileNo || '',
+            email: traderData.personalInfo.email || ''
+          } : undefined,
+          taluk: traderData.personalInfo?.taluk || traderData.taluk || '',
+          name: traderData.personalInfo?.name || traderData.name || '',
+          mobile: traderData.personalInfo?.mobileNo || traderData.mobile || '',
+          email: traderData.personalInfo?.email || traderData.email || ''
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching trader details:', error);
+      return null;
+    }
+  };
+
+  // Fetch all farmer and trader details for notifications
+  const fetchAllDetailsForNotifications = async (allNotifications: Notification[]) => {
+    const farmerIds = [...new Set(allNotifications.map(notification => notification.farmerId).filter(Boolean))] as string[];
+    const traderIds = [...new Set(allNotifications.map(notification => notification.traderId).filter(Boolean))] as string[];
+    
+    const farmerDetailsMap: {[key: string]: string} = {};
+    const traderDetailsMap: {[key: string]: string} = {};
+    
+    // Fetch farmer details in parallel
+    const farmerPromises = farmerIds.map(async (farmerId) => {
+      const details = await fetchFarmerDetails(farmerId);
+      if (details) {
+        farmerDetailsMap[farmerId] = details.personalInfo?.taluk || '';
+      }
+    });
+    
+    // Fetch trader details in parallel
+    const traderPromises = traderIds.map(async (traderId) => {
+      const details = await fetchTraderDetails(traderId);
+      if (details) {
+        traderDetailsMap[traderId] = details.personalInfo?.taluk || details.taluk || '';
+      }
+    });
+    
+    await Promise.all([...farmerPromises, ...traderPromises]);
+    
+    return { farmerDetailsMap, traderDetailsMap };
+  };
 
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-     const response = await fetch('https://kisanadmin.etpl.ai/product/admin-notifications');
-
+      const response = await fetch('https://kisan.etpl.ai/product/admin-notifications');
       const data = await response.json();
 
       if (data.success) {
-        setNotifications(data.data);
+        let allNotifications = data.data;
+        
+        // If admin, show all notifications
+        if (session?.role === 'admin') {
+          setNotifications(allNotifications);
+          setFilteredNotifications(allNotifications);
+        } 
+        // If subadmin, filter by taluk
+        else if (session?.role === 'subadmin' && session?.taluka) {
+          // Fetch taluk information for farmers and traders
+          const { farmerDetailsMap, traderDetailsMap } = await fetchAllDetailsForNotifications(allNotifications);
+          
+          // Filter notifications based on subadmin's taluk
+          const filtered = allNotifications.filter((notification: Notification) => {
+            // Check if notification belongs to subadmin's taluk
+            const farmerTaluk = notification.farmerId ? farmerDetailsMap[notification.farmerId] : null;
+            const traderTaluk = notification.traderId ? traderDetailsMap[notification.traderId] : null;
+            
+            return farmerTaluk === session.taluka || traderTaluk === session.taluka;
+          });
+
+          // Add taluk information to notifications for display
+          const notificationsWithTaluk = filtered.map((notification:any) => ({
+            ...notification,
+            farmerTaluk: notification.farmerId ? farmerDetailsMap[notification.farmerId] : undefined,
+            traderTaluk: notification.traderId ? traderDetailsMap[notification.traderId] : undefined,
+          }));
+
+          setNotifications(notificationsWithTaluk);
+          setFilteredNotifications(notificationsWithTaluk);
+        } else {
+          setNotifications(allNotifications);
+          setFilteredNotifications(allNotifications);
+        }
         setError(null);
       } else {
         throw new Error(data.message);
@@ -86,6 +260,35 @@ const AdminNotifications: React.FC = () => {
       setLoading(false);
     }
   };
+
+  // Helper function to check if notification should be visible based on filters
+  const applyFilters = (notification: Notification) => {
+    // Filter by type
+    if (filter === 'offers' && notification.type !== 'offer') return false;
+    if (filter === 'orders' && notification.type !== 'order_created') return false;
+    if (filter === 'payments' && !['trader_payment', 'farmer_payment'].includes(notification.type)) return false;
+    if (filter === 'transporter' && notification.type !== 'transporter_update') return false;
+
+    // Filter by search term
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      return (
+        notification.orderId?.toLowerCase().includes(search) ||
+        notification.productCode?.toLowerCase().includes(search) ||
+        notification.traderName?.toLowerCase().includes(search) ||
+        notification.farmerName?.toLowerCase().includes(search) ||
+        notification.productName?.toLowerCase().includes(search)
+      );
+    }
+
+    return true;
+  };
+
+  // Update filtered notifications when filters change
+  useEffect(() => {
+    const filtered = notifications.filter(applyFilters);
+    setFilteredNotifications(filtered);
+  }, [filter, searchTerm, notifications]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, JSX.Element> = {
@@ -154,28 +357,6 @@ const AdminNotifications: React.FC = () => {
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
-  const filteredNotifications = notifications.filter(n => {
-    // Filter by type
-    if (filter === 'offers' && n.type !== 'offer') return false;
-    if (filter === 'orders' && n.type !== 'order_created') return false;
-    if (filter === 'payments' && !['trader_payment', 'farmer_payment'].includes(n.type)) return false;
-    if (filter === 'transporter' && n.type !== 'transporter_update') return false;
-
-    // Filter by search term
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
-      return (
-        n.orderId?.toLowerCase().includes(search) ||
-        n.productCode?.toLowerCase().includes(search) ||
-        n.traderName?.toLowerCase().includes(search) ||
-        n.farmerName?.toLowerCase().includes(search) ||
-        n.productName?.toLowerCase().includes(search)
-      );
-    }
-
-    return true;
-  });
-
   const offerCount = notifications.filter(n => n.type === 'offer').length;
   const orderCount = notifications.filter(n => n.type === 'order_created').length;
   const paymentCount = notifications.filter(n => ['trader_payment', 'farmer_payment'].includes(n.type)).length;
@@ -209,14 +390,28 @@ const AdminNotifications: React.FC = () => {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
-                <span className="text-green-600">Admin</span> Notifications
+                <span className="text-green-600">
+                  {session?.role === 'admin' ? 'Admin' : 'Subadmin'}
+                </span> Notifications
               </h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
-                  {notifications.length} Total
+                  {filteredNotifications.length} Total
+                  {session?.role === 'subadmin' && session?.taluka && (
+                    <span className="ml-1">• {session.taluka} Taluk</span>
+                  )}
                 </span>
-                <span className="text-gray-600 text-sm">All system activities and updates</span>
+                <span className="text-gray-600 text-sm">
+                  {session?.role === 'admin' ? 'All system activities and updates' : 'Taluk-specific activities'}
+                </span>
               </div>
+              {session?.role === 'subadmin' && session?.taluka && (
+                <div className="mt-2">
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
+                    Showing notifications for {session.taluka} taluk only
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <button
@@ -309,7 +504,7 @@ const AdminNotifications: React.FC = () => {
               className={`px-4 py-2 rounded-lg ${filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
               onClick={() => setFilter('all')}
             >
-              All ({notifications.length})
+              All ({filteredNotifications.length})
             </button>
             <button
               className={`px-4 py-2 rounded-lg flex items-center gap-2 ${filter === 'offers' ? 'bg-yellow-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
@@ -376,7 +571,12 @@ const AdminNotifications: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <h3 className="text-xl font-medium text-gray-700 mb-2">No notifications found</h3>
+            <h3 className="text-xl font-medium text-gray-700 mb-2">
+              {session?.role === 'subadmin' && session?.taluka 
+                ? `No notifications found for ${session.taluka} taluk`
+                : 'No notifications found'
+              }
+            </h3>
             <p className="text-gray-500">Try adjusting your filters or search term</p>
           </div>
         ) : (
@@ -389,32 +589,43 @@ const AdminNotifications: React.FC = () => {
 
                   {/* Content */}
                   <div className="flex-grow-1">
+                    {/* Taluk Badge for Subadmin */}
+                    {session?.role === 'subadmin' && (
+                      <div className="mb-2">
+                        <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                          Taluk: {notification.farmerTaluk || notification.traderTaluk || 'Unknown Taluk'}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Offer Notification */}
                     {notification.type === 'offer' && (
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-bold text-lg text-gray-800">
-                            New Offer from {notification.traderName}
+                            New Offer from {notification.traderName || 'Unknown Trader'}
                           </h3>
                           <span className="text-sm text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-3">
                           {getStatusBadge(notification.status || 'pending')}
                           <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
-                            <span className="font-medium">Product:</span> {notification.productCode}
+                            <span className="font-medium">Product:</span> {notification.productCode || 'N/A'}
                           </span>
-                          <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
-                            {notification.gradeName}
-                          </span>
+                          {notification.gradeName && (
+                            <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm rounded-full">
+                              {notification.gradeName}
+                            </span>
+                          )}
                         </div>
                         <p className="text-gray-700 mb-4">
-                          <span className="font-medium">{notification.productName}</span>
+                          <span className="font-medium">{notification.productName || 'Unknown Product'}</span>
                           {notification.categoryName && ` - ${notification.categoryName}`}
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Offered Price</p>
-                            <p className="text-lg font-bold">₹{notification.offeredPrice} × {notification.quantity} {notification.unitMeasurement}</p>
+                            <p className="text-lg font-bold">₹{notification.offeredPrice || 0} × {notification.quantity || 0} {notification.unitMeasurement || 'units'}</p>
                             <p className="text-green-600 font-medium">Total: ₹{((notification.offeredPrice || 0) * (notification.quantity || 0)).toFixed(2)}</p>
                           </div>
                           {notification.counterPrice && (
@@ -426,8 +637,9 @@ const AdminNotifications: React.FC = () => {
                           )}
                           <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Trader Details</p>
-                            <p className="font-bold">{notification.traderName}</p>
-                            <p className="text-sm text-gray-600">Farmer ID: {notification.farmerId}</p>
+                            <p className="font-bold">{notification.traderName || 'Unknown Trader'}</p>
+                            <p className="text-sm text-gray-600">Trader ID: {notification.traderId || 'N/A'}</p>
+                            <p className="text-sm text-gray-600">Farmer ID: {notification.farmerId || 'N/A'}</p>
                           </div>
                         </div>
                       </div>
@@ -438,13 +650,13 @@ const AdminNotifications: React.FC = () => {
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-bold text-lg text-gray-800">
-                            {notification.message}
+                            {notification.message || `New order ${notification.orderId} created`}
                           </h3>
                           <span className="text-sm text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                            Order: {notification.orderId}
+                            Order: {notification.orderId || 'N/A'}
                           </span>
                           {getStatusBadge(notification.orderStatus || 'pending')}
                           {getStatusBadge(notification.transporterStatus || 'pending')}
@@ -452,17 +664,23 @@ const AdminNotifications: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                           <div className="bg-gray-50 p-3 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Trader</p>
-                            <p className="font-bold">{notification.traderName}</p>
-                            <p className="text-xs text-gray-500">{notification.traderId}</p>
+                            <p className="font-bold">{notification.traderName || 'Unknown Trader'}</p>
+                            <p className="text-xs text-gray-500">{notification.traderId || 'N/A'}</p>
+                            {session?.role === 'subadmin' && notification.traderTaluk && (
+                              <p className="text-xs text-gray-500">Taluk: {notification.traderTaluk}</p>
+                            )}
                           </div>
                           <div className="bg-gray-50 p-3 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Farmer</p>
-                            <p className="font-bold">{notification.farmerName}</p>
-                            <p className="text-xs text-gray-500">{notification.farmerId}</p>
+                            <p className="font-bold">{notification.farmerName || 'Unknown Farmer'}</p>
+                            <p className="text-xs text-gray-500">{notification.farmerId || 'N/A'}</p>
+                            {session?.role === 'subadmin' && notification.farmerTaluk && (
+                              <p className="text-xs text-gray-500">Taluk: {notification.farmerTaluk}</p>
+                            )}
                           </div>
                           <div className="bg-green-50 p-3 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-                            <p className="text-lg font-bold text-green-700">₹{notification.totalAmount?.toFixed(2)}</p>
+                            <p className="text-lg font-bold text-green-700">₹{notification.totalAmount?.toFixed(2) || '0.00'}</p>
                           </div>
                           <div className="bg-gray-50 p-3 rounded-lg">
                             <p className="text-sm text-gray-600 mb-1">Payment Status</p>
@@ -483,22 +701,24 @@ const AdminNotifications: React.FC = () => {
                         </div>
                         <div className="flex flex-wrap gap-2 mb-3">
                           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                            Order: {notification.orderId}
+                            Order: {notification.orderId || 'N/A'}
                           </span>
                           <span className={`px-3 py-1 text-sm rounded-full ${notification.type === 'trader_payment' ? 'bg-green-100 text-green-800' : 'bg-indigo-100 text-indigo-800'}`}>
-                            Payment ID: {notification.razorpayPaymentId}
+                            Payment ID: {notification.razorpayPaymentId || 'N/A'}
                           </span>
                         </div>
-                        <p className="text-gray-700 mb-4">{notification.message}</p>
+                        <p className="text-gray-700 mb-4">{notification.message || 'Payment notification'}</p>
                         <div className={`p-4 rounded-lg ${notification.type === 'trader_payment' ? 'bg-green-50 border border-green-200' : 'bg-indigo-50 border border-indigo-200'}`}>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <p className="text-sm text-gray-600 mb-1">Amount</p>
-                              <p className="text-xl font-bold">{notification.type === 'trader_payment' ? '₹' : '₹'}{notification.amount?.toFixed(2)}</p>
+                              <p className="text-xl font-bold">{notification.type === 'trader_payment' ? '₹' : '₹'}{notification.amount?.toFixed(2) || '0.00'}</p>
                             </div>
                             <div>
                               <p className="text-sm text-gray-600 mb-1">Payment Date</p>
-                              <p className="font-medium">{notification.paidDate && new Date(notification.paidDate).toLocaleString('en-IN')}</p>
+                              <p className="font-medium">
+                                {notification.paidDate ? new Date(notification.paidDate).toLocaleString('en-IN') : 'N/A'}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -510,13 +730,13 @@ const AdminNotifications: React.FC = () => {
                       <div>
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-bold text-lg text-gray-800">
-                            {notification.message}
+                            {notification.message || 'Transporter update'}
                           </h3>
                           <span className="text-sm text-gray-500">{formatTimeAgo(notification.createdAt)}</span>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-4">
                           <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                            Order: {notification.orderId}
+                            Order: {notification.orderId || 'N/A'}
                           </span>
                           {getStatusBadge(notification.transporterStatus || 'pending')}
                         </div>
@@ -525,11 +745,13 @@ const AdminNotifications: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">Transporter</p>
-                                <p className="font-bold">{notification.transporterDetails.transporterName}</p>
+                                <p className="font-bold">{notification.transporterDetails.transporterName || 'Unknown'}</p>
                               </div>
                               <div>
                                 <p className="text-sm text-gray-600 mb-1">Vehicle</p>
-                                <p className="font-bold">{notification.transporterDetails.vehicleType} - {notification.transporterDetails.vehicleNumber}</p>
+                                <p className="font-bold">
+                                  {notification.transporterDetails.vehicleType || 'N/A'} - {notification.transporterDetails.vehicleNumber || 'N/A'}
+                                </p>
                               </div>
                               {notification.transporterDetails.driverName && (
                                 <div>

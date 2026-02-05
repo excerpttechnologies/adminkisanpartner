@@ -157,7 +157,7 @@ export async function GET(req: NextRequest) {
         const showDeleted = searchParams.get("showDeleted") === "true"; // New parameter
 
 
-    const filter: any = {};
+    const filter: any = {role:"subadmin"};
 
      if (!showDeleted) {
       filter.isDeleted = { $ne: true };

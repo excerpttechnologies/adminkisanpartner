@@ -113,8 +113,13 @@ export async function proxy(request: NextRequest) {
 
   if (path.startsWith('/my-profile') && session) {
   return NextResponse.next();
+
 }
 
+  
+  if (path.startsWith('/admin-notifications') && session) {
+  return NextResponse.next();
+  }
   // For subadmin, check page access (only for admin protected routes)
   if (isAdminProtectedRoute && session?.admin?.role === 'subadmin') {
     // Extract page name from path

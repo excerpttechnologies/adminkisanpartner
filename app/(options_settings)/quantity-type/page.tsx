@@ -6,15 +6,127 @@
 
 
 
+
+
+
+
 // "use client";
 
-// import React, { useState } from "react";
-// import axios from "axios";
+// import React, { useState, useEffect } from "react";
+
+// interface PackagingData {
+//   _id: string;
+//   packageType: string;
+//   measurements: string[];
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
 // const QuantityType: React.FC = () => {
+//   // State for creating/editing packaging
 //   const [packageType, setPackageType] = useState("");
 //   const [measurements, setMeasurements] = useState<string[]>([""]);
+//   const [editingId, setEditingId] = useState<string | null>(null);
+  
+//   // State for fetching and displaying data
+//   const [packagingData, setPackagingData] = useState<PackagingData[]>([]);
 //   const [loading, setLoading] = useState(false);
+//   const [fetchLoading, setFetchLoading] = useState(false);
+//   const [activeTab, setActiveTab] = useState<"create" | "view">("create");
+//   const [error, setError] = useState<string | null>(null);
+//   const [success, setSuccess] = useState<string | null>(null);
+
+//   // Fetch packaging data on component mount
+//   useEffect(() => {
+//     fetchPackagingData();
+//   }, []);
+
+//   const fetchPackagingData = async () => {
+//     try {
+//       setFetchLoading(true);
+//       setError(null);
+      
+//       const response = await fetch("/api/packaging");
+      
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! status: ${response.status}`);
+//       }
+      
+//       const data = await response.json();
+      
+//       if (data.success) {
+//         setPackagingData(data.data || []);
+//       } else {
+//         setError(data.error || "Failed to fetch data");
+//       }
+      
+//     } catch (err: any) {
+//       console.error("Error fetching packaging data:", err);
+//       setError("Failed to fetch packaging data: " + err.message);
+//     } finally {
+//       setFetchLoading(false);
+//     }
+//   };
+
+//   // Edit packaging function
+//   const editPackage = async (id: string) => {
+//     try {
+//       setLoading(true);
+//       setError(null);
+//       setSuccess(null);
+      
+//       const response = await fetch(`/api/packaging/${id}`);
+//       const data = await response.json();
+      
+//       if (data.success) {
+//         const item = data.data;
+//         setPackageType(item.packageType);
+//         setMeasurements(item.measurements.length > 0 ? item.measurements : [""]);
+//         setEditingId(id);
+//         setActiveTab("create");
+//         setSuccess("Package loaded for editing");
+//       } else {
+//         setError(data.error || "Failed to load package");
+//       }
+      
+//     } catch (err: any) {
+//       console.error("Error loading package for edit:", err);
+//       setError("Failed to load package for editing: " + err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Delete packaging function
+//   const deletePackage = async (id: string) => {
+//     if (!confirm("Are you sure you want to delete this packaging?")) return;
+
+//     try {
+//       setLoading(true);
+//       setError(null);
+//       setSuccess(null);
+      
+//       const response = await fetch(`/api/packaging/${id}`, {
+//         method: 'DELETE'
+//       });
+      
+//       const data = await response.json();
+      
+//       if (data.success) {
+//         setSuccess(data.message || "Packaging deleted successfully!");
+//         setPackagingData(packagingData.filter(item => item._id !== id));
+//         setTimeout(() => fetchPackagingData(), 500);
+//       } else {
+//         setError(data.error || "Failed to delete packaging");
+//       }
+      
+//     } catch (err: any) {
+//       console.error("Error deleting packaging:", err);
+//       setError("Failed to delete packaging: " + err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
 
 //   const addMeasurement = () => {
 //     setMeasurements([...measurements, ""]);
@@ -27,168 +139,477 @@
 //   };
 
 //   const removeMeasurement = (index: number) => {
-//     setMeasurements(measurements.filter((_, i) => i !== index));
+//     if (measurements.length > 1) {
+//       setMeasurements(measurements.filter((_, i) => i !== index));
+//     }
 //   };
 
 //   const submitHandler = async (e: React.FormEvent) => {
 //     e.preventDefault();
+//     setLoading(true);
+//     setError(null);
+//     setSuccess(null);
 
 //     try {
-//       await axios.post("https://kisan.etpl.ai/api/packaging/save", {
-//         packageType,
-//         measurements: measurements.filter(Boolean),
-//       });
+//       const payload = {
+//         packageType: packageType.trim(),
+//         measurements: measurements.filter(m => m.trim() !== ""),
+//       };
 
-//       alert("Packaging saved");
-//       setPackageType("");
-//       setMeasurements([""]);
+//       if (editingId) {
+//         // Update existing packaging
+//         const response = await fetch(`/api/packaging/${editingId}`, {
+//           method: 'PUT',
+//           headers: {
+//             'Content-Type': 'application/json',
+//           },
+//           body: JSON.stringify(payload)
+//         });
+        
+//         const data = await response.json();
+        
+//         if (data.success) {
+//           setSuccess(data.message || "Packaging updated successfully!");
+//           setPackagingData(packagingData.map(item => 
+//             item._id === editingId ? data.data : item
+//           ));
+//           resetForm();
+//           setTimeout(() => fetchPackagingData(), 500);
+//         } else {
+//           setError(data.error || "Update failed");
+//         }
+//       } else {
+//         // Create new packaging
+//         const response = await fetch("/api/packaging", {
+//           method: 'POST',
+//           headers: {
+//             'Content-Type': 'application/json',
+//           },
+//           body: JSON.stringify(payload)
+//         });
+        
+//         const data = await response.json();
+        
+//         if (data.success) {
+//           setSuccess(data.message || "Packaging created successfully!");
+//           setPackagingData([...packagingData, data.data]);
+//           resetForm();
+//           setTimeout(() => fetchPackagingData(), 500);
+//         } else {
+//           setError(data.error || "Creation failed");
+//         }
+//       }
+      
 //     } catch (err: any) {
-//       alert(err.response?.data?.message || "Error");
+//       console.error("Error saving packaging:", err);
+//       setError("Error saving packaging: " + err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const resetForm = () => {
+//     setPackageType("");
+//     setMeasurements([""]);
+//     setEditingId(null);
+//     setError(null);
+//     setSuccess(null);
+//   };
+
+//   const cancelEdit = () => {
+//     resetForm();
+//   };
+
+//   // Format date for display
+//   const formatDate = (dateString: string) => {
+//     try {
+//       return new Date(dateString).toLocaleDateString("en-US", {
+//         year: "numeric",
+//         month: "short",
+//         day: "numeric",
+//         hour: "2-digit",
+//         minute: "2-digit",
+//       });
+//     } catch {
+//       return "Invalid date";
 //     }
 //   };
 
 //   return (
 //     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-//       <div className="max-w-2xl mx-auto">
-//         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-//           {/* Header */}
-//           <div className="bg-gradient-to-r from-green-600 to-green-700 px-8 py-6">
-//             <h3 className="text-2xl font-bold text-white">Packaging Setup</h3>
-//             <p className="text-emerald-100 text-sm mt-1">Define packaging types and their measurements</p>
+//       <div className="max-w-6xl mx-auto">
+//         {/* Success Alert */}
+//         {success && (
+//           <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+//             <div className="flex items-center">
+//               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+//                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+//               </svg>
+//               <span>{success}</span>
+//               <button onClick={() => setSuccess(null)} className="ml-auto text-green-500 hover:text-green-700">
+//                 Dismiss
+//               </button>
+//             </div>
 //           </div>
+//         )}
 
-//           <form onSubmit={submitHandler} className="p-8 space-y-8">
-//             {/* Package Type Input */}
-//             <div>
-//               <label className="block text-sm font-semibold text-gray-700 mb-3">
-//                 Package Type *
-//               </label>
-//               <input
-//                 type="text"
-//                 className="w-full px-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
-//                 placeholder="Enter package type (Eg: KG, BOX, SACK, BAG)"
-//                 value={packageType}
-//                 onChange={(e) => setPackageType(e.target.value)}
-//                 required
-//               />
-//               <p className="text-xs text-gray-500 mt-2 ml-1">
-//                 This is the main packaging category
-//               </p>
+//         {/* Error Alert */}
+//         {error && (
+//           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+//             <div className="flex items-center">
+//               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+//                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+//               </svg>
+//               <span>{error}</span>
+//               <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">
+//                 Dismiss
+//               </button>
+//             </div>
+//           </div>
+//         )}
+
+//         {/* Header */}
+//         <div className="text-center mb-12">
+//           <h1 className="text-4xl font-bold text-gray-900 mb-3">
+//             Packaging Management {editingId && <span className="text-blue-600">(Editing)</span>}
+//           </h1>
+//           <p className="text-gray-600 max-w-2xl mx-auto">
+//             Create, view, edit, and delete packaging types in your system
+//           </p>
+//         </div>
+
+//         {/* Tabs */}
+//         <div className="flex border-b border-gray-200 mb-8">
+//           <button
+//             className={`px-6 py-3 font-medium text-lg transition-colors ${
+//               activeTab === "create"
+//                 ? "border-b-2 border-blue-600 text-blue-600"
+//                 : "text-gray-500 hover:text-gray-700"
+//             }`}
+//             onClick={() => {
+//               setActiveTab("create");
+//               setError(null);
+//               setSuccess(null);
+//             }}
+//           >
+//             {editingId ? "Edit Package" : "Create New"}
+//           </button>
+//           <button
+//             className={`px-6 py-3 font-medium text-lg transition-colors ${
+//               activeTab === "view"
+//                 ? "border-b-2 border-blue-600 text-blue-600"
+//                 : "text-gray-500 hover:text-gray-700"
+//             }`}
+//             onClick={() => {
+//               setActiveTab("view");
+//               setError(null);
+//               setSuccess(null);
+//               fetchPackagingData();
+//             }}
+//           >
+//             View All ({packagingData.length})
+//           </button>
+//         </div>
+
+//         {/* Content based on active tab */}
+//         {activeTab === "create" ? (
+//           /* Create/Edit Form */
+//           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+//             <div className={`px-8 py-6 ${editingId ? 'bg-gradient-to-r from-yellow-600 to-amber-600' : 'bg-gradient-to-r from-green-600 to-green-700'}`}>
+//               <div className="flex justify-between items-center">
+//                 <div>
+//                   <h3 className="text-2xl font-bold text-white">
+//                     {editingId ? 'Edit Packaging' : 'Create New Packaging'}
+//                     {editingId && <span className="block text-sm font-normal mt-1">Editing ID: {editingId.substring(0, 12)}...</span>}
+//                   </h3>
+//                   <p className="text-emerald-100 text-sm mt-1">
+//                     {editingId ? 'Update existing packaging details' : 'Define packaging types and their measurements'}
+//                   </p>
+//                 </div>
+//                 {editingId && (
+//                   <button
+//                     onClick={cancelEdit}
+//                     className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+//                   >
+//                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+//                     </svg>
+//                     Cancel Edit
+//                   </button>
+//                 )}
+//               </div>
 //             </div>
 
-//             {/* Measurements Section */}
-//             <div className="space-y-5">
-//               <div className="flex items-center justify-between">
-//                 <label className="text-sm font-semibold text-gray-700">
-//                   Measurements *
+//             <form onSubmit={submitHandler} className="p-8 space-y-8">
+//               {/* Package Type Input */}
+//               <div>
+//                 <label className="block text-sm font-semibold text-gray-700 mb-3">
+//                   Package Type *
 //                 </label>
-//                 <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-//                   {measurements.length} measurement(s)
-//                 </span>
+//                 <input
+//                   type="text"
+//                   className="w-full px-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
+//                   placeholder="Enter package type (Eg: KG, BOX, SACK, BAG)"
+//                   value={packageType}
+//                   onChange={(e) => setPackageType(e.target.value)}
+//                   required
+//                   disabled={loading}
+//                 />
+//                 <p className="text-xs text-gray-500 mt-2 ml-1">
+//                   This will be automatically converted to uppercase
+//                 </p>
 //               </div>
 
-//               <div className="space-y-4">
-//                 {measurements.map((m, index) => (
-//                   <div key={index} className="flex items-center gap-3 group">
-//                     <div className="flex-1">
-//                       <div className="relative">
-//                         <input
-//                           className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
-//                           placeholder="Eg: 10 KG / Medium / 25 KG Bag"
-//                           value={m}
-//                           onChange={(e) => updateMeasurement(index, e.target.value)}
-//                           required
-//                         />
-//                         <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-//                           <div className="flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full">
-//                             <span className="text-xs font-semibold">
-//                               {index + 1}
-//                             </span>
+//               {/* Measurements Section */}
+//               <div className="space-y-5">
+//                 <div className="flex items-center justify-between">
+//                   <label className="text-sm font-semibold text-gray-700">
+//                     Measurements *
+//                   </label>
+//                   <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+//                     {measurements.length} measurement(s)
+//                   </span>
+//                 </div>
+
+//                 <div className="space-y-4">
+//                   {measurements.map((m, index) => (
+//                     <div key={index} className="flex items-center gap-3 group">
+//                       <div className="flex-1">
+//                         <div className="relative">
+//                           <input
+//                             className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
+//                             placeholder="Eg: 10 KG / Medium / 25 KG Bag"
+//                             value={m}
+//                             onChange={(e) => updateMeasurement(index, e.target.value)}
+//                             required
+//                             disabled={loading}
+//                           />
+//                           <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+//                             <div className="flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full">
+//                               <span className="text-xs font-semibold">
+//                                 {index + 1}
+//                               </span>
+//                             </div>
 //                           </div>
 //                         </div>
 //                       </div>
-//                     </div>
 
-//                     {measurements.length > 1 && (
-//                       <button
-//                         type="button"
-//                         onClick={() => removeMeasurement(index)}
-//                         className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors duration-200 group-hover:opacity-100 opacity-70"
-//                         title="Remove measurement"
-//                       >
-//                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-//                         </svg>
-//                       </button>
-//                     )}
+//                       {measurements.length > 1 && (
+//                         <button
+//                           type="button"
+//                           onClick={() => removeMeasurement(index)}
+//                           className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors duration-200 group-hover:opacity-100 opacity-70 disabled:opacity-50"
+//                           title="Remove measurement"
+//                           disabled={loading}
+//                         >
+//                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+//                           </svg>
+//                         </button>
+//                       )}
+//                     </div>
+//                   ))}
+//                 </div>
+
+//                 {/* Add Measurement Button */}
+//                 <button
+//                   type="button"
+//                   onClick={addMeasurement}
+//                   className="w-full py-3.5 border-2 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+//                   disabled={loading}
+//                 >
+//                   <div className="flex items-center justify-center gap-2">
+//                     <div className="w-8 h-8 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full group-hover:bg-emerald-200 transition-colors">
+//                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+//                       </svg>
+//                     </div>
+//                     <span className="text-emerald-700 font-medium group-hover:text-emerald-800">
+//                       Add Measurement
+//                     </span>
 //                   </div>
-//                 ))}
+//                   <p className="text-xs text-gray-500 mt-2">
+//                     Add another measurement variant for this package type
+//                   </p>
+//                 </button>
 //               </div>
 
-//               {/* Add Measurement Button */}
-//               <button
-//                 type="button"
-//                 onClick={addMeasurement}
-//                 className="w-full py-3.5 border-2 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50 rounded-lg transition-all duration-200 group"
-//               >
-//                 <div className="flex items-center justify-center gap-2">
-//                   <div className="w-8 h-8 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full group-hover:bg-emerald-200 transition-colors">
+//               {/* Submit Button */}
+//               <div className="pt-6 border-t border-gray-200">
+//                 <button
+//                   type="submit"
+//                   disabled={loading}
+//                   className={`w-full text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${
+//                     editingId 
+//                       ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 focus:ring-yellow-500'
+//                       : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500'
+//                   }`}
+//                 >
+//                   {loading ? (
+//                     <span className="flex items-center justify-center gap-2">
+//                       <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+//                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+//                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+//                       </svg>
+//                       {editingId ? 'Updating...' : 'Saving...'}
+//                     </span>
+//                   ) : (
+//                     editingId ? 'Update Packaging' : 'Save Packaging'
+//                   )}
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         ) : (
+//           /* View Data Section */
+//           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+//             <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+//               <div className="flex justify-between items-center">
+//                 <div>
+//                   <h3 className="text-2xl font-bold text-white">All Packaging Types</h3>
+//                   <p className="text-blue-100 text-sm mt-1">
+//                     Total {packagingData.length} packaging types found
+//                   </p>
+//                 </div>
+//                 <button
+//                   onClick={fetchPackagingData}
+//                   disabled={fetchLoading}
+//                   className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+//                 >
+//                   {fetchLoading ? (
+//                     <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+//                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+//                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+//                     </svg>
+//                   ) : (
+//                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+//                     </svg>
+//                   )}
+//                   Refresh
+//                 </button>
+//               </div>
+//             </div>
+
+//             <div className="p-8">
+//               {fetchLoading && packagingData.length === 0 ? (
+//                 <div className="flex justify-center items-center py-12">
+//                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+//                 </div>
+//               ) : packagingData.length === 0 ? (
+//                 <div className="text-center py-12">
+//                   <div className="w-24 h-24 mx-auto mb-4 text-gray-300">
+//                     <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+//                     </svg>
+//                   </div>
+//                   <h4 className="text-xl font-semibold text-gray-600 mb-2">No Packaging Found</h4>
+//                   <p className="text-gray-500 max-w-md mx-auto mb-6">
+//                     No packaging types have been created yet. Create your first packaging type to get started.
+//                   </p>
+//                   <button
+//                     onClick={() => setActiveTab("create")}
+//                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors"
+//                   >
 //                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 //                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
 //                     </svg>
-//                   </div>
-//                   <span className="text-emerald-700 font-medium group-hover:text-emerald-800">
-//                     Add Measurement
-//                   </span>
+//                     Create New Packaging
+//                   </button>
 //                 </div>
-//                 <p className="text-xs text-gray-500 mt-2">
-//                   Add another measurement variant for this package type
-//                 </p>
-//               </button>
-//             </div>
+//               ) : (
+//                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+//                   {packagingData.map((item) => (
+//                     <div
+//                       key={item._id}
+//                       className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow bg-white group relative"
+//                     >
+//                       {/* Edit/Delete buttons */}
+//                       <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+//                         <button
+//                           onClick={() => editPackage(item._id)}
+//                           disabled={loading}
+//                           className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-50"
+//                           title="Edit"
+//                         >
+//                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+//                           </svg>
+//                         </button>
+//                         <button
+//                           onClick={() => deletePackage(item._id)}
+//                           disabled={loading}
+//                           className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
+//                           title="Delete"
+//                         >
+//                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+//                           </svg>
+//                         </button>
+//                       </div>
 
-//             {/* Submit Button */}
-//             <div className="pt-6 border-t border-gray-200">
-//               <button
-//                 type="submit"
-//                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-//               >
-//                 Save Packaging
-//               </button>
-//             </div>
-//           </form>
-//         </div>
+//                       <div className="mb-4">
+//                         <h4 className="text-lg font-bold text-gray-900 mb-1 pr-12">
+//                           {item.packageType}
+//                         </h4>
+//                         <div className="flex items-center text-sm text-gray-500">
+//                           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+//                           </svg>
+//                           Created: {formatDate(item.createdAt)}
+//                         </div>
+//                       </div>
 
-//         {/* Info Card */}
-//         <div className="mt-8 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-6">
-//           <div className="flex items-start">
-//             <div className="flex-shrink-0">
-//               <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-//               </svg>
-//             </div>
-//             <div className="ml-4">
-//               <h4 className="text-sm font-semibold text-emerald-900">How Packaging Setup Works</h4>
-//               <p className="mt-1 text-sm text-emerald-800">
-//                 Define a package type (like &quot;KG&quot; or &quot;BOX&quot;) and add multiple measurements for that type.
-//                 Each measurement represents a different size/variant of the same packaging type.
-//                 Example: For &quot;BAG&quot; type, you could add measurements like &quot;5 KG Bag&quot;, &quot;10 KG Bag&quot;, &quot;25 KG Bag&quot;.
-//               </p>
+//                       <div className="mb-6">
+//                         <div className="flex items-center justify-between mb-2">
+//                           <h5 className="text-sm font-semibold text-gray-700">Measurements:</h5>
+//                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+//                             {item.measurements.length} variants
+//                           </span>
+//                         </div>
+//                         <div className="flex flex-wrap gap-2">
+//                           {item.measurements.map((measurement, idx) => (
+//                             <span
+//                               key={idx}
+//                               className="inline-block px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
+//                             >
+//                               {measurement}
+//                             </span>
+//                           ))}
+//                         </div>
+//                       </div>
+
+//                       <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+//                         <div className="flex space-x-2">
+//                           <button
+//                             onClick={() => editPackage(item._id)}
+//                             disabled={loading}
+//                             className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+//                           >
+//                             Edit
+//                           </button>
+//                           <button
+//                             onClick={() => deletePackage(item._id)}
+//                             disabled={loading}
+//                             className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+//                           >
+//                             Delete
+//                           </button>
+//                         </div>
+//                       </div>
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
 //             </div>
 //           </div>
-//         </div>
+//         )}
 //       </div>
 //     </div>
 //   );
 // };
 
 // export default QuantityType;
-
-
-
-
-
-
 
 
 
@@ -221,9 +642,17 @@ const QuantityType: React.FC = () => {
   const [packagingData, setPackagingData] = useState<PackagingData[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"create" | "view">("create");
+  const [isFormVisible, setIsFormVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [viewingItem, setViewingItem] = useState<PackagingData | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch packaging data on component mount
   useEffect(() => {
@@ -245,6 +674,7 @@ const QuantityType: React.FC = () => {
       
       if (data.success) {
         setPackagingData(data.data || []);
+        setCurrentPage(1); // Reset to first page on refresh
       } else {
         setError(data.error || "Failed to fetch data");
       }
@@ -255,6 +685,41 @@ const QuantityType: React.FC = () => {
     } finally {
       setFetchLoading(false);
     }
+  };
+
+  // Filter data based on search term
+  const filteredData = packagingData.filter(item =>
+    item.packageType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.measurements.some(m => m.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  // Pagination calculations
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  // Pagination handlers
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   // Edit packaging function
@@ -272,7 +737,7 @@ const QuantityType: React.FC = () => {
         setPackageType(item.packageType);
         setMeasurements(item.measurements.length > 0 ? item.measurements : [""]);
         setEditingId(id);
-        setActiveTab("create");
+        setIsFormVisible(true);
         setSuccess("Package loaded for editing");
       } else {
         setError(data.error || "Failed to load package");
@@ -284,6 +749,16 @@ const QuantityType: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // View packaging details
+  const viewPackage = (item: PackagingData) => {
+    setViewingItem(item);
+  };
+
+  // Close view modal
+  const closeViewModal = () => {
+    setViewingItem(null);
   };
 
   // Delete packaging function
@@ -401,11 +876,19 @@ const QuantityType: React.FC = () => {
     setPackageType("");
     setMeasurements([""]);
     setEditingId(null);
+    setIsFormVisible(false);
     setError(null);
     setSuccess(null);
   };
 
-  const cancelEdit = () => {
+  const openForm = () => {
+    setIsFormVisible(true);
+    setEditingId(null);
+    resetForm();
+  };
+
+  const closeForm = () => {
+    setIsFormVisible(false);
     resetForm();
   };
 
@@ -416,384 +899,625 @@ const QuantityType: React.FC = () => {
         year: "numeric",
         month: "short",
         day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
       });
     } catch {
       return "Invalid date";
     }
   };
 
+  // Items per page options
+  const itemsPerPageOptions = [5, 10, 20, 50];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/20 p-3 md:p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6 md:mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Packaging Manager</h1>
+              <p className="text-gray-600 mt-1 text-sm md:text-base">Manage your packaging types and measurements</p>
+            </div>
+            
+            {/* Summary in one line */}
+            <div className="bg-gradient-to-r from-white to-blue-50 rounded-xl md:rounded-2xl border border-gray-200 shadow-sm p-3 md:p-4 w-full md:w-auto">
+              <div className="flex items-center justify-between">
+                <div className="text-center flex-1 md:flex-none">
+                  <div className="text-lg md:text-xl font-bold text-blue-600">{packagingData.length}</div>
+                  <div className="text-xs md:text-sm text-gray-600">Total Packaging</div>
+                </div>
+                <div className="h-6 md:h-8 w-px bg-gray-300 mx-2"></div>
+                <div className="text-center flex-1 md:flex-none">
+                  <div className="text-lg md:text-xl font-bold text-green-600">
+                    {packagingData.reduce((total, item) => total + item.measurements.length, 0)}
+                  </div>
+                  <div className="text-xs md:text-sm text-gray-600">Total Measurements</div>
+                </div>
+                <div className="h-6 md:h-8 w-px bg-gray-300 mx-2"></div>
+                <button
+                  onClick={fetchPackagingData}
+                  disabled={fetchLoading}
+                  className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 text-blue-600 rounded-lg md:rounded-xl transition-all duration-200 border border-blue-200"
+                  title="Refresh Data"
+                >
+                  <svg className={`w-4 h-4 md:w-5 md:h-5 ${fetchLoading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Header with Add New Packaging button on right */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div className="flex-1">
+              {/* Search Input */}
+              <div className="relative max-w-md">
+                <input
+                  type="text"
+                  placeholder="Search packaging or measurements..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2.5 pl-10 text-sm md:text-base border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-white"
+                />
+                <svg className="absolute left-3 top-3 w-4 h-4 md:w-5 md:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Add New Packaging button on right */}
+            <div className="flex justify-end">
+              <button
+                onClick={openForm}
+                className="group relative px-4 py-2.5 md:px-6 md:py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg md:rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 shadow-lg hover:shadow-xl flex items-center justify-center gap-2 text-sm md:text-base"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add New Packaging
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-lg md:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Success Alert */}
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>{success}</span>
-              <button onClick={() => setSuccess(null)} className="ml-auto text-green-500 hover:text-green-700">
-                Dismiss
-              </button>
+          <div className="mb-4 md:mb-6 animate-fadeIn">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-3 md:p-4 rounded-r-lg shadow-sm">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-4 w-4 md:h-5 md:w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-2 md:ml-3 flex-1">
+                  <p className="text-xs md:text-sm font-medium text-green-800">{success}</p>
+                </div>
+                <div className="ml-2 md:ml-3">
+                  <button
+                    onClick={() => setSuccess(null)}
+                    className="inline-flex text-green-700 hover:text-green-900"
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    <svg className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span>{error}</span>
-              <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">
-                Dismiss
-              </button>
+          <div className="mb-4 md:mb-6 animate-fadeIn">
+            <div className="bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 p-3 md:p-4 rounded-r-lg shadow-sm">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-4 w-4 md:h-5 md:w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-2 md:ml-3 flex-1">
+                  <p className="text-xs md:text-sm font-medium text-red-800">{error}</p>
+                </div>
+                <div className="ml-2 md:ml-3">
+                  <button
+                    onClick={() => setError(null)}
+                    className="inline-flex text-red-700 hover:text-red-900"
+                  >
+                    <span className="sr-only">Dismiss</span>
+                    <svg className="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
-            Packaging Management {editingId && <span className="text-blue-600">(Editing)</span>}
-          </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Create, view, edit, and delete packaging types in your system
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-8">
-          <button
-            className={`px-6 py-3 font-medium text-lg transition-colors ${
-              activeTab === "create"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            onClick={() => {
-              setActiveTab("create");
-              setError(null);
-              setSuccess(null);
-            }}
-          >
-            {editingId ? "Edit Package" : "Create New"}
-          </button>
-          <button
-            className={`px-6 py-3 font-medium text-lg transition-colors ${
-              activeTab === "view"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-            onClick={() => {
-              setActiveTab("view");
-              setError(null);
-              setSuccess(null);
-              fetchPackagingData();
-            }}
-          >
-            View All ({packagingData.length})
-          </button>
-        </div>
-
-        {/* Content based on active tab */}
-        {activeTab === "create" ? (
-          /* Create/Edit Form */
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <div className={`px-8 py-6 ${editingId ? 'bg-gradient-to-r from-yellow-600 to-amber-600' : 'bg-gradient-to-r from-green-600 to-green-700'}`}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-2xl font-bold text-white">
-                    {editingId ? 'Edit Packaging' : 'Create New Packaging'}
-                    {editingId && <span className="block text-sm font-normal mt-1">Editing ID: {editingId.substring(0, 12)}...</span>}
-                  </h3>
-                  <p className="text-emerald-100 text-sm mt-1">
-                    {editingId ? 'Update existing packaging details' : 'Define packaging types and their measurements'}
-                  </p>
-                </div>
-                {editingId && (
+        {/* Form Section */}
+        {isFormVisible && (
+          <div className="mb-6 md:mb-8 animate-slideDown">
+            <div className="bg-white rounded-xl md:rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
+              <div className="px-4 md:px-8 py-4 md:py-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-lg md:text-2xl font-bold text-gray-900">
+                      {editingId ? 'Edit Packaging' : 'Add New Packaging'}
+                    </h3>
+                    <p className="text-gray-600 mt-1 text-sm md:text-base">
+                      {editingId ? 'Update existing packaging details' : 'Add new packaging type and measurements'}
+                    </p>
+                  </div>
                   <button
-                    onClick={cancelEdit}
-                    className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                    onClick={closeForm}
+                    className="p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Cancel Edit
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={submitHandler} className="p-4 md:p-8 space-y-4 md:space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Package Type <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-3 md:px-4 py-2.5 md:py-3.5 border border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-sm md:text-base"
+                    placeholder="e.g., Box, Carton, Envelope"
+                    value={packageType}
+                    onChange={(e) => setPackageType(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-2 gap-2">
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Measurements <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addMeasurement}
+                      className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1 self-start md:self-auto"
+                      disabled={loading}
+                    >
+                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Measurement
+                    </button>
+                  </div>
+                  <div className="space-y-2 md:space-y-3">
+                    {measurements.map((m, index) => (
+                      <div key={index} className="flex flex-col md:flex-row gap-2">
+                        <input
+                          className="flex-1 px-3 md:px-4 py-2.5 border border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-sm md:text-base"
+                          placeholder="e.g., Small, Medium, Large"
+                          value={m}
+                          onChange={(e) => updateMeasurement(index, e.target.value)}
+                          required
+                          disabled={loading}
+                        />
+                        {measurements.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMeasurement(index)}
+                            className="px-3 md:px-4 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg md:rounded-xl transition-colors duration-200 flex items-center justify-center gap-1 font-medium text-sm md:text-base"
+                            disabled={loading}
+                          >
+                            <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-2 md:gap-3 pt-4 md:pt-6 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={closeForm}
+                    disabled={loading}
+                    className="flex-1 px-4 md:px-6 py-2.5 md:py-3.5 border-2 border-gray-300 rounded-lg md:rounded-xl bg-white text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 disabled:opacity-50 text-sm md:text-base"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`flex-1 px-4 md:px-6 py-2.5 md:py-3.5 text-white font-semibold rounded-lg md:rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 ${
+                      editingId 
+                        ? 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+                        : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'
+                    } disabled:opacity-50 text-sm md:text-base`}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4 md:h-5 md:w-5" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        {editingId ? 'Updating...' : 'Creating...'}
+                      </span>
+                    ) : editingId ? 'Update Packaging' : 'Add Packaging'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Packaging List Table */}
+        <div className="bg-white rounded-xl md:rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-4 md:px-8 py-4 md:py-6 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg md:text-2xl font-bold text-gray-900">All Packaging Types</h3>
+                <p className="text-gray-600 mt-1 text-sm md:text-base">
+                  Showing {filteredData.length} packaging types
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs md:text-sm font-medium text-gray-700">
+                  Page {currentPage} of {totalPages}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {fetchLoading && packagingData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 md:py-16">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-blue-600"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-4 w-4 md:h-6 md:w-6 bg-blue-600 rounded-full animate-pulse"></div>
+                  </div>
+                </div>
+                <p className="mt-3 md:mt-4 text-gray-600 font-medium text-sm md:text-base">Loading packaging data...</p>
+              </div>
+            ) : filteredData.length === 0 ? (
+              <div className="text-center py-12 md:py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-full mb-4 md:mb-6">
+                  <svg className="w-8 h-8 md:w-10 md:h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <h4 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">No Packaging Found</h4>
+                <p className="text-gray-500 mb-4 md:mb-6 max-w-md mx-auto text-sm md:text-base">
+                  {searchTerm ? 'No results found for your search. Try a different term.' : 'Get started by adding your first packaging type.'}
+                </p>
+                {!searchTerm && (
+                  <button
+                    onClick={openForm}
+                    className="px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold rounded-lg md:rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 shadow-md text-sm md:text-base"
+                  >
+                    Add First Packaging
                   </button>
                 )}
               </div>
-            </div>
-
-            <form onSubmit={submitHandler} className="p-8 space-y-8">
-              {/* Package Type Input */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                  Package Type *
-                </label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
-                  placeholder="Enter package type (Eg: KG, BOX, SACK, BAG)"
-                  value={packageType}
-                  onChange={(e) => setPackageType(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-                <p className="text-xs text-gray-500 mt-2 ml-1">
-                  This will be automatically converted to uppercase
-                </p>
-              </div>
-
-              {/* Measurements Section */}
-              <div className="space-y-5">
-                <div className="flex items-center justify-between">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Measurements *
-                  </label>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
-                    {measurements.length} measurement(s)
-                  </span>
-                </div>
-
-                <div className="space-y-4">
-                  {measurements.map((m, index) => (
-                    <div key={index} className="flex items-center gap-3 group">
-                      <div className="flex-1">
-                        <div className="relative">
-                          <input
-                            className="w-full pl-12 pr-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-gray-800 placeholder-gray-500"
-                            placeholder="Eg: 10 KG / Medium / 25 KG Bag"
-                            value={m}
-                            onChange={(e) => updateMeasurement(index, e.target.value)}
-                            required
-                            disabled={loading}
-                          />
-                          <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                            <div className="flex items-center justify-center w-6 h-6 bg-emerald-100 text-emerald-700 rounded-full">
-                              <span className="text-xs font-semibold">
-                                {index + 1}
-                              </span>
+            ) : (
+              <>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100">
+                      <th className="px-4 md:px-8 py-3 md:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        #
+                      </th>
+                      <th className="px-4 md:px-8 py-3 md:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Package Type
+                      </th>
+                      <th className="px-4 md:px-8 py-3 md:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden md:table-cell">
+                        Measurements
+                      </th>
+                      <th className="px-4 md:px-8 py-3 md:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hidden sm:table-cell">
+                        Created Date
+                      </th>
+                      <th className="px-4 md:px-8 py-3 md:py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {currentItems.map((item, index) => (
+                      <tr key={item._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/20 transition-all duration-200">
+                        <td className="px-4 md:px-8 py-3 md:py-5 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg md:rounded-xl">
+                              <span className="text-xs md:text-sm font-bold text-blue-700">{(currentPage - 1) * itemsPerPage + index + 1}</span>
                             </div>
                           </div>
-                        </div>
+                        </td>
+                        <td className="px-4 md:px-8 py-3 md:py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <div className="w-2 h-6 md:h-8 bg-gradient-to-b from-blue-500 to-indigo-500 rounded-full"></div>
+                            <div>
+                              <div className="font-bold text-gray-900 text-sm md:text-lg">{item.packageType}</div>
+                              <div className="text-xs text-gray-500 md:hidden">
+                                {item.measurements.slice(0, 2).join(', ')}
+                                {item.measurements.length > 2 && '...'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 md:px-8 py-3 md:py-5 hidden md:table-cell">
+                          <div className="flex flex-wrap gap-1 md:gap-2">
+                            {item.measurements.map((measurement, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 md:px-3 py-0.5 md:py-1.5 rounded-full text-xs md:text-sm font-medium bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border border-blue-200"
+                              >
+                                {measurement}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 md:px-8 py-3 md:py-5 whitespace-nowrap hidden sm:table-cell">
+                          <div className="text-xs md:text-sm text-gray-900 font-medium">{formatDate(item.createdAt)}</div>
+                          <div className="text-xs text-gray-500">Updated: {formatDate(item.updatedAt)}</div>
+                        </td>
+                        <td className="px-4 md:px-8 py-3 md:py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-1 md:gap-2">
+                            <button
+                              onClick={() => viewPackage(item)}
+                              className="p-1.5 md:p-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-sm"
+                              title="View Details"
+                            >
+                              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => editPackage(item._id)}
+                              disabled={loading}
+                              className="p-1.5 md:p-2.5 bg-gradient-to-r from-purple-100 to-indigo-100 hover:from-purple-200 hover:to-indigo-200 text-purple-700 rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-sm disabled:opacity-50"
+                              title="Edit"
+                            >
+                              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => deletePackage(item._id)}
+                              disabled={loading}
+                              className="p-1.5 md:p-2.5 bg-gradient-to-r from-red-100 to-rose-100 hover:from-red-200 hover:to-rose-200 text-red-700 rounded-lg md:rounded-xl transition-all duration-200 hover:scale-105 shadow-sm disabled:opacity-50"
+                              title="Delete"
+                            >
+                              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Pagination Controls */}
+                <div className="px-4 md:px-8 py-4 border-t border-gray-200">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    {/* Items per page selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-700">Show:</span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                      >
+                        {itemsPerPageOptions.map(option => (
+                          <option key={option} value={option}>
+                            {option} per page
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Page information */}
+                    <div className="text-sm text-gray-700">
+                      Showing <span className="font-semibold">{indexOfFirstItem + 1}</span> to{" "}
+                      <span className="font-semibold">
+                        {Math.min(indexOfLastItem, filteredData.length)}
+                      </span>{" "}
+                      of <span className="font-semibold">{filteredData.length}</span> results
+                    </div>
+
+                    {/* Pagination buttons */}
+                    <div className="flex items-center space-x-1">
+                      <button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Prev
+                      </button>
+                      
+                      {/* Page numbers with ellipsis */}
+                      <div className="flex items-center space-x-1">
+                        {[...Array(totalPages)].map((_, i) => {
+                          const page = i + 1;
+                          // Show first, last, and pages around current
+                          if (
+                            page === 1 ||
+                            page === totalPages ||
+                            (page >= currentPage - 1 && page <= currentPage + 1)
+                          ) {
+                            return (
+                              <button
+                                key={page}
+                                onClick={() => goToPage(page)}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-lg min-w-[40px] ${
+                                  currentPage === page
+                                    ? "bg-blue-600 text-white"
+                                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            );
+                          } else if (
+                            page === currentPage - 2 ||
+                            page === currentPage + 2
+                          ) {
+                            return (
+                              <span key={page} className="px-2 py-1.5 text-gray-500">
+                                ...
+                              </span>
+                            );
+                          }
+                          return null;
+                        })}
                       </div>
-
-                      {measurements.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeMeasurement(index)}
-                          className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors duration-200 group-hover:opacity-100 opacity-70 disabled:opacity-50"
-                          title="Remove measurement"
-                          disabled={loading}
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
+                      
+                      <button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        Next
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
-                  ))}
-                </div>
-
-                {/* Add Measurement Button */}
-                <button
-                  type="button"
-                  onClick={addMeasurement}
-                  className="w-full py-3.5 border-2 border-dashed border-gray-300 hover:border-emerald-400 hover:bg-emerald-50 rounded-lg transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={loading}
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-8 h-8 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full group-hover:bg-emerald-200 transition-colors">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                    </div>
-                    <span className="text-emerald-700 font-medium group-hover:text-emerald-800">
-                      Add Measurement
-                    </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Add another measurement variant for this package type
-                  </p>
-                </button>
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-6 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={`w-full text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 active:translate-y-0 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${
-                    editingId 
-                      ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 focus:ring-yellow-500'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500'
-                  }`}
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      {editingId ? 'Updating...' : 'Saving...'}
-                    </span>
-                  ) : (
-                    editingId ? 'Update Packaging' : 'Save Packaging'
-                  )}
-                </button>
-              </div>
-            </form>
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          /* View Data Section */
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6">
+        </div>
+      </div>
+
+      {/* View Modal */}
+      {viewingItem && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-3 md:p-4 animate-fadeIn">
+          <div className="bg-white rounded-xl md:rounded-2xl max-w-full md:max-w-lg w-full transform animate-slideUp mx-2">
+            <div className="px-4 md:px-8 py-4 md:py-6 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-t-xl md:rounded-t-2xl">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-2xl font-bold text-white">All Packaging Types</h3>
-                  <p className="text-blue-100 text-sm mt-1">
-                    Total {packagingData.length} packaging types found
-                  </p>
+                  <h3 className="text-lg md:text-2xl font-bold">Package Details</h3>
+                  <p className="text-gray-300 mt-1 text-xs md:text-sm">Complete information about this packaging</p>
                 </div>
                 <button
-                  onClick={fetchPackagingData}
-                  disabled={fetchLoading}
-                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                  onClick={closeViewModal}
+                  className="p-1 md:p-2 hover:bg-gray-700/50 rounded-lg md:rounded-xl transition-colors"
                 >
-                  {fetchLoading ? (
-                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  Refresh
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             </div>
 
-            <div className="p-8">
-              {fetchLoading && packagingData.length === 0 ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : packagingData.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-24 h-24 mx-auto mb-4 text-gray-300">
-                    <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                    </svg>
+            <div className="p-4 md:p-8">
+              <div className="space-y-4 md:space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Package Type</label>
+                  <div className="p-3 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg md:rounded-xl border border-blue-200">
+                    <div className="text-lg md:text-2xl font-bold text-gray-900">{viewingItem.packageType}</div>
                   </div>
-                  <h4 className="text-xl font-semibold text-gray-600 mb-2">No Packaging Found</h4>
-                  <p className="text-gray-500 max-w-md mx-auto mb-6">
-                    No packaging types have been created yet. Create your first packaging type to get started.
-                  </p>
-                  <button
-                    onClick={() => setActiveTab("create")}
-                    className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-6 rounded-lg transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create New Packaging
-                  </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {packagingData.map((item) => (
-                    <div
-                      key={item._id}
-                      className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow bg-white group relative"
-                    >
-                      {/* Edit/Delete buttons */}
-                      <div className="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                        <button
-                          onClick={() => editPackage(item._id)}
-                          disabled={loading}
-                          className="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors disabled:opacity-50"
-                          title="Edit"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deletePackage(item._id)}
-                          disabled={loading}
-                          className="w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors disabled:opacity-50"
-                          title="Delete"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
 
-                      <div className="mb-4">
-                        <h4 className="text-lg font-bold text-gray-900 mb-1 pr-12">
-                          {item.packageType}
-                        </h4>
-                        <div className="flex items-center text-sm text-gray-500">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Created: {formatDate(item.createdAt)}
-                        </div>
-                      </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Measurements</label>
+                  <div className="flex flex-wrap gap-2 md:gap-3">
+                    {viewingItem.measurements.map((measurement, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-3 md:px-4 py-1.5 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-bold bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 border-2 border-blue-300"
+                      >
+                        <svg className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {measurement}
+                      </span>
+                    ))}
+                  </div>
+                </div>
 
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-sm font-semibold text-gray-700">Measurements:</h5>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {item.measurements.length} variants
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {item.measurements.map((measurement, idx) => (
-                            <span
-                              key={idx}
-                              className="inline-block px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
-                            >
-                              {measurement}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => editPackage(item._id)}
-                            disabled={loading}
-                            className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deletePackage(item._id)}
-                            disabled={loading}
-                            className="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 pt-4 md:pt-6 border-t border-gray-200">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Created Date</label>
+                    <div className="p-2 md:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm md:text-lg font-medium text-gray-900">{formatDate(viewingItem.createdAt)}</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last Updated</label>
+                    <div className="p-2 md:p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 md:w-5 md:h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span className="text-sm md:text-lg font-medium text-gray-900">{formatDate(viewingItem.updatedAt)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
+
+              <div className="mt-6 md:mt-8 flex justify-end gap-2 md:gap-3">
+                <button
+                  onClick={closeViewModal}
+                  className="px-4 md:px-6 py-2 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl bg-white text-gray-700 font-semibold hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 text-sm md:text-base"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={closeViewModal}
+                  className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700 text-white font-semibold rounded-lg md:rounded-xl transition-all duration-200 transform hover:-translate-y-0.5 shadow-lg text-sm md:text-base"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Add custom animations */}
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideDown { animation: slideDown 0.4s ease-out; }
+        .animate-slideUp { animation: slideUp 0.4s ease-out; }
+      `}</style>
     </div>
   );
 };
