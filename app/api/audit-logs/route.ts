@@ -168,19 +168,19 @@
 
 
 
-
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/Db";
 import AuditLog from "@/app/models/AuditLog";
+import "@/app/models/Admin"; // ✅ REQUIRED
 import { getAdminSession } from "@/app/lib/auth";
 import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
+
     const session = await getAdminSession();
 
-    // ❌ Only SUPER ADMIN allowed
     if (!session || session.admin.role !== "admin") {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
@@ -190,7 +190,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const page = Number(searchParams.get("page")) || 1;
-    const limit = Number(searchParams.get("limit")) || 0;
+    const limit = Number(searchParams.get("limit")) || 10;
 
     const logs = await AuditLog.find({actorRole:"subadmin"})
       .populate("actorId", "name role")
