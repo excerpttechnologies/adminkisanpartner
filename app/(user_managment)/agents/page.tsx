@@ -7866,19 +7866,19 @@ export default function AgentsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Holder Name</label>
-                  <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} className="input-field" placeholder="Account holder name" />
+                  <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} className="input-field" placeholder="Account holder name" required/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Number</label>
-                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
+                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">IFSC Code</label>
-                  <input name="ifscCode" value={form.ifscCode} onChange={handleChange} className="input-field" placeholder="Bank IFSC code" />
+                  <input name="ifscCode" value={form.ifscCode} onChange={handleChange} className="input-field" placeholder="Bank IFSC code" required/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Branch</label>
-                  <input name="branch" value={form.branch} onChange={handleChange} className="input-field" placeholder="Bank branch" />
+                  <input name="branch" value={form.branch} onChange={handleChange} className="input-field" placeholder="Bank branch" required/>
                 </div>
               </div>
             </section>
@@ -8022,11 +8022,12 @@ export default function AgentsPage() {
                     maxLength={4}
                     className="input-field"
                     placeholder="Set 4-digit MPIN"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
-                  <input name="password" value={form.password} onChange={handleChange} type="password" className="input-field" placeholder="Set password" />
+                  <input name="password" value={form.password} onChange={handleChange} type="password" className="input-field" placeholder="Set password" required/>
                 </div>
                 <div className="md:col-span-3">
                   <label className="flex items-center space-x-2 cursor-pointer">
@@ -8207,19 +8208,19 @@ export default function AgentsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Holder Name</label>
-                  <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} className="input-field" placeholder="Account holder name" />
+                  <input name="accountHolderName" value={form.accountHolderName} onChange={handleChange} className="input-field" placeholder="Account holder name" required/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Account Number</label>
-                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" />
+                  <input type="number" name="accountNumber" value={form.accountNumber} onChange={handleChange} className="input-field" placeholder="Bank account number" required/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">IFSC Code</label>
-                  <input name="ifscCode" value={form.ifscCode} onChange={handleChange} className="input-field" placeholder="Bank IFSC code" />
+                  <input name="ifscCode" value={form.ifscCode} onChange={handleChange} className="input-field" placeholder="Bank IFSC code" required />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Branch</label>
-                  <input name="branch" value={form.branch} onChange={handleChange} className="input-field" placeholder="Bank branch" />
+                  <input name="branch" value={form.branch} onChange={handleChange} className="input-field" placeholder="Bank branch" required/>
                 </div>
               </div>
             </section>
@@ -8329,11 +8330,12 @@ export default function AgentsPage() {
                     maxLength={4}
                     className="input-field"
                     placeholder="Set 4-digit MPIN"
+                    required
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Password (Leave empty to keep current)</label>
-                  <input name="password" value={form.password} onChange={handleChange} type="password" className="input-field" placeholder="Set password" />
+                  <input name="password" value={form.password} onChange={handleChange} type="password" className="input-field" placeholder="Set password" required/>
                 </div>
                 <div className="md:col-span-3">
                   <label className="flex items-center space-x-2 cursor-pointer">

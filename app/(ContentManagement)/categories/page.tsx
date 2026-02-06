@@ -1,5 +1,15 @@
 
 
+
+
+
+
+
+
+
+
+
+
 // "use client";
 
 // import { useEffect, useState } from "react";
@@ -580,92 +590,55 @@
 
 //   /* ================== UI ================== */
 //   return (
-//     <div style={{ maxWidth: "1200px", margin: "20px auto", padding: "0 15px" }}>
-//       <h1 style={{ fontSize: "24px", fontWeight: "bold", marginBottom: "20px", color: "#1f2937" }}>
+//     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+//       <h1 className="text-3xl font-bold text-gray-900 mb-8">
 //         Category & Sub-Category Management
 //       </h1>
 
 //       {/* Tabs Navigation */}
-//       <div style={{
-//         display: "flex",
-//         borderBottom: "1px solid #e5e7eb",
-//         marginBottom: "20px",
-//         flexWrap: "wrap"
-//       }}>
-//         <button
-//           onClick={() => setActiveTab("category")}
-//           style={{
-//             padding: "10px 20px",
-//             fontSize: "14px",
-//             fontWeight: "600",
-//             color: activeTab === "category" ? "#2563eb" : "#6b7280",
-//             backgroundColor: "transparent",
-//             border: "none",
-//             borderBottom: activeTab === "category" ? "2px solid #2563eb" : "none",
-//             cursor: "pointer",
-//             transition: "all 0.2s",
-//             flex: "1",
-//             minWidth: "120px"
-//           }}
-//           onMouseEnter={(e) => {
-//             if (activeTab !== "category") e.currentTarget.style.color = "#374151";
-//           }}
-//           onMouseLeave={(e) => {
-//             if (activeTab !== "category") e.currentTarget.style.color = "#6b7280";
-//           }}
-//         >
-//           Categories
-//           {isCategoryLoading && activeTab === "category" && (
-//             <span style={{ marginLeft: "8px", fontSize: "12px", color: "#6b7280" }}>(Loading...)</span>
-//           )}
-//         </button>
-//         <button
-//           onClick={() => setActiveTab("subcategory")}
-//           style={{
-//             padding: "10px 20px",
-//             fontSize: "14px",
-//             fontWeight: "600",
-//             color: activeTab === "subcategory" ? "#059669" : "#6b7280",
-//             backgroundColor: "transparent",
-//             border: "none",
-//             borderBottom: activeTab === "subcategory" ? "2px solid #059669" : "none",
-//             cursor: "pointer",
-//             transition: "all 0.2s",
-//             flex: "1",
-//             minWidth: "120px"
-//           }}
-//           onMouseEnter={(e) => {
-//             if (activeTab !== "subcategory") e.currentTarget.style.color = "#374151";
-//           }}
-//           onMouseLeave={(e) => {
-//             if (activeTab !== "subcategory") e.currentTarget.style.color = "#6b7280";
-//           }}
-//         >
-//           Sub-Categories
-//           {isSubCategoryLoading && activeTab === "subcategory" && (
-//             <span style={{ marginLeft: "8px", fontSize: "12px", color: "#6b7280" }}>(Loading...)</span>
-//           )}
-//         </button>
+//       <div className="border-b border-gray-200 mb-8">
+//         <nav className="-mb-px flex space-x-8">
+//           <button
+//             onClick={() => setActiveTab("category")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+//               activeTab === "category"
+//                 ? "border-blue-500 text-blue-600"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Categories
+//             {isCategoryLoading && activeTab === "category" && (
+//               <span className="ml-2 text-xs text-gray-500">(Loading...)</span>
+//             )}
+//           </button>
+//           <button
+//             onClick={() => setActiveTab("subcategory")}
+//             className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+//               activeTab === "subcategory"
+//                 ? "border-green-500 text-green-600"
+//                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//             }`}
+//           >
+//             Sub-Categories
+//             {isSubCategoryLoading && activeTab === "subcategory" && (
+//               <span className="ml-2 text-xs text-gray-500">(Loading...)</span>
+//             )}
+//           </button>
+//         </nav>
 //       </div>
 
 //       {/* Category Tab Content */}
 //       {activeTab === "category" && (
 //         <>
 //           {/* Add Category Card */}
-//           <div style={{
-//             backgroundColor: "white",
-//             borderRadius: "8px",
-//             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-//             padding: "20px",
-//             marginBottom: "24px"
-//           }}>
-//             <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px", color: "#374151" }}>
+//           <div className="bg-white shadow rounded-lg p-6 mb-8">
+//             <h2 className="text-lg font-semibold text-gray-900 mb-4">
 //               Add New Category
 //             </h2>
 
-//             <form onSubmit={handleCategorySubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+//             <form onSubmit={handleCategorySubmit} className="space-y-6">
 //               <div>
-//                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+//                 <label className="block text-sm font-medium text-gray-700 mb-1">
 //                   Category Name *
 //                 </label>
 //                 <input
@@ -675,22 +648,12 @@
 //                   value={categoryName}
 //                   onChange={(e) => setCategoryName(e.target.value)}
 //                   required
-//                   style={{
-//                     width: "100%",
-//                     padding: "10px 14px",
-//                     border: "1px solid #d1d5db",
-//                     borderRadius: "6px",
-//                     fontSize: "14px",
-//                     outline: "none",
-//                     transition: "all 0.2s"
-//                   }}
-//                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 //                 />
 //               </div>
 
 //               <div>
-//                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+//                 <label className="block text-sm font-medium text-gray-700 mb-1">
 //                   Category Image (Optional)
 //                 </label>
 //                 <input
@@ -698,16 +661,9 @@
 //                   type="file"
 //                   accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                   onChange={(e) => setCategoryImage(e.target.files?.[0] || null)}
-//                   style={{
-//                     width: "100%",
-//                     padding: "10px 14px",
-//                     border: "1px solid #d1d5db",
-//                     borderRadius: "6px",
-//                     fontSize: "14px",
-//                     outline: "none"
-//                   }}
+//                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
 //                 />
-//                 <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+//                 <p className="mt-1 text-xs text-gray-500">
 //                   Accepted: JPG, PNG, GIF, WebP, SVG, BMP (Max 5MB)
 //                 </p>
 //               </div>
@@ -715,24 +671,11 @@
 //               <button
 //                 type="submit"
 //                 disabled={isCategorySubmitting}
-//                 style={{
-//                   width: "100%",
-//                   padding: "12px",
-//                   backgroundColor: isCategorySubmitting ? "#93c5fd" : "#2563eb",
-//                   color: "white",
-//                   border: "none",
-//                   borderRadius: "6px",
-//                   fontSize: "14px",
-//                   fontWeight: "500",
-//                   cursor: isCategorySubmitting ? "not-allowed" : "pointer",
-//                   transition: "background-color 0.2s"
-//                 }}
-//                 onMouseEnter={(e) => {
-//                   if (!isCategorySubmitting) e.currentTarget.style.backgroundColor = "#1d4ed8";
-//                 }}
-//                 onMouseLeave={(e) => {
-//                   if (!isCategorySubmitting) e.currentTarget.style.backgroundColor = "#2563eb";
-//                 }}
+//                 className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+//                   isCategorySubmitting
+//                     ? "bg-blue-400 cursor-not-allowed"
+//                     : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+//                 }`}
 //               >
 //                 {isCategorySubmitting ? "Adding..." : "Add Category"}
 //               </button>
@@ -740,35 +683,16 @@
 //           </div>
 
 //           {/* Categories List Card */}
-//           <div style={{
-//             backgroundColor: "white",
-//             borderRadius: "8px",
-//             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-//             overflow: "hidden"
-//           }}>
-//             <div style={{ 
-//               padding: "20px", 
-//               borderBottom: "1px solid #e5e7eb",
-//               display: "flex",
-//               flexDirection: "column",
-//               gap: "10px"
-//             }}>
-//               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-//                 <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#374151" }}>Category List</h3>
-//                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-//                   <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap" }}>Show:</span>
+//           <div className="bg-white shadow rounded-lg overflow-hidden">
+//             <div className="px-6 py-4 border-b border-gray-200">
+//               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+//                 <h3 className="text-lg font-semibold text-gray-900">Category List</h3>
+//                 <div className="flex items-center space-x-2">
+//                   <span className="text-sm text-gray-600 whitespace-nowrap">Show:</span>
 //                   <select
 //                     value={categoryItemsPerPage}
 //                     onChange={handleCategoryItemsPerPageChange}
-//                     style={{
-//                       padding: "6px 10px",
-//                       border: "1px solid #d1d5db",
-//                       borderRadius: "4px",
-//                       fontSize: "13px",
-//                       backgroundColor: "white",
-//                       outline: "none",
-//                       cursor: "pointer"
-//                     }}
+//                     className="block w-20 px-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
 //                   >
 //                     <option value="5">5</option>
 //                     <option value="10">10</option>
@@ -776,172 +700,91 @@
 //                     <option value="50">50</option>
 //                     <option value="100">100</option>
 //                   </select>
-//                   <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap" }}>per page</span>
+//                   <span className="text-sm text-gray-600 whitespace-nowrap">per page</span>
 //                 </div>
 //               </div>
-//               <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "0" }}>
-//                 Showing {((currentCategoryPage - 1) * categoryItemsPerPage) + 1} to {Math.min(currentCategoryPage * categoryItemsPerPage, totalCategories)} of {totalCategories} categories
+//               <p className="mt-2 text-sm text-gray-600">
+//                 Showing {((currentCategoryPage - 1) * categoryItemsPerPage) + 1} to{" "}
+//                 {Math.min(currentCategoryPage * categoryItemsPerPage, totalCategories)} of{" "}
+//                 {totalCategories} categories
 //               </p>
 //             </div>
 
 //             {isCategoryLoading ? (
-//               <div style={{ padding: "40px", textAlign: "center" }}>
-//                 <div style={{
-//                   display: "inline-block",
-//                   width: "32px",
-//                   height: "32px",
-//                   border: "2px solid #e5e7eb",
-//                   borderTop: "2px solid #2563eb",
-//                   borderRadius: "50%",
-//                   animation: "spin 1s linear infinite"
-//                 }}></div>
-//                 <p style={{ marginTop: "12px", color: "#4b5563" }}>Loading categories...</p>
+//               <div className="py-12 text-center">
+//                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+//                 <p className="mt-4 text-gray-600">Loading categories...</p>
 //               </div>
 //             ) : categories.length === 0 ? (
-//               <div style={{ padding: "40px", textAlign: "center" }}>
-//                 <p style={{ color: "#6b7280" }}>No categories found. Add your first category above.</p>
+//               <div className="py-12 text-center">
+//                 <p className="text-gray-500">No categories found. Add your first category above.</p>
 //               </div>
 //             ) : (
 //               <>
 //                 {/* Desktop Table View */}
-//                 <div style={{ overflowX: "auto", display: "none" }}>
-//                   <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
-//                     <thead style={{ backgroundColor: "#f9fafb" }}>
+//                 <div className="hidden md:block overflow-x-auto">
+//                   <table className="min-w-full divide-y divide-gray-200">
+//                     <thead className="bg-gray-50">
 //                       <tr>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           ID
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Name
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Image
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Actions
 //                         </th>
 //                       </tr>
 //                     </thead>
-
-//                     <tbody>
+//                     <tbody className="bg-white divide-y divide-gray-200">
 //                       {categories.map((cat) => (
-//                         <tr key={cat._id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <span style={{ fontSize: "13px", fontWeight: "500", color: "#111827" }}>
+//                         <tr key={cat._id}>
+//                           <td className="px-6 py-4 whitespace-nowrap">
+//                             <span className="text-sm font-medium text-gray-900">
 //                               {cat.categoryId}
 //                             </span>
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
+//                           <td className="px-6 py-4">
 //                             {editingCategoryId === cat._id ? (
 //                               <input
 //                                 value={editCategoryName}
 //                                 onChange={(e) => setEditCategoryName(e.target.value)}
-//                                 style={{
-//                                   padding: "6px 10px",
-//                                   border: "1px solid #d1d5db",
-//                                   borderRadius: "4px",
-//                                   fontSize: "14px",
-//                                   outline: "none",
-//                                   transition: "all 0.2s",
-//                                   width: "100%",
-//                                   maxWidth: "200px"
-//                                 }}
-//                                 onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                                 onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                                 className="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
 //                                 autoFocus
 //                               />
 //                             ) : (
-//                               <span style={{ fontSize: "14px", color: "#111827" }}>{cat.categoryName}</span>
+//                               <span className="text-sm text-gray-900">{cat.categoryName}</span>
 //                             )}
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+//                           <td className="px-6 py-4">
+//                             <div className="flex flex-col space-y-2">
 //                               <img
 //                                 src={getImageUrl(cat.image)}
 //                                 alt={cat.categoryName}
-//                                 style={{
-//                                   width: "50px",
-//                                   height: "50px",
-//                                   objectFit: "cover",
-//                                   borderRadius: "6px"
-//                                 }}
+//                                 className="w-12 h-12 object-cover rounded"
 //                                 onError={handleCategoryImageError}
 //                               />
 //                               {editingCategoryId === cat._id && (
-//                                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+//                                 <div className="space-y-2">
 //                                   <input
 //                                     id={`category-image-edit-${cat._id}`}
 //                                     type="file"
 //                                     accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                                     onChange={(e) => setEditCategoryImage(e.target.files?.[0] || null)}
-//                                     style={{
-//                                       width: "100%",
-//                                       padding: "4px 8px",
-//                                       border: "1px solid #d1d5db",
-//                                       borderRadius: "4px",
-//                                       fontSize: "12px",
-//                                       maxWidth: "200px"
-//                                     }}
+//                                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
 //                                   />
 //                                   <button
 //                                     onClick={() => updateCategoryImage(cat._id)}
 //                                     disabled={isCategoryImageUploading || !editCategoryImage}
-//                                     style={{
-//                                       padding: "4px 8px",
-//                                       fontSize: "11px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: isCategoryImageUploading || !editCategoryImage ? "#93c5fd" : "#2563eb",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: isCategoryImageUploading || !editCategoryImage ? "not-allowed" : "pointer",
-//                                       transition: "background-color 0.2s",
-//                                       maxWidth: "200px"
-//                                     }}
-//                                     onMouseEnter={(e) => {
-//                                       if (!isCategoryImageUploading && editCategoryImage) {
-//                                         e.currentTarget.style.backgroundColor = "#1d4ed8";
-//                                       }
-//                                     }}
-//                                     onMouseLeave={(e) => {
-//                                       if (!isCategoryImageUploading && editCategoryImage) {
-//                                         e.currentTarget.style.backgroundColor = "#2563eb";
-//                                       }
-//                                     }}
+//                                     className={`px-3 py-1 text-xs rounded-md ${
+//                                       isCategoryImageUploading || !editCategoryImage
+//                                         ? "bg-blue-400 cursor-not-allowed"
+//                                         : "bg-blue-600 hover:bg-blue-700"
+//                                     } text-white`}
 //                                   >
 //                                     {isCategoryImageUploading ? "Uploading..." : "Update Image"}
 //                                   </button>
@@ -949,44 +792,19 @@
 //                               )}
 //                             </div>
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+//                           <td className="px-6 py-4 whitespace-nowrap">
+//                             <div className="flex space-x-2">
 //                               {editingCategoryId === cat._id ? (
 //                                 <>
 //                                   <button
 //                                     onClick={() => saveCategoryEdit(cat._id)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#059669",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#047857")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#059669")}
+//                                     className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
 //                                   >
 //                                     Save Name
 //                                   </button>
 //                                   <button
 //                                     onClick={cancelCategoryEdit}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "#374151",
-//                                       backgroundColor: "#e5e7eb",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#d1d5db")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+//                                     className="px-3 py-1 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300"
 //                                   >
 //                                     Cancel
 //                                   </button>
@@ -995,37 +813,13 @@
 //                                 <>
 //                                   <button
 //                                     onClick={() => startCategoryEdit(cat)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#2563eb",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+//                                     className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
 //                                   >
 //                                     Edit
 //                                   </button>
 //                                   <button
 //                                     onClick={() => deleteCategory(cat._id)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#dc2626",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+//                                     className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
 //                                   >
 //                                     Delete
 //                                   </button>
@@ -1040,77 +834,40 @@
 //                 </div>
 
 //                 {/* Mobile Card View */}
-//                 <div style={{ 
-//                   display: "block", 
-//                   padding: "15px"
-//                 }}>
+//                 <div className="md:hidden p-4">
 //                   {categories.map((cat) => (
-//                     <div key={cat._id} style={{
-//                       border: "1px solid #e5e7eb",
-//                       borderRadius: "8px",
-//                       padding: "16px",
-//                       marginBottom: "12px",
-//                       backgroundColor: "#f9fafb"
-//                     }}>
-//                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+//                     <div
+//                       key={cat._id}
+//                       className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50"
+//                     >
+//                       <div className="flex justify-between items-start mb-3">
 //                         <div>
-//                           <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>ID: {cat.categoryId}</div>
+//                           <div className="text-xs text-gray-500 mb-1">ID: {cat.categoryId}</div>
 //                           {editingCategoryId === cat._id ? (
 //                             <input
 //                               value={editCategoryName}
 //                               onChange={(e) => setEditCategoryName(e.target.value)}
-//                               style={{
-//                                 padding: "6px 10px",
-//                                 border: "1px solid #d1d5db",
-//                                 borderRadius: "4px",
-//                                 fontSize: "14px",
-//                                 outline: "none",
-//                                 transition: "all 0.2s",
-//                                 width: "100%",
-//                                 marginBottom: "8px"
-//                               }}
-//                               onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                               onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                               className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 //                               autoFocus
 //                             />
 //                           ) : (
-//                             <div style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "8px" }}>
+//                             <div className="text-lg font-semibold text-gray-900">
 //                               {cat.categoryName}
 //                             </div>
 //                           )}
 //                         </div>
-//                         <div style={{ display: "flex", gap: "8px" }}>
+//                         <div className="flex space-x-2">
 //                           {editingCategoryId === cat._id ? (
 //                             <>
 //                               <button
 //                                 onClick={() => saveCategoryEdit(cat._id)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#059669",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer",
-//                                   transition: "background-color 0.2s"
-//                                 }}
+//                                 className="px-3 py-1 bg-green-600 text-white text-xs rounded-md"
 //                               >
 //                                 Save
 //                               </button>
 //                               <button
 //                                 onClick={cancelCategoryEdit}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "#374151",
-//                                   backgroundColor: "#e5e7eb",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer",
-//                                   transition: "background-color 0.2s"
-//                                 }}
+//                                 className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded-md"
 //                               >
 //                                 Cancel
 //                               </button>
@@ -1119,31 +876,13 @@
 //                             <>
 //                               <button
 //                                 onClick={() => startCategoryEdit(cat)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#2563eb",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md"
 //                               >
 //                                 Edit
 //                               </button>
 //                               <button
 //                                 onClick={() => deleteCategory(cat._id)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#dc2626",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded-md"
 //                               >
 //                                 Delete
 //                               </button>
@@ -1152,48 +891,30 @@
 //                         </div>
 //                       </div>
 
-//                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+//                       <div className="flex items-center space-x-3">
 //                         <img
 //                           src={getImageUrl(cat.image)}
 //                           alt={cat.categoryName}
-//                           style={{
-//                             width: "60px",
-//                             height: "60px",
-//                             objectFit: "cover",
-//                             borderRadius: "6px"
-//                           }}
+//                           className="w-16 h-16 object-cover rounded"
 //                           onError={handleCategoryImageError}
 //                         />
 //                         {editingCategoryId === cat._id && (
-//                           <div style={{ flex: 1 }}>
+//                           <div className="flex-1">
 //                             <input
 //                               id={`category-image-edit-${cat._id}`}
 //                               type="file"
 //                               accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                               onChange={(e) => setEditCategoryImage(e.target.files?.[0] || null)}
-//                               style={{
-//                                 width: "100%",
-//                                 padding: "6px 10px",
-//                                 border: "1px solid #d1d5db",
-//                                 borderRadius: "4px",
-//                                 fontSize: "12px",
-//                                 marginBottom: "8px"
-//                               }}
+//                               className="block w-full mb-2 text-sm text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700"
 //                             />
 //                             <button
 //                               onClick={() => updateCategoryImage(cat._id)}
 //                               disabled={isCategoryImageUploading || !editCategoryImage}
-//                               style={{
-//                                 width: "100%",
-//                                 padding: "6px 10px",
-//                                 fontSize: "12px",
-//                                 fontWeight: "500",
-//                                 color: "white",
-//                                 backgroundColor: isCategoryImageUploading || !editCategoryImage ? "#93c5fd" : "#2563eb",
-//                                 border: "none",
-//                                 borderRadius: "4px",
-//                                 cursor: isCategoryImageUploading || !editCategoryImage ? "not-allowed" : "pointer"
-//                               }}
+//                               className={`w-full px-3 py-2 text-sm rounded-md ${
+//                                 isCategoryImageUploading || !editCategoryImage
+//                                   ? "bg-blue-400 cursor-not-allowed"
+//                                   : "bg-blue-600 hover:bg-blue-700"
+//                               } text-white`}
 //                             >
 //                               {isCategoryImageUploading ? "Uploading..." : "Update Image"}
 //                             </button>
@@ -1206,111 +927,73 @@
 
 //                 {/* Category Pagination */}
 //                 {totalCategories > 0 && (
-//                   <div style={{ 
-//                     padding: "20px", 
-//                     borderTop: "1px solid #e5e7eb",
-//                     display: "flex", 
-//                     flexDirection: "column",
-//                     gap: "15px"
-//                   }}>
-//                     <div style={{ fontSize: "14px", color: "#6b7280", textAlign: "center" }}>
-//                       Page {currentCategoryPage} of {categoryTotalPages}
-//                     </div>
-                    
-//                     <div style={{ display: "flex", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
-//                       <button
-//                         onClick={() => goToPage(1, 'category')}
-//                         disabled={currentCategoryPage === 1}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentCategoryPage === 1 ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentCategoryPage === 1 ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentCategoryPage === 1 ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         First
-//                       </button>
-                      
-//                       <button
-//                         onClick={() => goToPage(currentCategoryPage - 1, 'category')}
-//                         disabled={currentCategoryPage === 1}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentCategoryPage === 1 ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentCategoryPage === 1 ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentCategoryPage === 1 ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Previous
-//                       </button>
-                      
-//                       {getPageNumbers(currentCategoryPage, categoryTotalPages).map((pageNum, index) => (
+//                   <div className="px-6 py-4 border-t border-gray-200">
+//                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+//                       <p className="text-sm text-gray-700 mb-4 sm:mb-0">
+//                         Page {currentCategoryPage} of {categoryTotalPages}
+//                       </p>
+//                       <div className="flex items-center space-x-2">
 //                         <button
-//                           key={index}
-//                           onClick={() => typeof pageNum === 'number' ? goToPage(pageNum, 'category') : null}
-//                           disabled={pageNum === '...'}
-//                           style={{
-//                             padding: "8px 12px",
-//                             minWidth: "40px",
-//                             fontSize: "12px",
-//                             fontWeight: "500",
-//                             color: pageNum === currentCategoryPage ? "white" : "#374151",
-//                             backgroundColor: pageNum === currentCategoryPage ? "#2563eb" : "white",
-//                             border: "1px solid #d1d5db",
-//                             borderRadius: "6px",
-//                             cursor: pageNum === '...' ? "default" : "pointer",
-//                             transition: "all 0.2s"
-//                           }}
+//                           onClick={() => goToPage(1, 'category')}
+//                           disabled={currentCategoryPage === 1}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentCategoryPage === 1
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
 //                         >
-//                           {pageNum}
+//                           First
 //                         </button>
-//                       ))}
-                      
-//                       <button
-//                         onClick={() => goToPage(currentCategoryPage + 1, 'category')}
-//                         disabled={currentCategoryPage === categoryTotalPages}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentCategoryPage === categoryTotalPages ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentCategoryPage === categoryTotalPages ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentCategoryPage === categoryTotalPages ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Next
-//                       </button>
-                      
-//                       <button
-//                         onClick={() => goToPage(categoryTotalPages, 'category')}
-//                         disabled={currentCategoryPage === categoryTotalPages}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentCategoryPage === categoryTotalPages ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentCategoryPage === categoryTotalPages ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentCategoryPage === categoryTotalPages ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Last
-//                       </button>
+//                         <button
+//                           onClick={() => goToPage(currentCategoryPage - 1, 'category')}
+//                           disabled={currentCategoryPage === 1}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentCategoryPage === 1
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Previous
+//                         </button>
+//                         {getPageNumbers(currentCategoryPage, categoryTotalPages).map((pageNum, index) => (
+//                           <button
+//                             key={index}
+//                             onClick={() => typeof pageNum === 'number' ? goToPage(pageNum, 'category') : null}
+//                             disabled={pageNum === '...'}
+//                             className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                               pageNum === currentCategoryPage
+//                                 ? "bg-blue-600 text-white"
+//                                 : pageNum === '...'
+//                                 ? "bg-white text-gray-700 cursor-default"
+//                                 : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                             }`}
+//                           >
+//                             {pageNum}
+//                           </button>
+//                         ))}
+//                         <button
+//                           onClick={() => goToPage(currentCategoryPage + 1, 'category')}
+//                           disabled={currentCategoryPage === categoryTotalPages}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentCategoryPage === categoryTotalPages
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Next
+//                         </button>
+//                         <button
+//                           onClick={() => goToPage(categoryTotalPages, 'category')}
+//                           disabled={currentCategoryPage === categoryTotalPages}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentCategoryPage === categoryTotalPages
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Last
+//                         </button>
+//                       </div>
 //                     </div>
 //                   </div>
 //                 )}
@@ -1324,39 +1007,21 @@
 //       {activeTab === "subcategory" && (
 //         <>
 //           {/* Add Sub-Category Card */}
-//           <div style={{
-//             backgroundColor: "white",
-//             borderRadius: "8px",
-//             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-//             padding: "20px",
-//             marginBottom: "24px"
-//           }}>
-//             <h2 style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px", color: "#374151" }}>
+//           <div className="bg-white shadow rounded-lg p-6 mb-8">
+//             <h2 className="text-lg font-semibold text-gray-900 mb-4">
 //               Add New Sub-Category
 //             </h2>
 
-//             <form onSubmit={addSubCategory} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+//             <form onSubmit={addSubCategory} className="space-y-6">
 //               <div>
-//                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+//                 <label className="block text-sm font-medium text-gray-700 mb-1">
 //                   Select Category *
 //                 </label>
 //                 <select
 //                   required
 //                   value={selectedCategoryId}
 //                   onChange={(e) => setSelectedCategoryId(e.target.value)}
-//                   style={{
-//                     width: "100%",
-//                     padding: "10px 14px",
-//                     border: "1px solid #d1d5db",
-//                     borderRadius: "6px",
-//                     fontSize: "14px",
-//                     backgroundColor: "white",
-//                     outline: "none",
-//                     cursor: "pointer",
-//                     transition: "all 0.2s"
-//                   }}
-//                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
 //                 >
 //                   <option value="">Select Category</option>
 //                   {categories.map((c) => (
@@ -1368,7 +1033,7 @@
 //               </div>
 
 //               <div>
-//                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+//                 <label className="block text-sm font-medium text-gray-700 mb-1">
 //                   Sub-Category Name *
 //                 </label>
 //                 <input
@@ -1377,22 +1042,12 @@
 //                   placeholder="Enter sub-category name"
 //                   value={subCategoryName}
 //                   onChange={(e) => setSubCategoryName(e.target.value)}
-//                   style={{
-//                     width: "100%",
-//                     padding: "10px 14px",
-//                     border: "1px solid #d1d5db",
-//                     borderRadius: "6px",
-//                     fontSize: "14px",
-//                     outline: "none",
-//                     transition: "all 0.2s"
-//                   }}
-//                   onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                   onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
 //                 />
 //               </div>
 
 //               <div>
-//                 <label style={{ display: "block", fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+//                 <label className="block text-sm font-medium text-gray-700 mb-1">
 //                   Sub-Category Image (Optional)
 //                 </label>
 //                 <input
@@ -1400,16 +1055,9 @@
 //                   type="file"
 //                   accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                   onChange={(e) => setSubCategoryImage(e.target.files?.[0] || null)}
-//                   style={{
-//                     width: "100%",
-//                     padding: "10px 14px",
-//                     border: "1px solid #d1d5db",
-//                     borderRadius: "6px",
-//                     fontSize: "14px",
-//                     outline: "none"
-//                   }}
+//                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
 //                 />
-//                 <p style={{ fontSize: "12px", color: "#6b7280", marginTop: "4px" }}>
+//                 <p className="mt-1 text-xs text-gray-500">
 //                   Accepted: JPG, PNG, GIF, WebP, SVG, BMP (Max 5MB)
 //                 </p>
 //               </div>
@@ -1417,24 +1065,11 @@
 //               <button
 //                 type="submit"
 //                 disabled={isSubCategorySubmitting}
-//                 style={{
-//                   width: "100%",
-//                   padding: "12px",
-//                   backgroundColor: isSubCategorySubmitting ? "#86efac" : "#16a34a",
-//                   color: "white",
-//                   border: "none",
-//                   borderRadius: "6px",
-//                   fontSize: "14px",
-//                   fontWeight: "500",
-//                   cursor: isSubCategorySubmitting ? "not-allowed" : "pointer",
-//                   transition: "background-color 0.2s"
-//                 }}
-//                 onMouseEnter={(e) => {
-//                   if (!isSubCategorySubmitting) e.currentTarget.style.backgroundColor = "#15803d";
-//                 }}
-//                 onMouseLeave={(e) => {
-//                   if (!isSubCategorySubmitting) e.currentTarget.style.backgroundColor = "#16a34a";
-//                 }}
+//                 className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
+//                   isSubCategorySubmitting
+//                     ? "bg-green-400 cursor-not-allowed"
+//                     : "bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+//                 }`}
 //               >
 //                 {isSubCategorySubmitting ? "Adding..." : "Add Sub-Category"}
 //               </button>
@@ -1442,35 +1077,16 @@
 //           </div>
 
 //           {/* Sub-Categories List Card */}
-//           <div style={{
-//             backgroundColor: "white",
-//             borderRadius: "8px",
-//             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-//             overflow: "hidden"
-//           }}>
-//             <div style={{ 
-//               padding: "20px", 
-//               borderBottom: "1px solid #e5e7eb",
-//               display: "flex",
-//               flexDirection: "column",
-//               gap: "10px"
-//             }}>
-//               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-//                 <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#374151" }}>Sub-Category List</h3>
-//                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-//                   <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap" }}>Show:</span>
+//           <div className="bg-white shadow rounded-lg overflow-hidden">
+//             <div className="px-6 py-4 border-b border-gray-200">
+//               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+//                 <h3 className="text-lg font-semibold text-gray-900">Sub-Category List</h3>
+//                 <div className="flex items-center space-x-2">
+//                   <span className="text-sm text-gray-600 whitespace-nowrap">Show:</span>
 //                   <select
 //                     value={subCategoryItemsPerPage}
 //                     onChange={handleSubCategoryItemsPerPageChange}
-//                     style={{
-//                       padding: "6px 10px",
-//                       border: "1px solid #d1d5db",
-//                       borderRadius: "4px",
-//                       fontSize: "13px",
-//                       backgroundColor: "white",
-//                       outline: "none",
-//                       cursor: "pointer"
-//                     }}
+//                     className="block w-20 px-3 py-1.5 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
 //                   >
 //                     <option value="5">5</option>
 //                     <option value="10">10</option>
@@ -1478,198 +1094,101 @@
 //                     <option value="50">50</option>
 //                     <option value="100">100</option>
 //                   </select>
-//                   <span style={{ fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap" }}>per page</span>
+//                   <span className="text-sm text-gray-600 whitespace-nowrap">per page</span>
 //                 </div>
 //               </div>
-//               <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "0" }}>
-//                 Showing {((currentSubCategoryPage - 1) * subCategoryItemsPerPage) + 1} to {Math.min(currentSubCategoryPage * subCategoryItemsPerPage, totalSubCategories)} of {totalSubCategories} sub-categories
+//               <p className="mt-2 text-sm text-gray-600">
+//                 Showing {((currentSubCategoryPage - 1) * subCategoryItemsPerPage) + 1} to{" "}
+//                 {Math.min(currentSubCategoryPage * subCategoryItemsPerPage, totalSubCategories)} of{" "}
+//                 {totalSubCategories} sub-categories
 //               </p>
 //             </div>
 
 //             {isSubCategoryLoading ? (
-//               <div style={{ padding: "40px", textAlign: "center" }}>
-//                 <div style={{
-//                   display: "inline-block",
-//                   width: "32px",
-//                   height: "32px",
-//                   border: "2px solid #e5e7eb",
-//                   borderTop: "2px solid #16a34a",
-//                   borderRadius: "50%",
-//                   animation: "spin 1s linear infinite"
-//                 }}></div>
-//                 <p style={{ marginTop: "12px", color: "#4b5563" }}>Loading sub-categories...</p>
+//               <div className="py-12 text-center">
+//                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+//                 <p className="mt-4 text-gray-600">Loading sub-categories...</p>
 //               </div>
 //             ) : subCategories.length === 0 ? (
-//               <div style={{ padding: "40px", textAlign: "center" }}>
-//                 <p style={{ color: "#6b7280" }}>No sub-categories found. Add your first sub-category above.</p>
+//               <div className="py-12 text-center">
+//                 <p className="text-gray-500">No sub-categories found. Add your first sub-category above.</p>
 //               </div>
 //             ) : (
 //               <>
 //                 {/* Desktop Table View */}
-//                 <div style={{ overflowX: "auto", display: "none" }}>
-//                   <table style={{ minWidth: "100%", borderCollapse: "collapse" }}>
-//                     <thead style={{ backgroundColor: "#f9fafb" }}>
+//                 <div className="hidden md:block overflow-x-auto">
+//                   <table className="min-w-full divide-y divide-gray-200">
+//                     <thead className="bg-gray-50">
 //                       <tr>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           ID
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Sub-Category
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Category
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Image
 //                         </th>
-//                         <th style={{
-//                           padding: "12px 16px",
-//                           textAlign: "left",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: "#6b7280",
-//                           textTransform: "uppercase",
-//                           letterSpacing: "0.05em"
-//                         }}>
+//                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                           Actions
 //                         </th>
 //                       </tr>
 //                     </thead>
-
-//                     <tbody>
+//                     <tbody className="bg-white divide-y divide-gray-200">
 //                       {subCategories.map((s) => (
-//                         <tr key={s._id} style={{ borderBottom: "1px solid #e5e7eb" }}>
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <span style={{ fontSize: "13px", fontWeight: "500", color: "#111827" }}>
+//                         <tr key={s._id}>
+//                           <td className="px-6 py-4 whitespace-nowrap">
+//                             <span className="text-sm font-medium text-gray-900">
 //                               {s.subCategoryId}
 //                             </span>
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
+//                           <td className="px-6 py-4">
 //                             {editingSubCategoryId === s._id ? (
 //                               <input
 //                                 value={editSubCategoryName}
 //                                 onChange={(e) => setEditSubCategoryName(e.target.value)}
-//                                 style={{
-//                                   padding: "6px 10px",
-//                                   border: "1px solid #d1d5db",
-//                                   borderRadius: "4px",
-//                                   fontSize: "14px",
-//                                   outline: "none",
-//                                   transition: "all 0.2s",
-//                                   width: "100%",
-//                                   maxWidth: "200px"
-//                                 }}
-//                                 onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                                 onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                                 className="px-3 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
 //                                 autoFocus
 //                               />
 //                             ) : (
-//                               <span style={{ fontSize: "14px", color: "#111827" }}>{s.subCategoryName}</span>
+//                               <span className="text-sm text-gray-900">{s.subCategoryName}</span>
 //                             )}
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <span style={{
-//                               fontSize: "13px",
-//                               color: "#4b5563",
-//                               backgroundColor: "#f3f4f6",
-//                               padding: "4px 8px",
-//                               borderRadius: "4px",
-//                               display: "inline-block"
-//                             }}>
+//                           <td className="px-6 py-4">
+//                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
 //                               {getCategoryName(s.categoryId)}
 //                             </span>
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+//                           <td className="px-6 py-4">
+//                             <div className="flex flex-col space-y-2">
 //                               {s.image && (
 //                                 <img
 //                                   src={getImageUrl(s.image)}
 //                                   alt={s.subCategoryName}
-//                                   style={{
-//                                     width: "50px",
-//                                     height: "50px",
-//                                     objectFit: "cover",
-//                                     borderRadius: "6px"
-//                                   }}
+//                                   className="w-12 h-12 object-cover rounded"
 //                                   onError={handleCategoryImageError}
 //                                 />
 //                               )}
 //                               {editingSubCategoryId === s._id && (
-//                                 <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+//                                 <div className="space-y-2">
 //                                   <input
 //                                     id={`subcategory-image-edit-${s._id}`}
 //                                     type="file"
 //                                     accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                                     onChange={(e) => setEditSubCategoryImage(e.target.files?.[0] || null)}
-//                                     style={{
-//                                       width: "100%",
-//                                       padding: "4px 8px",
-//                                       border: "1px solid #d1d5db",
-//                                       borderRadius: "4px",
-//                                       fontSize: "12px",
-//                                       maxWidth: "200px"
-//                                     }}
+//                                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
 //                                   />
 //                                   <button
 //                                     onClick={() => updateSubCategoryImage(s._id)}
 //                                     disabled={isSubCategoryImageUploading || !editSubCategoryImage}
-//                                     style={{
-//                                       padding: "4px 8px",
-//                                       fontSize: "11px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: isSubCategoryImageUploading || !editSubCategoryImage ? "#86efac" : "#16a34a",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: isSubCategoryImageUploading || !editSubCategoryImage ? "not-allowed" : "pointer",
-//                                       transition: "background-color 0.2s",
-//                                       maxWidth: "200px"
-//                                     }}
-//                                     onMouseEnter={(e) => {
-//                                       if (!isSubCategoryImageUploading && editSubCategoryImage) {
-//                                         e.currentTarget.style.backgroundColor = "#15803d";
-//                                       }
-//                                     }}
-//                                     onMouseLeave={(e) => {
-//                                       if (!isSubCategoryImageUploading && editSubCategoryImage) {
-//                                         e.currentTarget.style.backgroundColor = "#16a34a";
-//                                       }
-//                                     }}
+//                                     className={`px-3 py-1 text-xs rounded-md ${
+//                                       isSubCategoryImageUploading || !editSubCategoryImage
+//                                         ? "bg-green-400 cursor-not-allowed"
+//                                         : "bg-green-600 hover:bg-green-700"
+//                                     } text-white`}
 //                                   >
 //                                     {isSubCategoryImageUploading ? "Uploading..." : "Update Image"}
 //                                   </button>
@@ -1677,44 +1196,19 @@
 //                               )}
 //                             </div>
 //                           </td>
-
-//                           <td style={{ padding: "14px 16px" }}>
-//                             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+//                           <td className="px-6 py-4 whitespace-nowrap">
+//                             <div className="flex space-x-2">
 //                               {editingSubCategoryId === s._id ? (
 //                                 <>
 //                                   <button
 //                                     onClick={() => saveSubCategoryEdit(s._id)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#059669",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#047857")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#059669")}
+//                                     className="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
 //                                   >
 //                                     Save Name
 //                                   </button>
 //                                   <button
 //                                     onClick={cancelSubCategoryEdit}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "#374151",
-//                                       backgroundColor: "#e5e7eb",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#d1d5db")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+//                                     className="px-3 py-1 bg-gray-200 text-gray-800 text-sm rounded-md hover:bg-gray-300"
 //                                   >
 //                                     Cancel
 //                                   </button>
@@ -1723,37 +1217,13 @@
 //                                 <>
 //                                   <button
 //                                     onClick={() => startSubCategoryEdit(s)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#2563eb",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1d4ed8")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+//                                     className="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
 //                                   >
 //                                     Edit
 //                                   </button>
 //                                   <button
 //                                     onClick={() => deleteSubCategory(s._id)}
-//                                     style={{
-//                                       padding: "6px 12px",
-//                                       fontSize: "12px",
-//                                       fontWeight: "500",
-//                                       color: "white",
-//                                       backgroundColor: "#dc2626",
-//                                       border: "none",
-//                                       borderRadius: "4px",
-//                                       cursor: "pointer",
-//                                       transition: "background-color 0.2s"
-//                                     }}
-//                                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#b91c1c")}
-//                                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#dc2626")}
+//                                     className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700"
 //                                   >
 //                                     Delete
 //                                   </button>
@@ -1768,85 +1238,45 @@
 //                 </div>
 
 //                 {/* Mobile Card View */}
-//                 <div style={{ 
-//                   display: "block", 
-//                   padding: "15px"
-//                 }}>
+//                 <div className="md:hidden p-4">
 //                   {subCategories.map((s) => (
-//                     <div key={s._id} style={{
-//                       border: "1px solid #e5e7eb",
-//                       borderRadius: "8px",
-//                       padding: "16px",
-//                       marginBottom: "12px",
-//                       backgroundColor: "#f9fafb"
-//                     }}>
-//                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+//                     <div
+//                       key={s._id}
+//                       className="border border-gray-200 rounded-lg p-4 mb-4 bg-gray-50"
+//                     >
+//                       <div className="flex justify-between items-start mb-3">
 //                         <div>
-//                           <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>ID: {s.subCategoryId}</div>
+//                           <div className="text-xs text-gray-500 mb-1">ID: {s.subCategoryId}</div>
 //                           {editingSubCategoryId === s._id ? (
 //                             <input
 //                               value={editSubCategoryName}
 //                               onChange={(e) => setEditSubCategoryName(e.target.value)}
-//                               style={{
-//                                 padding: "6px 10px",
-//                                 border: "1px solid #d1d5db",
-//                                 borderRadius: "4px",
-//                                 fontSize: "14px",
-//                                 outline: "none",
-//                                 transition: "all 0.2s",
-//                                 width: "100%",
-//                                 marginBottom: "8px"
-//                               }}
-//                               onFocus={(e) => (e.target.style.borderColor = "#3b82f6")}
-//                               onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+//                               className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
 //                               autoFocus
 //                             />
 //                           ) : (
-//                             <div style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "8px" }}>
+//                             <div className="text-lg font-semibold text-gray-900">
 //                               {s.subCategoryName}
 //                             </div>
 //                           )}
-//                           <div style={{
-//                             fontSize: "13px",
-//                             color: "#4b5563",
-//                             backgroundColor: "#f3f4f6",
-//                             padding: "4px 8px",
-//                             borderRadius: "4px",
-//                             display: "inline-block"
-//                           }}>
-//                             {getCategoryName(s.categoryId)}
+//                           <div className="mt-1">
+//                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+//                               {getCategoryName(s.categoryId)}
+//                             </span>
 //                           </div>
 //                         </div>
-//                         <div style={{ display: "flex", gap: "8px" }}>
+//                         <div className="flex space-x-2">
 //                           {editingSubCategoryId === s._id ? (
 //                             <>
 //                               <button
 //                                 onClick={() => saveSubCategoryEdit(s._id)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#059669",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-green-600 text-white text-xs rounded-md"
 //                               >
 //                                 Save
 //                               </button>
 //                               <button
 //                                 onClick={cancelSubCategoryEdit}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "#374151",
-//                                   backgroundColor: "#e5e7eb",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-gray-200 text-gray-800 text-xs rounded-md"
 //                               >
 //                                 Cancel
 //                               </button>
@@ -1855,31 +1285,13 @@
 //                             <>
 //                               <button
 //                                 onClick={() => startSubCategoryEdit(s)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#2563eb",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-blue-600 text-white text-xs rounded-md"
 //                               >
 //                                 Edit
 //                               </button>
 //                               <button
 //                                 onClick={() => deleteSubCategory(s._id)}
-//                                 style={{
-//                                   padding: "6px 12px",
-//                                   fontSize: "12px",
-//                                   fontWeight: "500",
-//                                   color: "white",
-//                                   backgroundColor: "#dc2626",
-//                                   border: "none",
-//                                   borderRadius: "4px",
-//                                   cursor: "pointer"
-//                                 }}
+//                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded-md"
 //                               >
 //                                 Delete
 //                               </button>
@@ -1888,50 +1300,32 @@
 //                         </div>
 //                       </div>
 
-//                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+//                       <div className="flex items-center space-x-3">
 //                         {s.image && (
 //                           <img
 //                             src={getImageUrl(s.image)}
 //                             alt={s.subCategoryName}
-//                             style={{
-//                               width: "60px",
-//                               height: "60px",
-//                               objectFit: "cover",
-//                               borderRadius: "6px"
-//                             }}
+//                             className="w-16 h-16 object-cover rounded"
 //                             onError={handleCategoryImageError}
 //                           />
 //                         )}
 //                         {editingSubCategoryId === s._id && (
-//                           <div style={{ flex: 1 }}>
+//                           <div className="flex-1">
 //                             <input
 //                               id={`subcategory-image-edit-${s._id}`}
 //                               type="file"
 //                               accept=".jpg,.jpeg,.png,.gif,.webp,.svg,.bmp"
 //                               onChange={(e) => setEditSubCategoryImage(e.target.files?.[0] || null)}
-//                               style={{
-//                                 width: "100%",
-//                                 padding: "6px 10px",
-//                                 border: "1px solid #d1d5db",
-//                                 borderRadius: "4px",
-//                                 fontSize: "12px",
-//                                 marginBottom: "8px"
-//                               }}
+//                               className="block w-full mb-2 text-sm text-gray-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-green-50 file:text-green-700"
 //                             />
 //                             <button
 //                               onClick={() => updateSubCategoryImage(s._id)}
 //                               disabled={isSubCategoryImageUploading || !editSubCategoryImage}
-//                               style={{
-//                                 width: "100%",
-//                                 padding: "6px 10px",
-//                                 fontSize: "12px",
-//                                 fontWeight: "500",
-//                                 color: "white",
-//                                 backgroundColor: isSubCategoryImageUploading || !editSubCategoryImage ? "#86efac" : "#16a34a",
-//                                 border: "none",
-//                                 borderRadius: "4px",
-//                                 cursor: isSubCategoryImageUploading || !editSubCategoryImage ? "not-allowed" : "pointer"
-//                               }}
+//                               className={`w-full px-3 py-2 text-sm rounded-md ${
+//                                 isSubCategoryImageUploading || !editSubCategoryImage
+//                                   ? "bg-green-400 cursor-not-allowed"
+//                                   : "bg-green-600 hover:bg-green-700"
+//                               } text-white`}
 //                             >
 //                               {isSubCategoryImageUploading ? "Uploading..." : "Update Image"}
 //                             </button>
@@ -1944,111 +1338,73 @@
 
 //                 {/* Sub-Category Pagination */}
 //                 {totalSubCategories > 0 && (
-//                   <div style={{ 
-//                     padding: "20px", 
-//                     borderTop: "1px solid #e5e7eb",
-//                     display: "flex", 
-//                     flexDirection: "column",
-//                     gap: "15px"
-//                   }}>
-//                     <div style={{ fontSize: "14px", color: "#6b7280", textAlign: "center" }}>
-//                       Page {currentSubCategoryPage} of {subCategoryTotalPages}
-//                     </div>
-                    
-//                     <div style={{ display: "flex", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
-//                       <button
-//                         onClick={() => goToPage(1, 'subcategory')}
-//                         disabled={currentSubCategoryPage === 1}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentSubCategoryPage === 1 ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentSubCategoryPage === 1 ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentSubCategoryPage === 1 ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         First
-//                       </button>
-                      
-//                       <button
-//                         onClick={() => goToPage(currentSubCategoryPage - 1, 'subcategory')}
-//                         disabled={currentSubCategoryPage === 1}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentSubCategoryPage === 1 ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentSubCategoryPage === 1 ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentSubCategoryPage === 1 ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Previous
-//                       </button>
-                      
-//                       {getPageNumbers(currentSubCategoryPage, subCategoryTotalPages).map((pageNum, index) => (
+//                   <div className="px-6 py-4 border-t border-gray-200">
+//                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+//                       <p className="text-sm text-gray-700 mb-4 sm:mb-0">
+//                         Page {currentSubCategoryPage} of {subCategoryTotalPages}
+//                       </p>
+//                       <div className="flex items-center space-x-2">
 //                         <button
-//                           key={index}
-//                           onClick={() => typeof pageNum === 'number' ? goToPage(pageNum, 'subcategory') : null}
-//                           disabled={pageNum === '...'}
-//                           style={{
-//                             padding: "8px 12px",
-//                             minWidth: "40px",
-//                             fontSize: "12px",
-//                             fontWeight: "500",
-//                             color: pageNum === currentSubCategoryPage ? "white" : "#374151",
-//                             backgroundColor: pageNum === currentSubCategoryPage ? "#16a34a" : "white",
-//                             border: "1px solid #d1d5db",
-//                             borderRadius: "6px",
-//                             cursor: pageNum === '...' ? "default" : "pointer",
-//                             transition: "all 0.2s"
-//                           }}
+//                           onClick={() => goToPage(1, 'subcategory')}
+//                           disabled={currentSubCategoryPage === 1}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentSubCategoryPage === 1
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
 //                         >
-//                           {pageNum}
+//                           First
 //                         </button>
-//                       ))}
-                      
-//                       <button
-//                         onClick={() => goToPage(currentSubCategoryPage + 1, 'subcategory')}
-//                         disabled={currentSubCategoryPage === subCategoryTotalPages}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentSubCategoryPage === subCategoryTotalPages ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentSubCategoryPage === subCategoryTotalPages ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentSubCategoryPage === subCategoryTotalPages ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Next
-//                       </button>
-                      
-//                       <button
-//                         onClick={() => goToPage(subCategoryTotalPages, 'subcategory')}
-//                         disabled={currentSubCategoryPage === subCategoryTotalPages}
-//                         style={{
-//                           padding: "8px 12px",
-//                           fontSize: "12px",
-//                           fontWeight: "500",
-//                           color: currentSubCategoryPage === subCategoryTotalPages ? "#9ca3af" : "#374151",
-//                           backgroundColor: currentSubCategoryPage === subCategoryTotalPages ? "#f3f4f6" : "white",
-//                           border: "1px solid #d1d5db",
-//                           borderRadius: "6px",
-//                           cursor: currentSubCategoryPage === subCategoryTotalPages ? "not-allowed" : "pointer",
-//                           transition: "all 0.2s"
-//                         }}
-//                       >
-//                         Last
-//                       </button>
+//                         <button
+//                           onClick={() => goToPage(currentSubCategoryPage - 1, 'subcategory')}
+//                           disabled={currentSubCategoryPage === 1}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentSubCategoryPage === 1
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Previous
+//                         </button>
+//                         {getPageNumbers(currentSubCategoryPage, subCategoryTotalPages).map((pageNum, index) => (
+//                           <button
+//                             key={index}
+//                             onClick={() => typeof pageNum === 'number' ? goToPage(pageNum, 'subcategory') : null}
+//                             disabled={pageNum === '...'}
+//                             className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                               pageNum === currentSubCategoryPage
+//                                 ? "bg-green-600 text-white"
+//                                 : pageNum === '...'
+//                                 ? "bg-white text-gray-700 cursor-default"
+//                                 : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                             }`}
+//                           >
+//                             {pageNum}
+//                           </button>
+//                         ))}
+//                         <button
+//                           onClick={() => goToPage(currentSubCategoryPage + 1, 'subcategory')}
+//                           disabled={currentSubCategoryPage === subCategoryTotalPages}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentSubCategoryPage === subCategoryTotalPages
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Next
+//                         </button>
+//                         <button
+//                           onClick={() => goToPage(subCategoryTotalPages, 'subcategory')}
+//                           disabled={currentSubCategoryPage === subCategoryTotalPages}
+//                           className={`px-3 py-1 text-sm font-medium rounded-md ${
+//                             currentSubCategoryPage === subCategoryTotalPages
+//                               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+//                               : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-300"
+//                           }`}
+//                         >
+//                           Last
+//                         </button>
+//                       </div>
 //                     </div>
 //                   </div>
 //                 )}
@@ -2057,32 +1413,6 @@
 //           </div>
 //         </>
 //       )}
-
-//       {/* Add CSS for spinner animation */}
-//       <style jsx global>{`
-//         @keyframes spin {
-//           0% { transform: rotate(0deg); }
-//           100% { transform: rotate(360deg); }
-//         }
-        
-//         @media (min-width: 768px) {
-//           .mobile-only {
-//             display: none !important;
-//           }
-//           .desktop-only {
-//             display: block !important;
-//           }
-//         }
-        
-//         @media (max-width: 767px) {
-//           .mobile-only {
-//             display: block !important;
-//           }
-//           .desktop-only {
-//             display: none !important;
-//           }
-//         }
-//       `}</style>
 //     </div>
 //   );
 // }
@@ -2093,6 +1423,12 @@
 
 
 
+
+
+
+
+
+//UPDATED BY SRIDHAR
 
 
 
@@ -3506,6 +2842,7 @@ export default function CategoryManagementPage() {
     </div>
   );
 }
+
 
 
 

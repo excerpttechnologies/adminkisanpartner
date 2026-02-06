@@ -1715,13 +1715,13 @@ export default function StatesDetailsPage() {
                         >
                           <FaEdit size={14} />
                         </button>
-                        <button
+                        {/* <button
                           onClick={() => handleDeleteClick(state)}
                           className="p-[.6rem] text-sm text-red-600 hover:bg-red-50 rounded transition-colors"
                           title="Delete Record"
                         >
                           <FaTrash size={14} />
-                        </button>
+                        </button> */}
                       </div>
                     </td>
                   </tr>

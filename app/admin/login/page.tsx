@@ -24,6 +24,8 @@ function AdminLoginContent() {
   const [resetError, setResetError] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showPassword, setShowPassword] = useState(false);
+
   const redirect = searchParams.get("redirect") || "/dashboard";
 
   useEffect(() => {
@@ -244,7 +246,7 @@ function AdminLoginContent() {
                 />
               </div>
               
-              <div>
+              {/* <div>
                 <div className="flex items-center justify-between mb-2">
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                     Password
@@ -263,7 +265,40 @@ function AdminLoginContent() {
                   placeholder="••••••••"
                   disabled={loading}
                 />
-              </div>
+              </div> */}
+              <div>
+  <div className="flex items-center justify-between mb-2">
+    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+      Password
+    </label>
+  </div>
+
+  <div className="relative">
+    <input
+      id="password"
+      name="password"
+      type={showPassword ? "text" : "password"}
+      autoComplete="current-password"
+      required
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+      placeholder="••••••••"
+      disabled={loading}
+    />
+
+    {/* Eye Button */}
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+      tabIndex={-1}
+    >
+      {showPassword ? "🙈" : "👁️"}
+    </button>
+  </div>
+</div>
+
 
   <button
                     type="button"

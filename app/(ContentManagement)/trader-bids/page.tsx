@@ -3,10 +3,6 @@
 
 
 
-
-
-
-
 // "use client"
 
 // import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
@@ -58,6 +54,7 @@
 //   FaHome
 // } from 'react-icons/fa';
 // import toast from 'react-hot-toast';
+// import { getAdminSessionAction } from '@/app/actions/auth-actions';
 
 // interface FarmerInfo {
 //   farmerId?: string;
@@ -158,6 +155,20 @@
 //   // Farmer details cache
 //   const [farmerDetailsCache, setFarmerDetailsCache] = useState<Record<string, FarmerInfo>>({});
 
+//   // FIX: Add separate state for total stats from API
+//   const [totalStats, setTotalStats] = useState({
+//     totalOffers: 0,
+//     totalValue: 0,
+//     statusCounts: {
+//       pending: 0,
+//       accepted: 0,
+//       rejected: 0,
+//       countered: 0
+//     },
+//     counterOffers: 0,
+//     privateCounters: 0
+//   });
+
 //   const API_BASE = '/api';
 //   const tableRef = useRef<HTMLDivElement>(null);
 //   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -229,7 +240,11 @@
 //     };
 //   }, [API_BASE, farmerDetailsCache]);
 
-//   // Fetch offers with server-side pagination and sorting - FIXED: Only one API call
+//   const [user,setUser]=useState<{
+//     role:string,
+//     taluka:string
+//   }>()
+//   // Fetch offers with server-side pagination and sorting - FIXED: Fetch total stats separately
 //   const fetchOffers = useCallback(async (isForExport = false) => {
 //     // Don't set loading for export calls
 //     if (!isForExport) {
@@ -249,6 +264,12 @@
 //       params.append('limit', itemsPerPage.toString());
 //     } else {
 //       params.append('limit', '10000');
+//     }
+
+//     const session=await getAdminSessionAction()
+//     setUser(session?.admin)
+//     if(session?.admin?.role== "subadmin"){
+//       params.append('taluk', session?.admin?.taluka);
 //     }
     
 //     params.append('sortBy', sortField);
@@ -281,6 +302,22 @@
 //           setOffers(processedOffers);
 //           setTotalItemsState(response.data.pagination?.total || data.length);
 //           setTotalPages(response.data.pagination?.totalPages || 1);
+          
+//           // FIX: Update total stats from API response if available
+//           if (response.data.summary) {
+//             setTotalStats({
+//               totalOffers: response.data.summary.totalOffers || 0,
+//               totalValue: response.data.summary.totalValue || 0,
+//               statusCounts: response.data.summary.statusCounts || {
+//                 pending: 0,
+//                 accepted: 0,
+//                 rejected: 0,
+//                 countered: 0
+//               },
+//               counterOffers: processedOffers.filter(o => o.counterPrice || o.counterQuantity).length,
+//               privateCounters: processedOffers.filter(o => o.isCounterPrivate).length
+//             });
+//           }
 //         }
 //       } else {
 //         if (!isForExport) {
@@ -301,6 +338,41 @@
 //     return [];
 //   }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, currentPage, itemsPerPage, sortField, sortOrder, fetchFarmerDetails]);
 
+//   // Separate function to fetch total stats
+//   const fetchTotalStats = useCallback(async () => {
+//     try {
+//       const params = new URLSearchParams();
+//       if (searchInput) params.append('search', searchInput);
+//       if (statusFilter) params.append('status', statusFilter);
+//       if (traderIdFilter) params.append('traderId', traderIdFilter);
+//       if (farmerIdFilter) params.append('farmerId', farmerIdFilter);
+//       if (productIdFilter) params.append('productId', productIdFilter);
+      
+//       // Fetch with limit=1 just to get the summary/total counts
+//       params.append('limit', '1');
+//       params.append('page', '1');
+      
+//       const response = await axios.get(`${API_BASE}/trader-bids-reports?${params.toString()}`);
+      
+//       if (response.data.success && response.data.summary) {
+//         setTotalStats({
+//           totalOffers: response.data.summary.totalOffers || 0,
+//           totalValue: response.data.summary.totalValue || 0,
+//           statusCounts: response.data.summary.statusCounts || {
+//             pending: 0,
+//             accepted: 0,
+//             rejected: 0,
+//             countered: 0
+//           },
+//           counterOffers: 0, // Will be calculated from allOffers
+//           privateCounters: 0 // Will be calculated from allOffers
+//         });
+//       }
+//     } catch (error) {
+//       console.error('Error fetching total stats:', error);
+//     }
+//   }, [API_BASE, searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter]);
+
 //   // Separate function to fetch export data
 //   const fetchExportData = useCallback(async () => {
 //     try {
@@ -318,15 +390,22 @@
 //     fetchOffers();
 //   }, [currentPage, itemsPerPage, sortField, sortOrder]);
 
-//   // Debounced search for filters - FIXED: Added all filter dependencies
+//   // Fetch total stats when filters change (but not on pagination)
+//   useEffect(() => {
+//     fetchTotalStats();
+//   }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, fetchTotalStats]);
+
+//   // Debounced search for filters - FIXED: Reset to page 1 when filters change
 //   useEffect(() => {
 //     if (searchTimeoutRef.current) {
 //       clearTimeout(searchTimeoutRef.current);
 //     }
 
 //     searchTimeoutRef.current = setTimeout(() => {
+//       // FIX: Reset to page 1 when filters change
 //       setCurrentPage(1);
 //       fetchOffers();
+//       fetchTotalStats(); // Also refresh stats
 //     }, 500);
 
 //     return () => {
@@ -334,7 +413,7 @@
 //         clearTimeout(searchTimeoutRef.current);
 //       }
 //     };
-//   }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter, fetchOffers]);
+//   }, [searchInput, statusFilter, traderIdFilter, farmerIdFilter, productIdFilter]);
 
 //   // Get unique traders for filter dropdown - use allOffers to get all traders
 //   const getUniqueTraders = useMemo(() => {
@@ -424,7 +503,7 @@
 //       : <FaChevronDown className="inline ml-1 text-blue-600" />;
 //   };
 
-//   // Handle page change
+//   // Handle page change - FIXED: Use the correct page value
 //   const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
 //     setCurrentPage(value);
 //     if (tableRef.current) {
@@ -436,7 +515,7 @@
 //   const handleItemsPerPageChange = (event: SelectChangeEvent<number>) => {
 //     const newLimit = Number(event.target.value);
 //     setItemsPerPage(newLimit);
-//     setCurrentPage(1);
+//     setCurrentPage(1); // Reset to page 1 when items per page changes
 //   };
 
 //   // Calculate pagination range - use filteredOffers for display
@@ -446,23 +525,18 @@
 //     return { startItem, endItem };
 //   };
 
-//   // Calculate stats - use allOffers for global stats
+//   // Calculate stats - use totalStats from API instead of calculating from current page
 //   const calculateStats = () => {
-//     const offersForStats = allOffers.length > 0 ? allOffers : offers;
-//     const totalOffers = offersForStats.length;
-//     const totalValue = offersForStats.reduce((sum, offer) => sum + ((offer.offeredPrice || 0) * (offer.quantity || 0)), 0);
+//     // Use totalStats from API for global counts
+//     const offersForCounterStats = allOffers.length > 0 ? allOffers : offers;
+//     const counterOffers = offersForCounterStats.filter(o => o.counterPrice || o.counterQuantity).length;
+//     const privateCounters = offersForCounterStats.filter(o => o.isCounterPrivate).length;
     
-//     const statusCounts = {
-//       pending: offersForStats.filter(o => o.status?.toLowerCase() === 'pending').length,
-//       accepted: offersForStats.filter(o => o.status?.toLowerCase() === 'accepted').length,
-//       rejected: offersForStats.filter(o => o.status?.toLowerCase() === 'rejected').length,
-//       countered: offersForStats.filter(o => o.status?.toLowerCase() === 'countered').length
+//     return { 
+//       ...totalStats, 
+//       counterOffers, 
+//       privateCounters 
 //     };
-    
-//     const counterOffers = offersForStats.filter(o => o.counterPrice || o.counterQuantity).length;
-//     const privateCounters = offersForStats.filter(o => o.isCounterPrivate).length;
-    
-//     return { totalOffers, totalValue, statusCounts, counterOffers, privateCounters };
 //   };
 
 //   const { totalOffers, totalValue, statusCounts, counterOffers, privateCounters } = calculateStats();
@@ -901,12 +975,15 @@
 //     setSortField('createdAt');
 //     setSortOrder('desc');
 //     setCurrentPage(1);
+//     fetchOffers();
+//     fetchTotalStats();
 //   };
 
 //   // Apply search and filters
 //   const applyFilters = () => {
 //     setCurrentPage(1);
 //     fetchOffers();
+//     fetchTotalStats();
 //   };
 
 //   if (loading && offers.length === 0) {
@@ -975,13 +1052,17 @@
 //         ))}
 //       </div>
 
-//       {/* Stats Cards */}
+
+// {
+//   user?.role == "admin" &&<>
+    
 //       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
 //         <div className="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
 //           <div className="flex items-center justify-between">
 //             <div>
 //               <p className="text-gray-500 text-xs">Total Bids</p>
 //               <p className="text-xl font-bold text-gray-900">{totalOffers}</p>
+//               <p className="text-xs text-gray-400 mt-1">Showing {displayOffers.length} on this page</p>
 //             </div>
 //             <FaGavel className="text-blue-500 text-xl" />
 //           </div>
@@ -1032,7 +1113,7 @@
 //           </div>
 //         </div>
 //       </div>
-
+//     </>  }
 //       {/* Filters Section */}
 //       <div className="bg-white rounded-lg shadow mb-4 p-3">
 //         <div className="flex items-center gap-2 mb-3">
@@ -1077,7 +1158,10 @@
 //             </select>
 //           </div>
 
-//           {/* Trader ID Filter */}
+// {
+//   user?.role == "admin" &&<>
+  
+//   {/* Trader ID Filter */}
 //           <div className="relative">
 //             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 //               <FaUserTie className="text-gray-400" />
@@ -1128,6 +1212,10 @@
 //               onChange={(e) => setFarmerIdFilter(e.target.value)}
 //             />
 //           </div>
+  
+//   </>
+// }
+          
 //         </div>
 
 //         {/* Action Buttons */}
@@ -1576,7 +1664,7 @@
 //             </FormControl>
 //           </div>
 
-//           {/* Pagination component */}
+//           {/* Pagination component - FIXED: Using correct page value */}
 //           <div className="flex flex-col sm:flex-row items-center gap-3">
 //             <div className="text-xs text-gray-600">
 //               Page {currentPage} of {totalPages}
@@ -1848,11 +1936,6 @@
 
 
 
-
-
-
-
-
 "use client"
 
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
@@ -1901,7 +1984,8 @@ import {
   FaChartLine,
   FaUserTag,
   FaMobileAlt,
-  FaHome
+  FaHome,
+  FaEnvelope
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import { getAdminSessionAction } from '@/app/actions/auth-actions';
@@ -1916,6 +2000,15 @@ interface FarmerInfo {
   farmerDistrict?: string;
 }
 
+interface TraderInfo {
+  state?: string;
+  district?: string;
+  taluk?: string;
+  mobileNo?: string;
+  email?: string;
+  address?: string;
+}
+
 interface Offer {
   // REQUIRED FIELDS:
   productId: string;
@@ -1923,6 +2016,7 @@ interface Offer {
   offerId: string;
   traderId: string;
   traderName: string;
+  traderDetails?: TraderInfo; // Added trader details field
   offeredPrice: number;
   quantity: number;
   status: 'pending' | 'accepted' | 'rejected' | 'countered' | string;
@@ -2412,6 +2506,8 @@ const TraderBidsReport: React.FC = () => {
       { name: "Offer ID", width: 12 },
       { name: "Product", width: 10 },
       { name: "Trader", width: 18 },
+      { name: "Trader Contact", width: 20 },
+      { name: "Trader Location", width: 18 },
       { name: "Price", width: 12 },
       { name: "Qty", width: 8 },
       { name: "Status", width: 14 },
@@ -2430,6 +2526,22 @@ const TraderBidsReport: React.FC = () => {
       const formattedTrader = traderInfo.length > 16 
         ? traderInfo.substring(0, 13) + "..." 
         : traderInfo;
+      
+      // Format trader contact info
+      const traderContact = offer.traderDetails ? 
+        `${offer.traderDetails.mobileNo || "N/A"} | ${offer.traderDetails.email || "N/A"}` : 
+        "N/A";
+      const formattedContact = traderContact.length > 18 
+        ? traderContact.substring(0, 15) + "..." 
+        : traderContact;
+      
+      // Format trader location
+      const traderLocation = offer.traderDetails ? 
+        `${offer.traderDetails.taluk || ""}, ${offer.traderDetails.district || ""}, ${offer.traderDetails.state || ""}` : 
+        "N/A";
+      const formattedLocation = traderLocation.length > 16 
+        ? traderLocation.substring(0, 13) + "..." 
+        : traderLocation;
       
       // Format price with ₹ symbol
       const formatPrice = (price: number) => 
@@ -2457,11 +2569,13 @@ const TraderBidsReport: React.FC = () => {
         (offer.offerId?.substring(0, 10) || "N/A").padEnd(headers[0].width),
         (offer.productId?.substring(0, 8) || "N/A").padEnd(headers[1].width),
         formattedTrader.padEnd(headers[2].width),
-        offeredPrice.padEnd(headers[3].width),
-        (offer.quantity || 0).toString().padEnd(headers[4].width),
-        `${statusEmoji} ${status}`.padEnd(headers[5].width),
-        counterInfo.padEnd(headers[6].width),
-        (offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A").padEnd(headers[7].width)
+        formattedContact.padEnd(headers[3].width),
+        formattedLocation.padEnd(headers[4].width),
+        offeredPrice.padEnd(headers[5].width),
+        (offer.quantity || 0).toString().padEnd(headers[6].width),
+        `${statusEmoji} ${status}`.padEnd(headers[7].width),
+        counterInfo.padEnd(headers[8].width),
+        (offer.createdAt ? new Date(offer.createdAt).toLocaleDateString() : "N/A").padEnd(headers[9].width)
       ];
       
       return rowValues.join(" │ ");
@@ -2496,6 +2610,16 @@ const TraderBidsReport: React.FC = () => {
       `• Total Offer Value: ₹${stats.totalValue.toLocaleString('en-IN')}`,
       `• Average Price per Unit: ₹${stats.totalQuantity > 0 ? (stats.totalValue / stats.totalQuantity).toFixed(2) : 0}`,
       "",
+      "📍 TRADER LOCATIONS",
+      `• Total Traders: ${new Set(offersToExport.map((o: any) => o.traderId)).size}`,
+      `• Total States: ${new Set(offersToExport.map((o: any) => o.traderDetails?.state).filter(Boolean)).size}`,
+      `• Total Districts: ${new Set(offersToExport.map((o: any) => o.traderDetails?.district).filter(Boolean)).size}`,
+      `• Total Taluks: ${new Set(offersToExport.map((o: any) => o.traderDetails?.taluk).filter(Boolean)).size}`,
+      "",
+      "📞 TRADER CONTACT INFO",
+      `• Traders with Mobile: ${new Set(offersToExport.map((o: any) => o.traderDetails?.mobileNo).filter(Boolean)).size}`,
+      `• Traders with Email: ${new Set(offersToExport.map((o: any) => o.traderDetails?.email).filter(Boolean)).size}`,
+      "",
       "📈 STATUS DISTRIBUTION",
       ...Object.entries(stats.statusCounts).map(([status, count]: [string, any]) => 
         `• ${status}: ${count} (${Math.round((count / offersToExport.length) * 100)}%)`
@@ -2510,7 +2634,6 @@ const TraderBidsReport: React.FC = () => {
       `• Source: ${filteredOffers.length > 0 ? 'Filtered Results' : 'All Offers'}`,
       `• Farmers: ${new Set(offersToExport.map((o: any) => o.farmerId)).size}`,
       `• Products: ${new Set(offersToExport.map((o: any) => o.productId)).size}`,
-      `• Traders: ${new Set(offersToExport.map((o: any) => o.traderId)).size}`,
       "",
       `📅 Report Generated: ${new Date().toLocaleString()}`
     ].join("\n");
@@ -2550,6 +2673,12 @@ const TraderBidsReport: React.FC = () => {
         "Offer ID": offer.offerId,
         "Trader ID": offer.traderId,
         "Trader Name": offer.traderName,
+        "Trader Mobile": offer.traderDetails?.mobileNo || 'N/A',
+        "Trader Email": offer.traderDetails?.email || 'N/A',
+        "Trader State": offer.traderDetails?.state || 'N/A',
+        "Trader District": offer.traderDetails?.district || 'N/A',
+        "Trader Taluka": offer.traderDetails?.taluk || 'N/A',
+        "Trader Address": offer.traderDetails?.address || 'N/A',
         "Offered Price": offer.offeredPrice,
         "Quantity": offer.quantity,
         "Total Value": totalValue,
@@ -2587,7 +2716,7 @@ const TraderBidsReport: React.FC = () => {
       return;
     }
     
-    const headers = ["Product ID", "Trader Name", "Farmer Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
+    const headers = ["Product ID", "Trader Name", "Trader Mobile", "Trader Email", "Trader State", "Trader District", "Trader Taluka", "Farmer Name", "Offered Price", "Quantity", "Status", "Counter Price", "Date"];
     
     const csvContent = [
       headers.join(","),
@@ -2595,6 +2724,11 @@ const TraderBidsReport: React.FC = () => {
         return [
           `"${offer.productId}"`,
           `"${offer.traderName}"`,
+          `"${offer.traderDetails?.mobileNo || 'N/A'}"`,
+          `"${offer.traderDetails?.email || 'N/A'}"`,
+          `"${offer.traderDetails?.state || 'N/A'}"`,
+          `"${offer.traderDetails?.district || 'N/A'}"`,
+          `"${offer.traderDetails?.taluk || 'N/A'}"`,
           `"${offer.farmerInfo?.farmerName || 'N/A'}"`,
           offer.offeredPrice,
           offer.quantity,
@@ -2631,12 +2765,18 @@ const TraderBidsReport: React.FC = () => {
     const doc = new jsPDF('landscape');
     doc.text("Trader Bids Report", 14, 16);
     
-    const tableColumn = ["Product ID", "Trader", "Farmer", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
+    const tableColumn = ["Product ID", "Trader", "Trader Mobile", "Trader Email", "Trader Location", "Farmer", "Price", "Quantity", "Total", "Status", "Counter", "Date"];
     const tableRows: any = offersToExport.map((offer) => {
       const total = (offer.offeredPrice || 0) * (offer.quantity || 0);
+      const traderLocation = offer.traderDetails ? 
+        `${offer.traderDetails.taluk || ''}, ${offer.traderDetails.district || ''}` : 
+        'N/A';
       return [
         offer.productId,
         offer.traderName,
+        offer.traderDetails?.mobileNo || 'N/A',
+        offer.traderDetails?.email || 'N/A',
+        traderLocation,
         offer.farmerInfo?.farmerName || 'N/A',
         `₹${offer.offeredPrice.toLocaleString()}`,
         offer.quantity.toLocaleString(),
@@ -2651,7 +2791,7 @@ const TraderBidsReport: React.FC = () => {
       head: [tableColumn],
       body: tableRows,
       startY: 20,
-      styles: { fontSize: 8 },
+      styles: { fontSize: 7 },
       headStyles: { fillColor: [59, 130, 246] },
     });
     
@@ -2689,6 +2829,8 @@ const TraderBidsReport: React.FC = () => {
           .status-accepted { background-color: #d1fae5; color: #065f46; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
           .status-rejected { background-color: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
           .status-countered { background-color: #dbeafe; color: #1e40af; padding: 4px 8px; border-radius: 12px; font-size: 12px; }
+          .trader-info { background-color: #e0f2fe; padding: 8px; border-radius: 6px; margin: 5px 0; }
+          .trader-label { font-weight: bold; color: #0369a1; }
           .farmer-info { background-color: #f0fdf4; padding: 8px; border-radius: 6px; margin: 5px 0; }
           .farmer-label { font-weight: bold; color: #166534; }
           @media print { 
@@ -2706,7 +2848,8 @@ const TraderBidsReport: React.FC = () => {
           <thead>
             <tr>
               <th>Product ID</th>
-              <th>Trader</th>
+              <th>Trader Details</th>
+              <th>Trader Location</th>
               <th>Farmer</th>
               <th>Price</th>
               <th>Quantity</th>
@@ -2726,7 +2869,23 @@ const TraderBidsReport: React.FC = () => {
               return `
                 <tr>
                   <td>${offer.productId}</td>
-                  <td>${offer.traderName}<br><small>ID: ${offer.traderId}</small></td>
+                  <td>
+                    <div class="trader-info">
+                      <div><span class="trader-label">Name:</span> ${offer.traderName}</div>
+                      <div><span class="trader-label">ID:</span> ${offer.traderId}</div>
+                      ${offer.traderDetails?.mobileNo ? `<div><span class="trader-label">Mobile:</span> ${offer.traderDetails.mobileNo}</div>` : ''}
+                      ${offer.traderDetails?.email ? `<div><span class="trader-label">Email:</span> ${offer.traderDetails.email}</div>` : ''}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="trader-info">
+                      ${offer.traderDetails ? `
+                        <div><span class="trader-label">State:</span> ${offer.traderDetails.state || 'N/A'}</div>
+                        <div><span class="trader-label">District:</span> ${offer.traderDetails.district || 'N/A'}</div>
+                        <div><span class="trader-label">Taluka:</span> ${offer.traderDetails.taluk || 'N/A'}</div>
+                      ` : 'N/A'}
+                    </div>
+                  </td>
                   <td>
                     ${offer.farmerInfo ? `
                       <div class="farmer-info">
@@ -2993,7 +3152,7 @@ const TraderBidsReport: React.FC = () => {
               <FaClipboardList className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-sm"
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
@@ -3017,7 +3176,7 @@ const TraderBidsReport: React.FC = () => {
               <FaUserTie className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={traderIdFilter}
               onChange={(e) => setTraderIdFilter(e.target.value)}
             >
@@ -3031,7 +3190,7 @@ const TraderBidsReport: React.FC = () => {
           </div>
 
           {/* Product ID Filter */}
-          <div className="relative">
+          {/* <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaBox className="text-gray-400" />
             </div>
@@ -3047,7 +3206,7 @@ const TraderBidsReport: React.FC = () => {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           {/* Farmer ID Filter */}
           <div className="relative">
@@ -3159,14 +3318,54 @@ const TraderBidsReport: React.FC = () => {
                       </div>
                     </td>
 
-                    {/* Trader Details */}
+                    {/* Trader Details - UPDATED with trader location and contact info */}
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <FaUserTie className="text-gray-400 mr-2 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{offer.traderName}</div>
-                          <div className="text-xs text-gray-500 truncate">{offer.traderId}</div>
+                      <div className="space-y-1">
+                        <div className="flex items-center">
+                          <FaUserTie className="text-gray-400 mr-2 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{offer.traderName}</div>
+                            <div className="text-xs text-gray-500 truncate">{offer.traderId}</div>
+                          </div>
                         </div>
+                        
+                        {/* Added Trader Contact Info Here */}
+                        {offer.traderDetails?.mobileNo && (
+                          <div className="flex items-center text-xs text-gray-600 ml-6">
+                            <FaMobileAlt className="mr-1 flex-shrink-0" />
+                            <span className="truncate">{offer.traderDetails.mobileNo}</span>
+                          </div>
+                        )}
+                        {offer.traderDetails?.email && (
+                          <div className="flex items-center text-xs text-gray-600 ml-6">
+                            <FaEnvelope className="mr-1 flex-shrink-0" />
+                            <span className="truncate">{offer.traderDetails.email}</span>
+                          </div>
+                        )}
+                        
+                        {/* Added Trader Location Info Here */}
+                        {offer.traderDetails && (offer.traderDetails.state || offer.traderDetails.district || offer.traderDetails.taluk) && (
+                          <div className="text-xs text-gray-600 ml-6 space-y-0.5">
+                            {offer.traderDetails.state && (
+                              <div className="flex items-center">
+                                <FaGlobe className="mr-1 flex-shrink-0 text-xs" />
+                                <span className="truncate">{offer.traderDetails.state}</span>
+                              </div>
+                            )}
+                            {offer.traderDetails.district && (
+                              <div className="flex items-center">
+                                <FaCity className="mr-1 flex-shrink-0 text-xs" />
+                                <span className="truncate">{offer.traderDetails.district}</span>
+                              </div>
+                            )}
+                            {offer.traderDetails.taluk && (
+                              <div className="flex items-center ">
+                                <FaMapMarkerAlt className="mr-1 flex-shrink-0 text-xs text-blue-500" />
+                                <span className="truncate">{offer.traderDetails.taluk}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
 
@@ -3343,9 +3542,46 @@ const TraderBidsReport: React.FC = () => {
                 </div>
               </div>
 
+              {/* Trader Details in Mobile View - UPDATED */}
+              <div className="mb-2 p-2 bg-blue-50 rounded border-l-2 border-blue-500">
+                <div className="text-xs text-gray-500 mb-1">Trader Details</div>
+                <div className="space-y-1">
+                  <div className="flex items-center">
+                    <FaUserTie className="text-blue-500 mr-2 text-xs flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{offer.traderName}</div>
+                      <div className="text-xs text-gray-500 truncate">ID: {offer.traderId}</div>
+                    </div>
+                  </div>
+                  {/* Added Trader Contact Info Here */}
+                  {offer.traderDetails?.mobileNo && (
+                    <div className="flex items-center text-xs text-gray-600 ml-6">
+                      <FaMobileAlt className="mr-1 flex-shrink-0" />
+                      <span className="truncate">{offer.traderDetails.mobileNo}</span>
+                    </div>
+                  )}
+                  {offer.traderDetails?.email && (
+                    <div className="flex items-center text-xs text-gray-600 ml-6">
+                      <FaEnvelope className="mr-1 flex-shrink-0" />
+                      <span className="truncate">{offer.traderDetails.email}</span>
+                    </div>
+                  )}
+                  {/* Added Trader Location Info Here */}
+                  {offer.traderDetails && (offer.traderDetails.state || offer.traderDetails.district || offer.traderDetails.taluk) && (
+                    <div className="flex items-center text-xs text-gray-600 ml-6">
+                      <FaMapMarkerAlt className="mr-1 flex-shrink-0" />
+                      <span className="truncate">
+                        {[offer.traderDetails.taluk, offer.traderDetails.district, offer.traderDetails.state]
+                          .filter(Boolean).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Farmer Info in Mobile View */}
               {offer.farmerInfo && (
-                <div className="mb-2 p-2 bg-gray-50 rounded border-l-2 border-green-500">
+                <div className="mb-2 p-2 bg-green-50 rounded border-l-2 border-green-500">
                   <div className="text-xs text-gray-500 mb-1">Farmer Details</div>
                   <div className="space-y-1">
                     <div className="flex items-center">
@@ -3373,34 +3609,82 @@ const TraderBidsReport: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="truncate">
-                  <div className="text-xs text-gray-500">Trader</div>
-                  <div className="font-medium text-xs truncate">{offer.traderName}</div>
-                  <div className="text-xs text-gray-500 truncate">ID: {offer.traderId}</div>
-                </div>
-                <div className="truncate">
                   <div className="text-xs text-gray-500">Total Value</div>
                   <div className="font-bold text-sm truncate">{formatCurrency(totalValue)}</div>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="truncate">
                   <div className="text-xs text-gray-500">Price × Qty</div>
                   <div className="font-medium text-xs truncate">
                     {formatCurrency(offer.offeredPrice)} × {offer.quantity}
                   </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mb-2">
                 <div className="truncate">
                   <div className="text-xs text-gray-500">Status</div>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(offer.status)} truncate`}>
                     {formatStatus(offer.status)}
                   </span>
                 </div>
+                <div className="truncate">
+                  <div className="text-xs text-gray-500">Counter Offer</div>
+                  <div className="font-medium text-xs truncate">
+                    {offer.counterPrice ? `₹${offer.counterPrice}` : 'None'}
+                  </div>
+                </div>
               </div>
 
               {/* Expanded Content */}
               {expandedOffer === offer.offerId && (
                 <div className="mt-3 pt-3 border-t border-gray-200 space-y-3">
+                  {/* Trader Details in Expanded View - UPDATED */}
+                  <div className="bg-blue-50 p-2 rounded">
+                    <div className="text-xs text-gray-500 mb-2">Trader Information</div>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-xs text-gray-600">Name</div>
+                          <div className="text-sm font-medium">{offer.traderName}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs text-gray-600">ID</div>
+                          <div className="text-sm font-medium">{offer.traderId}</div>
+                        </div>
+                      </div>
+                      {offer.traderDetails?.mobileNo && (
+                        <div>
+                          <div className="text-xs text-gray-600">Mobile</div>
+                          <div className="text-sm font-medium">{offer.traderDetails.mobileNo}</div>
+                        </div>
+                      )}
+                      {offer.traderDetails?.email && (
+                        <div>
+                          <div className="text-xs text-gray-600">Email</div>
+                          <div className="text-sm font-medium">{offer.traderDetails.email}</div>
+                        </div>
+                      )}
+                      {offer.traderDetails?.state && (
+                        <div>
+                          <div className="text-xs text-gray-600">State</div>
+                          <div className="text-sm font-medium">{offer.traderDetails.state}</div>
+                        </div>
+                      )}
+                      {offer.traderDetails?.district && (
+                        <div>
+                          <div className="text-xs text-gray-600">District</div>
+                          <div className="text-sm font-medium">{offer.traderDetails.district}</div>
+                        </div>
+                      )}
+                      {offer.traderDetails?.taluk && (
+                        <div>
+                          <div className="text-xs text-gray-600">Taluka</div>
+                          <div className="text-sm font-medium">{offer.traderDetails.taluk}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Farmer Details in Expanded View */}
                   {offer.farmerInfo && (
                     <div className="bg-green-50 p-2 rounded">
@@ -3536,7 +3820,7 @@ const TraderBidsReport: React.FC = () => {
       )}
 
       {/* Counter Offer Statistics */}
-      {displayOffers.length > 0 && (
+      {/* {displayOffers.length > 0 && (
         <div className="mt-6 bg-white rounded-lg shadow border p-4">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <FaChartLine className="text-blue-600" />
@@ -3565,7 +3849,7 @@ const TraderBidsReport: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Bid Details Dialog */}
       <Dialog
@@ -3637,6 +3921,18 @@ const TraderBidsReport: React.FC = () => {
                       <span className="text-gray-600 text-sm">Trader Name:</span>
                       <span className="font-medium text-sm">{currentOffer.traderName}</span>
                     </div>
+                    {currentOffer.traderDetails?.mobileNo && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Mobile:</span>
+                        <span className="font-medium text-sm">{currentOffer.traderDetails.mobileNo}</span>
+                      </div>
+                    )}
+                    {currentOffer.traderDetails?.email && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Email:</span>
+                        <span className="font-medium text-sm">{currentOffer.traderDetails.email}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-gray-600 text-sm">Created:</span>
                       <span className="font-medium text-sm">{formatDateTime(currentOffer.createdAt)}</span>
@@ -3644,6 +3940,36 @@ const TraderBidsReport: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Trader Location Information - ADDED */}
+              {currentOffer.traderDetails && (currentOffer.traderDetails.state || currentOffer.traderDetails.district || currentOffer.traderDetails.taluk) && (
+                <div className="bg-indigo-50 p-3 rounded">
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-indigo-600" />
+                    Trader Location
+                  </h3>
+                  <div className="space-y-2">
+                    {currentOffer.traderDetails.state && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">State:</span>
+                        <span className="font-medium text-sm">{currentOffer.traderDetails.state}</span>
+                      </div>
+                    )}
+                    {currentOffer.traderDetails.district && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">District:</span>
+                        <span className="font-medium text-sm">{currentOffer.traderDetails.district}</span>
+                      </div>
+                    )}
+                    {currentOffer.traderDetails.taluk && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600 text-sm">Taluka:</span>
+                        <span className="font-medium text-sm">{currentOffer.traderDetails.taluk}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Farmer Information Section */}
               {currentOffer.farmerInfo && (

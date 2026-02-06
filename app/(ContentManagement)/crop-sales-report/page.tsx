@@ -4079,7 +4079,7 @@ const CropSalesReport: React.FC = () => {
             </select> */}
 
              <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none  bg-white"
               value={categoryFilter}
               onChange={(e) => {
                 setCategoryFilter(e.target.value);
@@ -4118,7 +4118,7 @@ const CropSalesReport: React.FC = () => {
               <FaTags className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none  bg-white"
               value={gradeFilter}
               onChange={(e) => setGradeFilter(e.target.value)}
             >
@@ -4136,7 +4136,7 @@ const CropSalesReport: React.FC = () => {
               <FaFilter className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none  bg-white"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -4154,7 +4154,7 @@ const CropSalesReport: React.FC = () => {
               <FaSort className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none  bg-white"
               value={sortField}
               onChange={(e) => {
                 setSortField(e.target.value);

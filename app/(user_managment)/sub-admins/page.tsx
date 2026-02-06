@@ -3,10 +3,6 @@
 
 
 
-
-
-
-
 // "use client";
 
 // import { useState, useEffect } from "react";
@@ -27,7 +23,6 @@
 //   FaTrashAlt,
 //   FaChevronDown,
 //   FaChevronRight,
-//   FaMapMarkerAlt,
 // } from "react-icons/fa";
 // import * as XLSX from "xlsx";
 // import jsPDF from "jspdf";
@@ -66,32 +61,14 @@
 //   total?: number;
 // }
 
-// interface State {
+// interface StateDetails {
 //   _id: string;
-//   name: string;
-// }
-
-// interface District {
-//   _id: string;
-//   name: string;
-//   stateId: string;
-// }
-
-// interface Taluka {
-//   _id: string;
-//   name: string;
-//   district: {
-//     _id: string;
-//     name: string;
-//     stateId: string;
-//   };
-// }
-
-// interface LocationData {
 //   pinCode: string;
 //   state: string;
 //   district: string;
 //   taluk: string;
+//   createdAt: string;
+//   updatedAt: string;
 // }
 
 // interface CommodityCategory {
@@ -115,8 +92,8 @@
 // export default function SubAdminAccountsPage() {
 //   const [allModules, setAllModules] = useState<string[]>([]);
 //   const [modules, setModules] = useState<string[]>(["All"]);
-//   const [allSubAdmins, setAllSubAdmins] = useState<SubAdmin[]>([]);
-//   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
+//   const [allSubAdmins, setAllSubAdmins] = useState<SubAdmin[]>([]); // Store all data
+//   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]); // Store filtered data
 //   const [search, setSearch] = useState("");
 //   const [currentPage, setCurrentPage] = useState(1);
 //   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -124,10 +101,12 @@
 //   const [totalAdmins, setTotalAdmins] = useState(0);
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState<string | null>(null);
-//   const [states, setStates] = useState<State[]>([]);
-//   const [districts, setDistricts] = useState<District[]>([]);
-//   const [talukas, setTalukas] = useState<Taluka[]>([]);
-//   const [allLocations, setAllLocations] = useState<LocationData[]>([]);
+//   const [stateDetails, setStateDetails] = useState<StateDetails[]>([]);
+  
+//   // Extract unique states, districts, and talukas
+//   const [states, setStates] = useState<string[]>([]);
+//   const [districts, setDistricts] = useState<string[]>([]);
+//   const [talukas, setTalukas] = useState<string[]>([]);
   
 //   // Commodities state
 //   const [commodityCategories, setCommodityCategories] = useState<CommodityCategory[]>([]);
@@ -139,17 +118,12 @@
 //   const [talukaFilter, setTalukaFilter] = useState<string>("");
   
 //   // Filtered dropdowns for form
-//   const [filteredDistricts, setFilteredDistricts] = useState<District[]>([]);
-//   const [filteredTalukas, setFilteredTalukas] = useState<Taluka[]>([]);
+//   const [filteredDistricts, setFilteredDistricts] = useState<string[]>([]);
+//   const [filteredTalukas, setFilteredTalukas] = useState<string[]>([]);
   
 //   // Filtered dropdowns for filters
-//   const [filteredDistrictsForFilter, setFilteredDistrictsForFilter] = useState<District[]>([]);
-//   const [filteredTalukasForFilter, setFilteredTalukasForFilter] = useState<Taluka[]>([]);
-
-//   // PIN Code lookup
-//   const [pincode, setPincode] = useState("");
-//   const [pincodeLoading, setPincodeLoading] = useState(false);
-//   const [pincodeError, setPincodeError] = useState("");
+//   const [filteredDistrictsForFilter, setFilteredDistrictsForFilter] = useState<string[]>([]);
+//   const [filteredTalukasForFilter, setFilteredTalukasForFilter] = useState<string[]>([]);
 
 //   const [open, setOpen] = useState(false);
 //   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -185,7 +159,7 @@
       
 //       const params = new URLSearchParams({
 //         page: page.toString(),
-//         limit: "10000",
+//         limit: "10000", // Fetch all data for manual filtering
 //         search: searchQuery,
 //         showDeleted: showDeleted.toString(),
 //       });
@@ -197,17 +171,17 @@
 //           ? response.data.data 
 //           : [response.data.data];
         
-//         setAllSubAdmins(data);
+//         setAllSubAdmins(data); // Store all data
         
 //         // Apply manual filtering
 //         const filteredData = applyManualFilters(data);
 //         setSubAdmins(filteredData);
         
 //         if (response.data.total !== undefined) {
-//           setTotalAdmins(filteredData.length);
+//           setTotalAdmins(filteredData.length); // Use filtered count
 //           setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
 //         }
-//         setCurrentPage(1);
+//         setCurrentPage(1); // Reset to first page after filtering
 //       }
 //     } catch (err: any) {
 //       console.error("Error fetching sub-admins:", err);
@@ -238,160 +212,27 @@
 //     }
 //   };
 
-//   // Fetch all location data from the new API
-//   const fetchAllLocations = async () => {
+//   const fetchStateDetails = async () => {
 //     try {
-//       const response = await axios.get("/api/states-details?limit=10000");
-//       if (response.data.success) {
-//         const locations = response.data.data;
-//         setAllLocations(locations);
+//       const response = await axios.get<{success: boolean; data: StateDetails[]}>("/api/states-details");
+//       if (response.data.success && response.data.data) {
+//         setStateDetails(response.data.data);
         
-//         // Extract unique states, districts, and talukas
-//         const uniqueStates = Array.from(
-//           new Set(locations.map((loc: LocationData) => loc.state))
-//         )
-//           .filter(state => state && state.trim() !== "")
-//           .map((state, index) => ({
-//             _id: `state-${index + 1}`,
-//             name: state,
-//           }));
-        
+//         // Extract unique values
+//         const uniqueStates = Array.from(new Set(response.data.data.map(item => item.state))).sort();
 //         setStates(uniqueStates);
         
-//         // Extract districts
-//         const districtMap = new Map();
-//         locations.forEach((loc: LocationData, index: number) => {
-//           if (loc.district && loc.district.trim() !== "" && loc.state) {
-//             const state = uniqueStates.find(s => s.name === loc.state);
-//             if (state) {
-//               const key = `${loc.state}-${loc.district}`;
-//               if (!districtMap.has(key)) {
-//                 districtMap.set(key, {
-//                   _id: `district-${districtMap.size + 1}`,
-//                   name: loc.district,
-//                   stateId: state._id,
-//                   stateName: loc.state,
-//                 });
-//               }
-//             }
-//           }
-//         });
+//         // Extract all districts for initial setup
+//         const allDistricts = Array.from(new Set(response.data.data.map(item => item.district))).sort();
+//         setDistricts(allDistricts);
         
-//         const districtsArray = Array.from(districtMap.values());
-//         setDistricts(districtsArray);
-        
-//         // Extract talukas
-//         const talukaMap = new Map();
-//         locations.forEach((loc: LocationData, index: number) => {
-//           if (loc.taluk && loc.taluk.trim() !== "" && loc.district && loc.state) {
-//             const district = districtsArray.find(d => 
-//               d.name === loc.district && d.stateName === loc.state
-//             );
-//             if (district) {
-//               const key = `${loc.state}-${loc.district}-${loc.taluk}`;
-//               if (!talukaMap.has(key)) {
-//                 talukaMap.set(key, {
-//                   _id: `taluka-${talukaMap.size + 1}`,
-//                   name: loc.taluk,
-//                   district: {
-//                     _id: district._id,
-//                     name: district.name,
-//                     stateId: district.stateId,
-//                   },
-//                 });
-//               }
-//             }
-//           }
-//         });
-        
-//         const talukasArray = Array.from(talukaMap.values());
-//         setTalukas(talukasArray);
+//         // Extract all talukas for initial setup
+//         const allTalukas = Array.from(new Set(response.data.data.map(item => item.taluk))).sort();
+//         setTalukas(allTalukas);
 //       }
 //     } catch (err) {
-//       console.error("Error fetching locations:", err);
+//       console.error("Error fetching state details:", err);
 //       toast.error("Failed to load location data");
-//     }
-//   };
-
-//   // Fetch PIN code details from the new API
-//   const fetchPinCodeDetails = async (pincode: string) => {
-//     try {
-//       setPincodeLoading(true);
-//       setPincodeError("");
-      
-//       if (!pincode || pincode.length !== 6 || !/^\d+$/.test(pincode)) {
-//         setPincodeError("Please enter a valid 6-digit PIN code");
-//         return false;
-//       }
-
-//       const response = await axios.get(`/api/states-details?pincode=${pincode}&action=lookup-pin`);
-      
-//       if (response.data.success) {
-//         const data = response.data.data;
-        
-//         // Find state by name from our extracted states
-//         const foundState = states.find(s => 
-//           s.name.toLowerCase() === data.state.toLowerCase()
-//         );
-        
-//         if (foundState) {
-//           // Update form with found state
-//           setForm(prev => ({ 
-//             ...prev, 
-//             state: foundState._id,
-//             district: "",
-//             taluka: ""
-//           }));
-          
-//           // Wait a moment for state to update, then find district
-//           setTimeout(() => {
-//             const foundDistrict = districts.find(d => 
-//               d.name.toLowerCase() === data.district.toLowerCase() && 
-//               d.stateId === foundState._id
-//             );
-            
-//             if (foundDistrict) {
-//               setForm(prev => ({ 
-//                 ...prev, 
-//                 district: foundDistrict._id,
-//                 taluka: ""
-//               }));
-              
-//               // Find taluka
-//               setTimeout(() => {
-//                 const foundTaluka = talukas.find(t => 
-//                   t.name.toLowerCase() === data.taluk.toLowerCase() && 
-//                   t.district._id === foundDistrict._id
-//                 );
-                
-//                 if (foundTaluka) {
-//                   setForm(prev => ({ ...prev, taluka: foundTaluka._id }));
-//                   toast.success(`Location found: ${data.state}, ${data.district}, ${data.taluk}`);
-//                 } else {
-//                   // Taluka not found in our data, but we still have state and district
-//                   toast.success(`Location found: ${data.state}, ${data.district}`);
-//                 }
-//               }, 100);
-//             } else {
-//               toast.success(`Location found: ${data.state}`);
-//             }
-//           }, 100);
-          
-//           return true;
-//         } else {
-//           setPincodeError(`State "${data.state}" not found in our database`);
-//           return false;
-//         }
-//       } else {
-//         setPincodeError(response.data.error || "Failed to fetch PIN code details");
-//         return false;
-//       }
-//     } catch (err: any) {
-//       console.error("Error fetching PIN code details:", err);
-//       setPincodeError(err.response?.data?.error || "Failed to fetch PIN code details");
-//       return false;
-//     } finally {
-//       setPincodeLoading(false);
 //     }
 //   };
 
@@ -399,33 +240,28 @@
 //   const applyManualFilters = (data: SubAdmin[]): SubAdmin[] => {
 //     let filtered = [...data];
 
+//     // Apply state filter
 //     if (stateFilter) {
-//       const selectedState = states.find(s => s._id === stateFilter);
-//       if (selectedState) {
-//         filtered = filtered.filter(admin => 
-//           admin.state?.toLowerCase() === selectedState.name.toLowerCase()
-//         );
-//       }
+//       filtered = filtered.filter(admin => 
+//         admin.state?.toLowerCase() === stateFilter.toLowerCase()
+//       );
 //     }
 
+//     // Apply district filter
 //     if (districtFilter) {
-//       const selectedDistrict = districts.find(d => d._id === districtFilter);
-//       if (selectedDistrict) {
-//         filtered = filtered.filter(admin => 
-//           admin.district?.toLowerCase() === selectedDistrict.name.toLowerCase()
-//         );
-//       }
+//       filtered = filtered.filter(admin => 
+//         admin.district?.toLowerCase() === districtFilter.toLowerCase()
+//       );
 //     }
 
+//     // Apply taluka filter
 //     if (talukaFilter) {
-//       const selectedTaluka = talukas.find(t => t._id === talukaFilter);
-//       if (selectedTaluka) {
-//         filtered = filtered.filter(admin => 
-//           admin.taluka?.toLowerCase() === selectedTaluka.name.toLowerCase()
-//         );
-//       }
+//       filtered = filtered.filter(admin => 
+//         admin.taluka?.toLowerCase() === talukaFilter.toLowerCase()
+//       );
 //     }
 
+//     // Apply text search
 //     if (search.trim()) {
 //       const searchTerm = search.toLowerCase().trim();
 //       filtered = filtered.filter(admin => 
@@ -494,7 +330,7 @@
 
 //   useEffect(() => {
 //     fetchSubAdmins(currentPage, "");
-//     fetchAllLocations();
+//     fetchStateDetails();
 //     fetchCommodities();
 //   }, [showDeleted]);
 
@@ -507,66 +343,72 @@
 //   // Filter districts based on selected state (for form)
 //   useEffect(() => {
 //     if (form.state) {
-//       const filtered = districts.filter(district => district.stateId === form.state);
+//       const filtered = Array.from(new Set(
+//         stateDetails
+//           .filter(item => item.state === form.state)
+//           .map(item => item.district)
+//       )).sort();
 //       setFilteredDistricts(filtered);
 //       // Reset district and taluka when state changes
-//       if (editing && !form.district) {
-//         // Keep district if editing and district exists
-//       } else {
-//         setForm(prev => ({ ...prev, district: "", taluka: "" }));
-//       }
+//       setForm(prev => ({ ...prev, district: "", taluka: "" }));
 //     } else {
 //       setFilteredDistricts([]);
 //     }
-//   }, [form.state, districts]);
+//   }, [form.state, stateDetails]);
 
 //   // Filter talukas based on selected district (for form)
 //   useEffect(() => {
 //     if (form.district) {
-//       const selectedDistrict = districts.find(d => d._id === form.district);
-//       const filtered = talukas.filter(taluka => {
-//         return taluka.district?._id === form.district;
-//       });
+//       const filtered = Array.from(new Set(
+//         stateDetails
+//           .filter(item => item.district === form.district)
+//           .map(item => item.taluk)
+//       )).sort();
 //       setFilteredTalukas(filtered);
 //       // Reset taluka when district changes
-//       if (editing && !form.taluka) {
-//         // Keep taluka if editing and taluka exists
-//       } else {
-//         setForm(prev => ({ ...prev, taluka: "" }));
-//       }
+//       setForm(prev => ({ ...prev, taluka: "" }));
 //     } else {
 //       setFilteredTalukas([]);
 //     }
-//   }, [form.district, districts, talukas]);
+//   }, [form.district, stateDetails]);
 
 //   // Filter districts based on selected state (for filter)
 //   useEffect(() => {
 //     if (stateFilter) {
-//       const filtered = districts.filter(district => district.stateId === stateFilter);
+//       const filtered = Array.from(new Set(
+//         stateDetails
+//           .filter(item => item.state === stateFilter)
+//           .map(item => item.district)
+//       )).sort();
 //       setFilteredDistrictsForFilter(filtered);
+//       // Reset district and taluka filters when state changes
 //       setDistrictFilter("");
 //       setTalukaFilter("");
 //     } else {
 //       setFilteredDistrictsForFilter([]);
+//       // Reset district and taluka filters when state is cleared
 //       setDistrictFilter("");
 //       setTalukaFilter("");
 //     }
-//   }, [stateFilter, districts]);
+//   }, [stateFilter, stateDetails]);
 
 //   // Filter talukas based on selected district (for filter)
 //   useEffect(() => {
 //     if (districtFilter) {
-//       const selectedDistrict = districts.find(d => d._id === districtFilter);
-//       const filtered = talukas.filter(taluka => {
-//         return taluka.district?._id === districtFilter;
-//       });
+//       const filtered = Array.from(new Set(
+//         stateDetails
+//           .filter(item => item.district === districtFilter)
+//           .map(item => item.taluk)
+//       )).sort();
 //       setFilteredTalukasForFilter(filtered);
+//       // Reset taluka filter when district changes
 //       setTalukaFilter("");
 //     } else {
 //       setFilteredTalukasForFilter([]);
+//       // Reset taluka filter when district is cleared
 //       setTalukaFilter("");
 //     }
-//   }, [districtFilter, districts, talukas]);
+//   }, [districtFilter, stateDetails]);
 
 //   // Apply filters when filter states change
 //   useEffect(() => {
@@ -575,7 +417,7 @@
 //       setSubAdmins(filteredData);
 //       setTotalAdmins(filteredData.length);
 //       setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
-//       setCurrentPage(1);
+//       setCurrentPage(1); // Reset to first page when filters change
 //     }
 //   }, [search, stateFilter, districtFilter, talukaFilter, allSubAdmins]);
 
@@ -635,9 +477,9 @@
 //       e.taluka = "Taluka is required";
 //     }
 
-//     if (form.commodity.length === 0) {
-//       e.commodity = "Select at least one commodity";
-//     }
+//     // if (form.commodity.length === 0) {
+//     //   e.commodity = "Select at least one commodity";
+//     // }
     
 //     setErrors(e);
 //     return Object.keys(e).length === 0;
@@ -657,17 +499,13 @@
 //         pageAccessToSave = form.pageAccess;
 //       }
 
-//       const selectedState = states.find(s => s._id === form.state);
-//       const selectedDistrict = districts.find(d => d._id === form.district);
-//       const selectedTaluka = talukas.find(t => t._id === form.taluka);
-
 //       const adminData: any = {
 //         name: form.name.trim(),
 //         email: form.email.trim(),
 //         pageAccess: pageAccessToSave,
-//         state: selectedState?.name || "",
-//         district: selectedDistrict?.name || "",
-//         taluka: selectedTaluka?.name || "",
+//         state: form.state,
+//         district: form.district,
+//         taluka: form.taluka,
 //         commodity: form.commodity,
 //         subCategories: form.subCategories,
 //       };
@@ -684,6 +522,7 @@
 //         toast.success("Sub-admin created successfully!");
 //       }
       
+//       // Refresh data after save
 //       await fetchSubAdmins(currentPage, "");
 //       reset();
 //     } catch (err: any) {
@@ -698,6 +537,7 @@
 //       await deleteSubAdminAPI(selectedAdmin._id);
 //       toast.success("Sub-admin moved to trash successfully!");
 //       setDeleteOpen(false);
+//       // Refresh data after delete
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error deleting sub-admin:", error);
@@ -712,6 +552,7 @@
 //       await restoreSubAdminAPI(adminToRestore._id);
 //       toast.success("Sub-admin restored successfully!");
 //       setRestoreOpen(false);
+//       // Refresh data after restore
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error restoring sub-admin:", error);
@@ -726,6 +567,7 @@
 //       await permanentDeleteSubAdminAPI(adminToDeletePermanently._id);
 //       toast.success("Sub-admin permanently deleted!");
 //       setPermanentDeleteOpen(false);
+//       // Refresh data after permanent delete
 //       await fetchSubAdmins(currentPage, "");
 //     } catch (error: any) {
 //       console.error("Error permanently deleting sub-admin:", error);
@@ -734,18 +576,6 @@
 //   };
 
 //   /* ================= HELPER FUNCTIONS ================= */
-
-//   const handleLookupPinCode = async () => {
-//     if (!pincode) {
-//       setPincodeError("Please enter a PIN code");
-//       return;
-//     }
-    
-//     const success = await fetchPinCodeDetails(pincode);
-//     if (success) {
-//       setPincode("");
-//     }
-//   };
 
 //   const toggleCategory = (categoryId: string) => {
 //     setExpandedCategories(prev => {
@@ -838,30 +668,15 @@
 //     const hasAllModules = allModules.every(module => 
 //       displayModules.includes(module)
 //     );
-    
-//     // Find selected state by name from our extracted states
-//     const selectedState = states.find(s => s.name.toLowerCase() === admin.state?.toLowerCase());
-    
-//     // Find selected district by name
-//     const selectedDistrict = districts.find(d => 
-//       d.name.toLowerCase() === admin.district?.toLowerCase() &&
-//       d.stateName === admin.state
-//     );
-    
-//     // Find selected taluka by name
-//     const selectedTaluka = talukas.find(t => 
-//       t.name.toLowerCase() === admin.taluka?.toLowerCase() &&
-//       t.district.name === admin.district
-//     );
 
 //     setForm({
 //       name: admin.name,
 //       email: admin.email,
 //       password: "",
 //       pageAccess: hasAllModules ? ["All"] : displayModules,
-//       state: selectedState?._id || "",
-//       district: selectedDistrict?._id || "",
-//       taluka: selectedTaluka?._id || "",
+//       state: admin.state || "",
+//       district: admin.district || "",
+//       taluka: admin.taluka || "",
 //       commodity: admin.commodity || [],
 //       subCategories: admin.subCategories || [],
 //     });
@@ -912,6 +727,7 @@
 //   const toggleDeletedView = () => {
 //     setShowDeleted(!showDeleted);
 //     setCurrentPage(1);
+//     // Clear filters when switching views
 //     setStateFilter("");
 //     setDistrictFilter("");
 //     setTalukaFilter("");
@@ -937,8 +753,6 @@
 //       subCategories: []
 //     });
 //     setErrors({});
-//     setPincode("");
-//     setPincodeError("");
 //   };
 
 //   const handleResetFilters = () => {
@@ -947,6 +761,7 @@
 //     setDistrictFilter("");
 //     setTalukaFilter("");
 //     setCurrentPage(1);
+//     // Re-fetch all data without filters
 //     fetchSubAdmins(1, "");
 //     setRowsPerPage(10);
 //     setShowDeleted(false);
@@ -986,24 +801,22 @@
 //     const printDate = new Date().toLocaleDateString();
 //     const printTime = new Date().toLocaleTimeString();
     
+//     // Build filter info text
 //     let filterInfo = "";
 //     if (stateFilter) {
-//       const state = states.find(s => s._id === stateFilter);
-//       filterInfo += `State: ${state?.name || ''} | `;
+//       filterInfo += `State: ${stateFilter} | `;
 //     }
 //     if (districtFilter) {
-//       const district = districts.find(d => d._id === districtFilter);
-//       filterInfo += `District: ${district?.name || ''} | `;
+//       filterInfo += `District: ${districtFilter} | `;
 //     }
 //     if (talukaFilter) {
-//       const taluka = talukas.find(t => t._id === talukaFilter);
-//       filterInfo += `Taluka: ${taluka?.name || ''} | `;
+//       filterInfo += `Taluka: ${talukaFilter} | `;
 //     }
 //     if (search) {
 //       filterInfo += `Search: "${search}" | `;
 //     }
 //     if (filterInfo) {
-//       filterInfo = filterInfo.slice(0, -3);
+//       filterInfo = filterInfo.slice(0, -3); // Remove last " | "
 //     }
     
 //     const printContent = `
@@ -1154,24 +967,31 @@
 //       return;
 //     }
 
+//     // Headers for the table
 //     const headers = ["Sr.", "Name", "Email", "Password", "State", "District", "Taluka", "Commodity", "Page Access", "Status"];
     
+//     // Define column widths (adjust as needed)
 //     const colWidths = [6, 20, 25, 10, 15, 15, 15, 20, 25, 12];
     
+//     // Create separator line
 //     const createSeparator = (): string => {
 //       const totalWidth = colWidths.reduce((sum, width) => sum + width + 3, -3);
 //       return "─".repeat(Math.min(totalWidth, 150));
 //     };
     
+//     // Format a single row
 //     const formatRow = (admin: any, index: number): string => {
 //       const rowNum = index + 1 + (currentPage - 1) * rowsPerPage;
       
+//       // Get commodity as string
 //       const commodity = admin.commodity?.join(', ') || '-';
 //       const trimmedCommodity = commodity.length > 17 ? commodity.substring(0, 14) + '...' : commodity;
       
+//       // Get page access as string
 //       const pageAccess = admin.pageAccess?.join(', ') || '-';
 //       const trimmedAccess = pageAccess.length > 22 ? pageAccess.substring(0, 19) + '...' : pageAccess;
       
+//       // Prepare all values
 //       const values = [
 //         rowNum.toString(),
 //         admin.name || '-',
@@ -1185,20 +1005,24 @@
 //         admin.isDeleted ? '❌ Deleted' : '✅ Active'
 //       ];
       
+//       // Apply padding to each value
 //       return values.map((val, i) => val.padEnd(colWidths[i])).join(" │ ");
 //     };
     
+//     // Format header row
 //     const formatHeader = (): string => {
 //       return headers.map((header, i) => header.padEnd(colWidths[i])).join(" │ ");
 //     };
     
+//     // Build the complete table content
+//     const separator = createSeparator();
 //     const tableContent = [
 //       `📋 SUB-ADMINS LIST - Page ${currentPage}`,
-//       createSeparator(),
+//       separator,
 //       formatHeader(),
-//       createSeparator(),
+//       separator,
 //       ...currentPageData.map((admin, index) => formatRow(admin, index)),
-//       createSeparator(),
+//       separator,
 //       "",
 //       "📊 SUMMARY",
 //       `• Current Page: ${currentPage}`,
@@ -1288,24 +1112,22 @@
 //       const doc = new jsPDF();
 //       doc.text("Sub-Admins Management Report", 14, 16);
       
+//       // Add filter info
 //       let filterText = "";
 //       if (stateFilter) {
-//         const state = states.find(s => s._id === stateFilter);
-//         filterText += `State: ${state?.name || ''} | `;
+//         filterText += `State: ${stateFilter} | `;
 //       }
 //       if (districtFilter) {
-//         const district = districts.find(d => d._id === districtFilter);
-//         filterText += `District: ${district?.name || ''} | `;
+//         filterText += `District: ${districtFilter} | `;
 //       }
 //       if (talukaFilter) {
-//         const taluka = talukas.find(t => t._id === talukaFilter);
-//         filterText += `Taluka: ${taluka?.name || ''} | `;
+//         filterText += `Taluka: ${talukaFilter} | `;
 //       }
 //       if (search) {
 //         filterText += `Search: "${search}" | `;
 //       }
 //       if (filterText) {
-//         filterText = filterText.slice(0, -3);
+//         filterText = filterText.slice(0, -3); // Remove last " | "
 //         doc.text(`Filters: ${filterText}`, 14, 24);
 //       }
       
@@ -1343,6 +1165,7 @@
 
 //   return (
 //     <div className="p-[.6rem] relative text-black text-sm md:p-1 overflow-x-auto min-h-screen">
+//       {/* Loading Overlay */}
 //       {loading && (
 //         <div className="min-h-screen absolute w-full top-0 left-0 bg-[#e9e7e773] z-[100] flex items-center justify-center">
 //           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
@@ -1409,8 +1232,8 @@
 //             >
 //               <option value="">All States</option>
 //               {states.map(state => (
-//                 <option key={state._id} value={state._id}>
-//                   {state.name}
+//                 <option key={state} value={state}>
+//                   {state}
 //                 </option>
 //               ))}
 //             </select>
@@ -1429,8 +1252,8 @@
 //             >
 //               <option value="">All Districts</option>
 //               {filteredDistrictsForFilter.map(district => (
-//                 <option key={district._id} value={district._id}>
-//                   {district.name}
+//                 <option key={district} value={district}>
+//                   {district}
 //                 </option>
 //               ))}
 //             </select>
@@ -1449,8 +1272,8 @@
 //             >
 //               <option value="">All Talukas</option>
 //               {filteredTalukasForFilter.map(taluka => (
-//                 <option key={taluka._id} value={taluka._id}>
-//                   {taluka.name}
+//                 <option key={taluka} value={taluka}>
+//                   {taluka}
 //                 </option>
 //               ))}
 //             </select>
@@ -1536,7 +1359,7 @@
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">State</th>
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">District</th>
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">Taluka</th>
-//                   <th className="p-[.6rem] text-sm text-left font-semibold">Commodities</th>
+//                   <th className="p-[.6rem] text-sm text-left font-semibold">{" "}</th>
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">Access Modules</th>
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">Status</th>
 //                   <th className="p-[.6rem] text-sm text-left font-semibold">Actions</th>
@@ -1851,46 +1674,6 @@
 //               required={!editing}
 //             />
 
-//             {/* PIN Code Lookup Section */}
-//             <div className="mb-6 p-4 bg-blue-50 rounded border border-blue-200">
-//               <div className="flex items-center gap-2 mb-2">
-//                 <FaMapMarkerAlt className="text-blue-600" />
-//                 <h3 className="text-sm font-semibold text-blue-800">Quick Fill from PIN Code</h3>
-//               </div>
-//               <div className="flex gap-2">
-//                 <div className="flex-1">
-//                   <input
-//                     type="text"
-//                     value={pincode}
-//                     onChange={(e) => {
-//                       const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-//                       setPincode(value);
-//                       if (pincodeError) setPincodeError("");
-//                     }}
-//                     placeholder="Enter 6-digit PIN code"
-//                     className={`border px-3 py-2 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-//                       pincodeError ? "border-red-500" : "border-gray-300"
-//                     }`}
-//                   />
-//                   {pincodeError && <p className="text-red-500 text-xs mt-1">{pincodeError}</p>}
-//                 </div>
-//                 <button
-//                   onClick={handleLookupPinCode}
-//                   disabled={pincodeLoading || pincode.length !== 6}
-//                   className={`px-4 py-2 rounded font-medium flex items-center gap-2 ${
-//                     pincodeLoading || pincode.length !== 6
-//                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-//                       : "bg-blue-500 text-white hover:bg-blue-600"
-//                   }`}
-//                 >
-//                   {pincodeLoading ? "Looking up..." : "Lookup"}
-//                 </button>
-//               </div>
-//               <p className="text-xs text-blue-600 mt-2">
-//                 Enter a PIN code to automatically fill State, District, and Taluka fields
-//               </p>
-//             </div>
-
 //             {/* State Dropdown */}
 //             <div className="mb-4">
 //               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1905,8 +1688,8 @@
 //               >
 //                 <option value="">Select State</option>
 //                 {states.map(state => (
-//                   <option key={state._id} value={state._id}>
-//                     {state.name}
+//                   <option key={state} value={state}>
+//                     {state}
 //                   </option>
 //                 ))}
 //               </select>
@@ -1928,8 +1711,8 @@
 //               >
 //                 <option value="">Select District</option>
 //                 {filteredDistricts.map(district => (
-//                   <option key={district._id} value={district._id}>
-//                     {district.name}
+//                   <option key={district} value={district}>
+//                     {district}
 //                   </option>
 //                 ))}
 //               </select>
@@ -1951,76 +1734,15 @@
 //               >
 //                 <option value="">Select Taluka</option>
 //                 {filteredTalukas.map(taluka => (
-//                   <option key={taluka._id} value={taluka._id}>
-//                     {taluka.name}
+//                   <option key={taluka} value={taluka}>
+//                     {taluka}
 //                   </option>
 //                 ))}
 //               </select>
 //               {errors.taluka && <p className="text-red-500 text-xs mt-1">{errors.taluka}</p>}
 //             </div>
 
-//             {/* Commodities Checkboxes */}
-//             <div className="mb-4">
-//               <label className="block text-sm font-medium text-gray-700 mb-2">
-//                 Select Commodities <span className="text-red-500">*</span>
-//               </label>
-//               <div className="border rounded p-3 max-h-60 overflow-y-auto">
-//                 {commodityCategories.length === 0 ? (
-//                   <div className="text-center py-4 text-gray-500">
-//                     Loading commodities...
-//                   </div>
-//                 ) : (
-//                   commodityCategories.map(category => (
-//                     <div key={category._id} className="mb-3 last:mb-0">
-//                       {/* Category Header */}
-//                       <div className="flex items-center gap-2 mb-1">
-//                         <button
-//                           onClick={() => toggleCategory(category._id)}
-//                           className="p-1 text-gray-500 hover:text-gray-700"
-//                         >
-//                           {expandedCategories.has(category._id) ? 
-//                             <FaChevronDown size={12} /> : 
-//                             <FaChevronRight size={12} />
-//                           }
-//                         </button>
-//                         <label className="flex items-center gap-2 text-sm font-medium">
-//                           <input
-//                             type="checkbox"
-//                             checked={isCategoryChecked(category._id)}
-//                             onChange={() => handleCategoryCheckboxChange(category._id)}
-//                             className="rounded"
-//                           />
-//                           {category.categoryName}
-//                           <span className="text-xs text-gray-500">
-//                             ({category.subCategories.length})
-//                           </span>
-//                         </label>
-//                       </div>
-                      
-//                       {/* Subcategories */}
-//                       {expandedCategories.has(category._id) && category.subCategories.length > 0 && (
-//                         <div className="ml-7 pl-1 border-l-2 border-gray-200">
-//                           <div className="grid grid-cols-2 gap-1 mt-1">
-//                             {category.subCategories.map(subCategory => (
-//                               <label key={subCategory._id} className="flex items-center gap-2 text-sm">
-//                                 <input
-//                                   type="checkbox"
-//                                   checked={isSubCategoryChecked(category.categoryName, subCategory.subCategoryName)}
-//                                   onChange={() => handleSubCategoryCheckboxChange(category.categoryName, subCategory.subCategoryName)}
-//                                   className="rounded"
-//                                 />
-//                                 <span className="truncate">{subCategory.subCategoryName}</span>
-//                               </label>
-//                             ))}
-//                           </div>
-//                         </div>
-//                       )}
-//                     </div>
-//                   ))
-//                 )}
-//               </div>
-//               {errors.commodity && <p className="text-red-500 text-xs mt-1">{errors.commodity}</p>}
-//             </div>
+           
 
 //             {/* Page Access */}
 //             <div className="mb-4">
@@ -2312,8 +2034,6 @@
 
 
 
-
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -2404,7 +2124,8 @@ export default function SubAdminAccountsPage() {
   const [allModules, setAllModules] = useState<string[]>([]);
   const [modules, setModules] = useState<string[]>(["All"]);
   const [allSubAdmins, setAllSubAdmins] = useState<SubAdmin[]>([]); // Store all data
-  const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]); // Store filtered data
+  const [filteredSubAdmins, setFilteredSubAdmins] = useState<SubAdmin[]>([]); // Store filtered data
+  const [currentPageData, setCurrentPageData] = useState<SubAdmin[]>([]); // Store current page data
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -2451,7 +2172,7 @@ export default function SubAdminAccountsPage() {
     name: "",
     email: "",
     password: "",
-    pageAccess: [] as string[],
+    pageAccess: ["dashboard"] as string[],
     state: "",
     district: "",
     taluka: "",
@@ -2486,19 +2207,21 @@ export default function SubAdminAccountsPage() {
         
         // Apply manual filtering
         const filteredData = applyManualFilters(data);
-        setSubAdmins(filteredData);
+        setFilteredSubAdmins(filteredData);
         
-        if (response.data.total !== undefined) {
-          setTotalAdmins(filteredData.length); // Use filtered count
-          setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
-        }
-        setCurrentPage(1); // Reset to first page after filtering
+        // Update total count based on filtered data
+        setTotalAdmins(filteredData.length);
+        setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
+        
+        // Set current page data
+        updateCurrentPageData(filteredData, currentPage);
       }
     } catch (err: any) {
       console.error("Error fetching sub-admins:", err);
       setError(err.response?.data?.message || 'Failed to load sub-admins. Please try again.');
       setAllSubAdmins([]);
-      setSubAdmins([]);
+      setFilteredSubAdmins([]);
+      setCurrentPageData([]);
       toast.error(err.response?.data?.message || "Failed to load sub-admins");
     } finally {
       setLoading(false);
@@ -2585,6 +2308,14 @@ export default function SubAdminAccountsPage() {
     }
 
     return filtered;
+  };
+
+  // Update current page data based on filtered data and current page
+  const updateCurrentPageData = (filteredData: SubAdmin[], page: number) => {
+    const startIndex = (page - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const paginatedData = filteredData.slice(startIndex, endIndex);
+    setCurrentPageData(paginatedData);
   };
 
   const createSubAdmin = async (adminData: any) => {
@@ -2725,25 +2456,38 @@ export default function SubAdminAccountsPage() {
   useEffect(() => {
     if (allSubAdmins.length > 0) {
       const filteredData = applyManualFilters(allSubAdmins);
-      setSubAdmins(filteredData);
+      setFilteredSubAdmins(filteredData);
       setTotalAdmins(filteredData.length);
       setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
-      setCurrentPage(1); // Reset to first page when filters change
+      
+      // Reset to first page when filters change
+      const newPage = 1;
+      setCurrentPage(newPage);
+      updateCurrentPageData(filteredData, newPage);
     }
   }, [search, stateFilter, districtFilter, talukaFilter, allSubAdmins]);
 
-  // Handle pagination for filtered data
+  // Handle pagination changes
   useEffect(() => {
-    if (allSubAdmins.length > 0) {
-      const filteredData = applyManualFilters(allSubAdmins);
-      const startIndex = (currentPage - 1) * rowsPerPage;
-      const endIndex = startIndex + rowsPerPage;
-      const paginatedData = filteredData.slice(startIndex, endIndex);
-      setSubAdmins(paginatedData);
-      setTotalAdmins(filteredData.length);
-      setTotalPages(Math.ceil(filteredData.length / rowsPerPage));
+    if (filteredSubAdmins.length > 0) {
+      updateCurrentPageData(filteredSubAdmins, currentPage);
     }
-  }, [currentPage, rowsPerPage, allSubAdmins]);
+  }, [currentPage, rowsPerPage, filteredSubAdmins]);
+
+  // Handle rows per page change
+  useEffect(() => {
+    if (filteredSubAdmins.length > 0) {
+      setTotalPages(Math.ceil(filteredSubAdmins.length / rowsPerPage));
+      
+      // If current page would be empty after changing rows per page, go to last page
+      const maxPage = Math.max(1, Math.ceil(filteredSubAdmins.length / rowsPerPage));
+      if (currentPage > maxPage) {
+        setCurrentPage(maxPage);
+      } else {
+        updateCurrentPageData(filteredSubAdmins, currentPage);
+      }
+    }
+  }, [rowsPerPage, filteredSubAdmins]);
 
   /* ================= VALIDATION ================= */
 
@@ -3078,26 +2822,9 @@ export default function SubAdminAccountsPage() {
     setShowDeleted(false);
   };
 
-  // Get current page data
-  const getCurrentPageData = () => {
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    return subAdmins.slice(startIndex, endIndex);
-  };
-
   /* ================= EXPORT FUNCTIONS ================= */
 
-  const exportData = subAdmins.map(({ _id, createdAt, updatedAt, password, ...rest }) => ({
-    ...rest,
-    password: "********",
-    state: rest.state || "",
-    district: rest.district || "",
-    taluka: rest.taluka || "",
-    commodity: rest.commodity?.join(", ") || "",
-  }));
-
   const handlePrint = () => {
-    const currentPageData = getCurrentPageData();
     if (currentPageData.length === 0) {
       toast.error("No sub-admins to print");
       return;
@@ -3210,7 +2937,7 @@ export default function SubAdminAccountsPage() {
         <div class="header">
           <h1>👨‍💼 Sub-Admins Management Report</h1>
           <div class="header-info">Generated on: ${printDate} at ${printTime}</div>
-          <div class="header-info">Total Sub-Admins: ${subAdmins.length} | Showing: ${currentPageData.length} sub-admins</div>
+          <div class="header-info">Total Sub-Admins: ${filteredSubAdmins.length} | Showing: ${currentPageData.length} sub-admins</div>
           <div class="header-info">Page: ${currentPage} of ${totalPages}</div>
           ${filterInfo ? `<div class="filter-info"><strong>Filters Applied:</strong> ${filterInfo}</div>` : ''}
         </div>
@@ -3272,7 +2999,6 @@ export default function SubAdminAccountsPage() {
   };
 
   const handleCopy = async (): Promise<void> => {
-    const currentPageData = getCurrentPageData();
     if (currentPageData.length === 0) {
       toast.error("No sub-admins to copy");
       return;
@@ -3356,7 +3082,6 @@ export default function SubAdminAccountsPage() {
   };
 
   const handleExcel = () => {
-    const currentPageData = getCurrentPageData();
     if (currentPageData.length === 0) {
       toast.error("No sub-admins to export");
       return;
@@ -3383,7 +3108,6 @@ export default function SubAdminAccountsPage() {
   };
 
   const handleCSV = () => {
-    const currentPageData = getCurrentPageData();
     if (currentPageData.length === 0) {
       toast.error("No sub-admins to export");
       return;
@@ -3413,7 +3137,6 @@ export default function SubAdminAccountsPage() {
   };
 
   const handlePDF = () => {
-    const currentPageData = getCurrentPageData();
     if (currentPageData.length === 0) {
       toast.error("No sub-admins to export");
       return;
@@ -3472,8 +3195,6 @@ export default function SubAdminAccountsPage() {
 
   /* ================= UI ================= */
 
-  const currentPageData = getCurrentPageData();
-
   return (
     <div className="p-[.6rem] relative text-black text-sm md:p-1 overflow-x-auto min-h-screen">
       {/* Loading Overlay */}
@@ -3492,7 +3213,7 @@ export default function SubAdminAccountsPage() {
           <p className="text-gray-600 mt-2">
             {showDeleted 
               ? "View, restore or permanently delete sub-admin accounts" 
-              : `Overview and management of all sub-admin accounts. ${subAdmins.length} sub-admins found.`}
+              : `Overview and management of all sub-admin accounts. ${filteredSubAdmins.length} sub-admins found.`}
           </p>
         </div>
       </div>
@@ -3670,7 +3391,7 @@ export default function SubAdminAccountsPage() {
                   <th className="p-[.6rem] text-sm text-left font-semibold">State</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">District</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Taluka</th>
-                  <th className="p-[.6rem] text-sm text-left font-semibold">Commodities</th>
+                  <th className="p-[.6rem] text-sm text-left font-semibold">{" "}</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Access Modules</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Status</th>
                   <th className="p-[.6rem] text-sm text-left font-semibold">Actions</th>
@@ -3912,11 +3633,11 @@ export default function SubAdminAccountsPage() {
       )}
 
       {/* Pagination */}
-      {!loading && subAdmins.length > 0 && (
+      {!loading && filteredSubAdmins.length > 0 && (
         <div className="flex flex-col bg-white sm:flex-row p-3 shadow justify-between items-center gap-[.6rem] text-sm">
           <div className="text-gray-600">
-            Showing <span className="font-semibold">{1 + (currentPage - 1) * rowsPerPage}-{Math.min(currentPage * rowsPerPage, subAdmins.length)}</span> of{" "}
-            <span className="font-semibold">{subAdmins.length}</span> sub-admins
+            Showing <span className="font-semibold">{1 + (currentPage - 1) * rowsPerPage}-{Math.min(currentPage * rowsPerPage, filteredSubAdmins.length)}</span> of{" "}
+            <span className="font-semibold">{filteredSubAdmins.length}</span> sub-admins
             <select
               value={rowsPerPage}
               onChange={(e) => setRowsPerPage(Number(e.target.value))}
@@ -4053,68 +3774,7 @@ export default function SubAdminAccountsPage() {
               {errors.taluka && <p className="text-red-500 text-xs mt-1">{errors.taluka}</p>}
             </div>
 
-            {/* Commodities Checkboxes */}
-            {/* <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Commodities <span className="text-red-500">*</span>
-              </label>
-              <div className="border rounded p-3 max-h-60 overflow-y-auto">
-                {commodityCategories.length === 0 ? (
-                  <div className="text-center py-4 text-gray-500">
-                    Loading commodities...
-                  </div>
-                ) : (
-                  commodityCategories.map(category => (
-                    <div key={category._id} className="mb-3 last:mb-0">
-                      
-                      <div className="flex items-center gap-2 mb-1">
-                        <button
-                          onClick={() => toggleCategory(category._id)}
-                          className="p-1 text-gray-500 hover:text-gray-700"
-                        >
-                          {expandedCategories.has(category._id) ? 
-                            <FaChevronDown size={12} /> : 
-                            <FaChevronRight size={12} />
-                          }
-                        </button>
-                        <label className="flex items-center gap-2 text-sm font-medium">
-                          <input
-                            type="checkbox"
-                            checked={isCategoryChecked(category._id)}
-                            onChange={() => handleCategoryCheckboxChange(category._id)}
-                            className="rounded"
-                          />
-                          {category.categoryName}
-                          <span className="text-xs text-gray-500">
-                            ({category.subCategories.length})
-                          </span>
-                        </label>
-                      </div>
-                      
-                    
-                      {expandedCategories.has(category._id) && category.subCategories.length > 0 && (
-                        <div className="ml-7 pl-1 border-l-2 border-gray-200">
-                          <div className="grid grid-cols-2 gap-1 mt-1">
-                            {category.subCategories.map(subCategory => (
-                              <label key={subCategory._id} className="flex items-center gap-2 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={isSubCategoryChecked(category.categoryName, subCategory.subCategoryName)}
-                                  onChange={() => handleSubCategoryCheckboxChange(category.categoryName, subCategory.subCategoryName)}
-                                  className="rounded"
-                                />
-                                <span className="truncate">{subCategory.subCategoryName}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-              {errors.commodity && <p className="text-red-500 text-xs mt-1">{errors.commodity}</p>}
-            </div> */}
+           
 
             {/* Page Access */}
             <div className="mb-4">
@@ -4134,8 +3794,10 @@ export default function SubAdminAccountsPage() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
-                  {allModules.map(module => (
-                    <label key={module} className="flex items-center gap-2 text-sm">
+                  {allModules.map(module => {
+                    if(module !== "Dashboard"){
+                      return (
+                        <label key={module} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={form.pageAccess.includes(module) || areAllModulesSelected()}
@@ -4144,7 +3806,9 @@ export default function SubAdminAccountsPage() {
                       />
                       {module}
                     </label>
-                  ))}
+                      )
+                    }
+                  })}
                 </div>
               </div>
               {errors.pageAccess && <p className="text-red-500 text-xs mt-1">{errors.pageAccess}</p>}
