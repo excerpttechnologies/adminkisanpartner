@@ -255,79 +255,681 @@
 
 
 
-// app/api/slider/route.ts
+// // app/api/slider/route.ts
+// import { NextRequest, NextResponse } from "next/server";
+// import connectDB from "@/app/lib/Db";
+// import Slider from "@/app/models/Slider";
+// import { writeFile } from "fs/promises";
+// import { join } from "path";
+// import fs from "fs";
+// import { v4 as uuidv4 } from "uuid";
+
+// // Helper function to upload image
+// async function uploadImage(file: File): Promise<string> {
+//   try {
+//     console.log("Uploading image:", {
+//       name: file.name,
+//       type: file.type,
+//       size: file.size
+//     });
+
+//     const bytes = await file.arrayBuffer();
+//     const buffer = Buffer.from(bytes);
+    
+//     // Get file extension properly
+//     const originalName = file.name;
+//     const fileExtension = originalName.includes('.') 
+//       ? originalName.substring(originalName.lastIndexOf('.')) 
+//       : '';
+    
+//     // Generate unique filename
+//     const uniqueName = `${uuidv4()}${fileExtension}`;
+//     const uploadPath = join(process.cwd(), 'public/uploads');
+    
+//     console.log("Upload path:", uploadPath);
+//     console.log("Unique filename:", uniqueName);
+    
+//     // Ensure upload directory exists
+//     if (!fs.existsSync(uploadPath)) {
+//       fs.mkdirSync(uploadPath, { recursive: true });
+//       console.log("Created upload directory");
+//     }
+    
+//     // Save the file
+//     const filepath = join(uploadPath, uniqueName);
+//     await writeFile(filepath, buffer);
+//     console.log("File saved to:", filepath);
+    
+//     const imagePath = `/uploads/${uniqueName}`;
+//     console.log("Returning image path:", imagePath);
+    
+//     return imagePath;
+//   } catch (error: any) {
+//     console.error("Upload error details:", error);
+//     throw new Error(`Failed to upload image: ${error.message}`);
+//   }
+// }
+
+// function deleteImage(imagePath: string): void {
+//   try {
+//     // Remove leading slash if present for path joining
+//     const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
+//     const fullPath = join(process.cwd(), 'public', cleanPath);
+    
+//     console.log("Attempting to delete image:", fullPath);
+    
+//     if (fs.existsSync(fullPath)) {
+//       fs.unlinkSync(fullPath);
+//       console.log("Image deleted successfully:", fullPath);
+//     } else {
+//       console.warn("Image file not found:", fullPath);
+//     }
+//   } catch (error: any) {
+//     console.error("Delete image error:", error.message);
+//   }
+// }
+
+// // POST - Create new slider
+// export async function POST(req: NextRequest) {
+//   console.log("=== POST SLIDER REQUEST STARTED ===");
+  
+//   try {
+//     await connectDB();
+//     console.log("Database connected");
+    
+//     const formData = await req.formData();
+//     console.log("FormData received");
+    
+//     // Log all form data entries
+//     const entries: Record<string, any> = {};
+//     for (const [key, value] of formData.entries()) {
+//       if (value instanceof File) {
+//         entries[key] = {
+//           name: value.name,
+//           type: value.type,
+//           size: value.size
+//         };
+//       } else {
+//         entries[key] = value;
+//       }
+//     }
+//     console.log("FormData entries:", entries);
+    
+//     const name = formData.get('name') as string;
+//     const role = formData.get('role') as string;
+//     const imageFile = formData.get('image') as File;
+    
+//     console.log("Parsed data:", { name, role, hasImage: !!imageFile });
+    
+//     // Validation
+//     if (!name || !name.trim()) {
+//       console.error("Validation failed: Name is required");
+//       return NextResponse.json(
+//         { error: "Slider name is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     if (!imageFile || imageFile.size === 0) {
+//       console.error("Validation failed: Image is required");
+//       return NextResponse.json(
+//         { error: "Image is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Validate image file
+//     if (!imageFile.type.startsWith('image/')) {
+//       console.error("Validation failed: File is not an image");
+//       return NextResponse.json(
+//         { error: "File must be an image (JPEG, PNG, GIF, WebP, etc.)" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Check file size (10MB limit)
+//     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+//     if (imageFile.size > MAX_FILE_SIZE) {
+//       console.error("Validation failed: Image too large");
+//       return NextResponse.json(
+//         { error: "Image must be less than 10MB" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Upload image
+//     console.log("Starting image upload...");
+//     let imagePath: string;
+//     try {
+//       imagePath = await uploadImage(imageFile);
+//       console.log("Image uploaded successfully:", imagePath);
+//     } catch (uploadError: any) {
+//       console.error("Image upload failed:", uploadError);
+//       return NextResponse.json(
+//         { error: `Failed to upload image: ${uploadError.message}` },
+//         { status: 500 }
+//       );
+//     }
+    
+//     // Create slider in database
+//     console.log("Creating slider in database...");
+//     const sliderData = {
+//       name: name.trim(),
+//       role: (role || "General").trim(),
+//       image: imagePath,
+//     };
+    
+//     console.log("Slider data to save:", sliderData);
+    
+//     const slider = await Slider.create(sliderData);
+//     console.log("Slider created successfully:", slider._id);
+    
+//     // Return success response
+//     const response = NextResponse.json({
+//       success: true,
+//       message: "Slider created successfully",
+//       slider: slider
+//     }, { status: 201 });
+    
+//     console.log("=== POST SLIDER REQUEST COMPLETED SUCCESSFULLY ===");
+//     return response;
+    
+//   } catch (error: any) {
+//     console.error("POST SLIDER ERROR DETAILS:");
+//     console.error("Error name:", error.name);
+//     console.error("Error message:", error.message);
+//     console.error("Error stack:", error.stack);
+    
+//     return NextResponse.json(
+//       { 
+//         error: "Failed to create slider", 
+//         details: error.message,
+//         suggestion: "Check server logs for more details"
+//       },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // GET - Fetch all sliders
+// export async function GET() {
+//   console.log("=== GET SLIDERS REQUEST STARTED ===");
+  
+//   try {
+//     await connectDB();
+//     console.log("Database connected");
+    
+//     const sliders = await Slider.find().sort({ createdAt: -1 });
+//     console.log(`Found ${sliders.length} sliders`);
+    
+//     // Return as array
+//     const response = NextResponse.json(sliders);
+    
+//     console.log("=== GET SLIDERS REQUEST COMPLETED SUCCESSFULLY ===");
+//     return response;
+    
+//   } catch (error: any) {
+//     console.error("GET SLIDERS ERROR:", error.message);
+//     return NextResponse.json(
+//       { error: "Failed to fetch sliders" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // PUT - Update slider
+// export async function PUT(req: NextRequest) {
+//   console.log("=== PUT SLIDER REQUEST STARTED ===");
+  
+//   try {
+//     await connectDB();
+//     console.log("Database connected");
+    
+//     const formData = await req.formData();
+//     const id = formData.get('id') as string;
+//     const name = formData.get('name') as string;
+//     const role = formData.get('role') as string;
+//     const imageFile = formData.get('image') as File;
+    
+//     console.log("Update data:", { id, name, role, hasImage: !!imageFile });
+    
+//     if (!id) {
+//       console.error("Validation failed: ID is required");
+//       return NextResponse.json(
+//         { error: "Slider ID is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     const slider = await Slider.findById(id);
+//     if (!slider) {
+//       console.error("Slider not found:", id);
+//       return NextResponse.json(
+//         { error: "Slider not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     // Update data
+//     const updateData: any = {
+//       name: name ? name.trim() : slider.name,
+//       role: role ? role.trim() : slider.role || "General",
+//     };
+    
+//     // Handle image update if provided
+//     if (imageFile && imageFile.size > 0) {
+//       console.log("Processing new image upload...");
+      
+//       // Validate image file
+//       if (!imageFile.type.startsWith('image/')) {
+//         console.error("Validation failed: File is not an image");
+//         return NextResponse.json(
+//           { error: "File must be an image" },
+//           { status: 400 }
+//         );
+//       }
+      
+//       // Check file size
+//       if (imageFile.size > 10 * 1024 * 1024) {
+//         console.error("Validation failed: Image too large");
+//         return NextResponse.json(
+//           { error: "Image must be less than 10MB" },
+//           { status: 400 }
+//         );
+//       }
+      
+//       // Delete old image if exists
+//       if (slider.image) {
+//         console.log("Deleting old image:", slider.image);
+//         deleteImage(slider.image);
+//       }
+      
+//       // Upload new image
+//       try {
+//         const imagePath = await uploadImage(imageFile);
+//         updateData.image = imagePath;
+//         console.log("New image uploaded:", imagePath);
+//       } catch (uploadError: any) {
+//         console.error("Image upload failed:", uploadError);
+//         return NextResponse.json(
+//           { error: `Failed to upload image: ${uploadError.message}` },
+//           { status: 500 }
+//         );
+//       }
+//     }
+    
+//     console.log("Update data to save:", updateData);
+    
+//     const updatedSlider = await Slider.findByIdAndUpdate(
+//       id,
+//       updateData,
+//       { new: true, runValidators: true }
+//     );
+    
+//     console.log("Slider updated successfully:", updatedSlider._id);
+    
+//     return NextResponse.json({
+//       success: true,
+//       message: "Slider updated successfully",
+//       slider: updatedSlider
+//     });
+    
+//   } catch (error: any) {
+//     console.error("PUT SLIDER ERROR:", error.message);
+//     return NextResponse.json(
+//       { error: "Failed to update slider" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // DELETE - Delete slider
+// export async function DELETE(req: NextRequest) {
+//   console.log("=== DELETE SLIDER REQUEST STARTED ===");
+  
+//   try {
+//     await connectDB();
+//     console.log("Database connected");
+    
+//     const { id } = await req.json();
+//     console.log("Delete slider ID:", id);
+    
+//     if (!id) {
+//       console.error("Validation failed: ID is required");
+//       return NextResponse.json(
+//         { error: "Slider ID is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     const slider = await Slider.findById(id);
+//     if (!slider) {
+//       console.error("Slider not found:", id);
+//       return NextResponse.json(
+//         { error: "Slider not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     console.log("Found slider to delete:", slider.name);
+    
+//     // Delete associated image file
+//     if (slider.image) {
+//       console.log("Deleting image file:", slider.image);
+//       deleteImage(slider.image);
+//     }
+    
+//     await Slider.findByIdAndDelete(id);
+//     console.log("Slider deleted from database");
+    
+//     return NextResponse.json({
+//       success: true,
+//       message: "Slider deleted successfully"
+//     }, { status: 200 });
+    
+//   } catch (error: any) {
+//     console.error("DELETE SLIDER ERROR:", error.message);
+//     return NextResponse.json(
+//       { error: "Failed to delete slider" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// import { NextRequest, NextResponse } from "next/server";
+// import connectDB from "@/app/lib/Db";
+// import Slider from "@/app/models/Slider";
+// import { v2 as cloudinary } from 'cloudinary';
+
+// // Configure Cloudinary
+// cloudinary.config({
+//   cloud_name: "Root",
+//   api_key: "442646415263847",
+//   api_secret: "1UOIeaeiKFKXtWfxTZplT8f_mvU",
+// });
+
+// // POST - Create new slider
+// export async function POST(req: NextRequest) {
+//   console.log("=== POST SLIDER REQUEST STARTED ===");
+  
+//   try {
+//     await connectDB();
+//     console.log("Database connected");
+    
+//     const formData = await req.formData();
+    
+//     const name = formData.get('name') as string;
+//     const role = formData.get('role') as string;
+//     const imageFile = formData.get('image') as File;
+    
+//     console.log("Parsed data:", { name, role, hasImage: !!imageFile });
+    
+//     // Validation
+//     if (!name || !name.trim()) {
+//       return NextResponse.json(
+//         { error: "Slider name is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     if (!imageFile || imageFile.size === 0) {
+//       return NextResponse.json(
+//         { error: "Image is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Validate image file
+//     if (!imageFile.type.startsWith('image/')) {
+//       return NextResponse.json(
+//         { error: "File must be an image" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Check file size (10MB limit)
+//     const MAX_FILE_SIZE = 10 * 1024 * 1024;
+//     if (imageFile.size > MAX_FILE_SIZE) {
+//       return NextResponse.json(
+//         { error: "Image must be less than 10MB" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     // Convert File to base64 for Cloudinary
+//     const bytes = await imageFile.arrayBuffer();
+//     const buffer = Buffer.from(bytes);
+//     const base64Image = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
+    
+//     // Upload to Cloudinary
+//     console.log("Uploading to Cloudinary...");
+//     let cloudinaryResult;
+//     try {
+//       cloudinaryResult = await cloudinary.uploader.upload(base64Image, {
+//         folder: 'sliders',
+//         public_id: `slider_${Date.now()}`,
+//       });
+//       console.log("Cloudinary upload successful:", cloudinaryResult.secure_url);
+//     } catch (uploadError: any) {
+//       console.error("Cloudinary upload failed:", uploadError);
+//       return NextResponse.json(
+//         { error: "Failed to upload image to cloud storage" },
+//         { status: 500 }
+//       );
+//     }
+    
+//     // Create slider in database
+//     const sliderData = {
+//       name: name.trim(),
+//       role: (role || "General").trim(),
+//       image: cloudinaryResult.secure_url,
+//       cloudinaryId: cloudinaryResult.public_id,
+//     };
+    
+//     const slider = await Slider.create(sliderData);
+//     console.log("Slider created successfully:", slider._id);
+    
+//     return NextResponse.json({
+//       success: true,
+//       message: "Slider created successfully",
+//       slider: slider
+//     }, { status: 201 });
+    
+//   } catch (error: any) {
+//     console.error("POST SLIDER ERROR:", error);
+//     return NextResponse.json(
+//       { 
+//         error: "Failed to create slider",
+//         details: process.env.NODE_ENV === 'development' ? error.message : undefined
+//       },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // PUT - Update slider
+// export async function PUT(req: NextRequest) {
+//   try {
+//     await connectDB();
+    
+//     const formData = await req.formData();
+//     const id = formData.get('id') as string;
+//     const name = formData.get('name') as string;
+//     const role = formData.get('role') as string;
+//     const imageFile = formData.get('image') as File;
+    
+//     if (!id) {
+//       return NextResponse.json(
+//         { error: "Slider ID is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     const slider = await Slider.findById(id);
+//     if (!slider) {
+//       return NextResponse.json(
+//         { error: "Slider not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     // Update data
+//     const updateData: any = {
+//       name: name ? name.trim() : slider.name,
+//       role: role ? role.trim() : slider.role,
+//     };
+    
+//     // Handle image update if provided
+//     if (imageFile && imageFile.size > 0) {
+//       // Validate image
+//       if (!imageFile.type.startsWith('image/')) {
+//         return NextResponse.json(
+//           { error: "File must be an image" },
+//           { status: 400 }
+//         );
+//       }
+      
+//       if (imageFile.size > 10 * 1024 * 1024) {
+//         return NextResponse.json(
+//           { error: "Image must be less than 10MB" },
+//           { status: 400 }
+//         );
+//       }
+      
+//       // Delete old image from Cloudinary
+//       if (slider.cloudinaryId) {
+//         try {
+//           await cloudinary.uploader.destroy(slider.cloudinaryId);
+//         } catch (error) {
+//           console.error("Failed to delete old image:", error);
+//         }
+//       }
+      
+//       // Upload new image
+//       const bytes = await imageFile.arrayBuffer();
+//       const buffer = Buffer.from(bytes);
+//       const base64Image = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
+      
+//       try {
+//         const cloudinaryResult = await cloudinary.uploader.upload(base64Image, {
+//           folder: 'sliders',
+//           public_id: `slider_${Date.now()}`,
+//         });
+        
+//         updateData.image = cloudinaryResult.secure_url;
+//         updateData.cloudinaryId = cloudinaryResult.public_id;
+//       } catch (uploadError) {
+//         console.error("Cloudinary upload failed:", uploadError);
+//         return NextResponse.json(
+//           { error: "Failed to upload image" },
+//           { status: 500 }
+//         );
+//       }
+//     }
+    
+//     const updatedSlider = await Slider.findByIdAndUpdate(
+//       id,
+//       updateData,
+//       { new: true, runValidators: true }
+//     );
+    
+//     return NextResponse.json({
+//       success: true,
+//       message: "Slider updated successfully",
+//       slider: updatedSlider
+//     });
+    
+//   } catch (error: any) {
+//     console.error("PUT SLIDER ERROR:", error);
+//     return NextResponse.json(
+//       { error: "Failed to update slider" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// // DELETE - Delete slider
+// export async function DELETE(req: NextRequest) {
+//   try {
+//     await connectDB();
+    
+//     const { id } = await req.json();
+    
+//     if (!id) {
+//       return NextResponse.json(
+//         { error: "Slider ID is required" },
+//         { status: 400 }
+//       );
+//     }
+    
+//     const slider = await Slider.findById(id);
+//     if (!slider) {
+//       return NextResponse.json(
+//         { error: "Slider not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     // Delete from Cloudinary
+//     if (slider.cloudinaryId) {
+//       try {
+//         await cloudinary.uploader.destroy(slider.cloudinaryId);
+//       } catch (error) {
+//         console.error("Failed to delete from Cloudinary:", error);
+//       }
+//     }
+    
+//     await Slider.findByIdAndDelete(id);
+    
+//     return NextResponse.json({
+//       success: true,
+//       message: "Slider deleted successfully"
+//     });
+    
+//   } catch (error: any) {
+//     console.error("DELETE SLIDER ERROR:", error);
+//     return NextResponse.json(
+//       { error: "Failed to delete slider" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+////////////////claudinary version above/////////////////////
+
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/Db";
 import Slider from "@/app/models/Slider";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import fs from "fs";
-import { v4 as uuidv4 } from "uuid";
+import { v2 as cloudinary } from 'cloudinary';
 
-// Helper function to upload image
-async function uploadImage(file: File): Promise<string> {
-  try {
-    console.log("Uploading image:", {
-      name: file.name,
-      type: file.type,
-      size: file.size
-    });
-
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    
-    // Get file extension properly
-    const originalName = file.name;
-    const fileExtension = originalName.includes('.') 
-      ? originalName.substring(originalName.lastIndexOf('.')) 
-      : '';
-    
-    // Generate unique filename
-    const uniqueName = `${uuidv4()}${fileExtension}`;
-    const uploadPath = join(process.cwd(), 'public/uploads');
-    
-    console.log("Upload path:", uploadPath);
-    console.log("Unique filename:", uniqueName);
-    
-    // Ensure upload directory exists
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-      console.log("Created upload directory");
-    }
-    
-    // Save the file
-    const filepath = join(uploadPath, uniqueName);
-    await writeFile(filepath, buffer);
-    console.log("File saved to:", filepath);
-    
-    const imagePath = `/uploads/${uniqueName}`;
-    console.log("Returning image path:", imagePath);
-    
-    return imagePath;
-  } catch (error: any) {
-    console.error("Upload error details:", error);
-    throw new Error(`Failed to upload image: ${error.message}`);
-  }
-}
-
-function deleteImage(imagePath: string): void {
-  try {
-    // Remove leading slash if present for path joining
-    const cleanPath = imagePath.startsWith('/') ? imagePath.substring(1) : imagePath;
-    const fullPath = join(process.cwd(), 'public', cleanPath);
-    
-    console.log("Attempting to delete image:", fullPath);
-    
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
-      console.log("Image deleted successfully:", fullPath);
-    } else {
-      console.warn("Image file not found:", fullPath);
-    }
-  } catch (error: any) {
-    console.error("Delete image error:", error.message);
-  }
-}
+// Configure Cloudinary from environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'da00ynh0o',
+  api_key: process.env.CLOUDINARY_API_KEY || '442646415263847',
+  api_secret: process.env.CLOUDINARY_API_SECRET || '1UOIeaeiKFKXtWfxTZplT8f_mvU',
+});
 
 // POST - Create new slider
 export async function POST(req: NextRequest) {
@@ -338,22 +940,6 @@ export async function POST(req: NextRequest) {
     console.log("Database connected");
     
     const formData = await req.formData();
-    console.log("FormData received");
-    
-    // Log all form data entries
-    const entries: Record<string, any> = {};
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        entries[key] = {
-          name: value.name,
-          type: value.type,
-          size: value.size
-        };
-      } else {
-        entries[key] = value;
-      }
-    }
-    console.log("FormData entries:", entries);
     
     const name = formData.get('name') as string;
     const role = formData.get('role') as string;
@@ -363,7 +949,6 @@ export async function POST(req: NextRequest) {
     
     // Validation
     if (!name || !name.trim()) {
-      console.error("Validation failed: Name is required");
       return NextResponse.json(
         { error: "Slider name is required" },
         { status: 400 }
@@ -371,7 +956,6 @@ export async function POST(req: NextRequest) {
     }
     
     if (!imageFile || imageFile.size === 0) {
-      console.error("Validation failed: Image is required");
       return NextResponse.json(
         { error: "Image is required" },
         { status: 400 }
@@ -379,10 +963,10 @@ export async function POST(req: NextRequest) {
     }
     
     // Validate image file
-    if (!imageFile.type.startsWith('image/')) {
-      console.error("Validation failed: File is not an image");
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!validTypes.includes(imageFile.type)) {
       return NextResponse.json(
-        { error: "File must be an image (JPEG, PNG, GIF, WebP, etc.)" },
+        { error: "File must be an image (JPEG, PNG, GIF, WebP, SVG)" },
         { status: 400 }
       );
     }
@@ -390,61 +974,62 @@ export async function POST(req: NextRequest) {
     // Check file size (10MB limit)
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     if (imageFile.size > MAX_FILE_SIZE) {
-      console.error("Validation failed: Image too large");
       return NextResponse.json(
         { error: "Image must be less than 10MB" },
         { status: 400 }
       );
     }
     
-    // Upload image
-    console.log("Starting image upload...");
-    let imagePath: string;
+    // Convert File to base64 for Cloudinary
+    const bytes = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const base64Image = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
+    
+    // Upload to Cloudinary
+    console.log("Uploading to Cloudinary...");
+    let cloudinaryResult;
     try {
-      imagePath = await uploadImage(imageFile);
-      console.log("Image uploaded successfully:", imagePath);
+      cloudinaryResult = await cloudinary.uploader.upload(base64Image, {
+        folder: 'sliders',
+        public_id: `slider_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+        overwrite: false,
+        resource_type: 'auto'
+      });
+      console.log("Cloudinary upload successful:", cloudinaryResult.secure_url);
     } catch (uploadError: any) {
-      console.error("Image upload failed:", uploadError);
+      console.error("Cloudinary upload failed:", uploadError);
       return NextResponse.json(
-        { error: `Failed to upload image: ${uploadError.message}` },
+        { error: "Failed to upload image to cloud storage: " + uploadError.message },
         { status: 500 }
       );
     }
     
     // Create slider in database
-    console.log("Creating slider in database...");
     const sliderData = {
       name: name.trim(),
       role: (role || "General").trim(),
-      image: imagePath,
+      image: cloudinaryResult.secure_url,
+      cloudinaryId: cloudinaryResult.public_id,
     };
     
-    console.log("Slider data to save:", sliderData);
+    console.log("Creating slider with data:", sliderData);
     
     const slider = await Slider.create(sliderData);
     console.log("Slider created successfully:", slider._id);
     
-    // Return success response
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
       message: "Slider created successfully",
-      slider: slider
+      data: slider
     }, { status: 201 });
     
-    console.log("=== POST SLIDER REQUEST COMPLETED SUCCESSFULLY ===");
-    return response;
-    
   } catch (error: any) {
-    console.error("POST SLIDER ERROR DETAILS:");
-    console.error("Error name:", error.name);
-    console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
-    
+    console.error("POST SLIDER ERROR:", error);
     return NextResponse.json(
       { 
-        error: "Failed to create slider", 
-        details: error.message,
-        suggestion: "Check server logs for more details"
+        success: false,
+        error: "Failed to create slider: " + error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       },
       { status: 500 }
     );
@@ -452,26 +1037,64 @@ export async function POST(req: NextRequest) {
 }
 
 // GET - Fetch all sliders
-export async function GET() {
+export async function GET(req: NextRequest) {
   console.log("=== GET SLIDERS REQUEST STARTED ===");
   
   try {
     await connectDB();
     console.log("Database connected");
     
-    const sliders = await Slider.find().sort({ createdAt: -1 });
+    // Parse query parameters
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search') || '';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const sortBy = searchParams.get('sort') || '-createdAt';
+    
+    // Build query
+    let query = {};
+    if (search) {
+      query = {
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { role: { $regex: search, $options: 'i' } }
+        ]
+      };
+    }
+    
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    const total = await Slider.countDocuments(query);
+    
+    // Fetch sliders with pagination
+    const sliders = await Slider.find(query)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    
     console.log(`Found ${sliders.length} sliders`);
     
-    // Return as array
-    const response = NextResponse.json(sliders);
-    
-    console.log("=== GET SLIDERS REQUEST COMPLETED SUCCESSFULLY ===");
-    return response;
+    return NextResponse.json({
+      success: true,
+      data: sliders,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPrevPage: page > 1
+      }
+    });
     
   } catch (error: any) {
-    console.error("GET SLIDERS ERROR:", error.message);
+    console.error("GET SLIDERS ERROR:", error);
     return NextResponse.json(
-      { error: "Failed to fetch sliders" },
+      { 
+        success: false,
+        error: "Failed to fetch sliders: " + error.message
+      },
       { status: 500 }
     );
   }
@@ -483,7 +1106,6 @@ export async function PUT(req: NextRequest) {
   
   try {
     await connectDB();
-    console.log("Database connected");
     
     const formData = await req.formData();
     const id = formData.get('id') as string;
@@ -494,18 +1116,22 @@ export async function PUT(req: NextRequest) {
     console.log("Update data:", { id, name, role, hasImage: !!imageFile });
     
     if (!id) {
-      console.error("Validation failed: ID is required");
       return NextResponse.json(
-        { error: "Slider ID is required" },
+        { 
+          success: false,
+          error: "Slider ID is required" 
+        },
         { status: 400 }
       );
     }
     
     const slider = await Slider.findById(id);
     if (!slider) {
-      console.error("Slider not found:", id);
       return NextResponse.json(
-        { error: "Slider not found" },
+        { 
+          success: false,
+          error: "Slider not found" 
+        },
         { status: 404 }
       );
     }
@@ -513,52 +1139,70 @@ export async function PUT(req: NextRequest) {
     // Update data
     const updateData: any = {
       name: name ? name.trim() : slider.name,
-      role: role ? role.trim() : slider.role || "General",
+      role: role ? role.trim() : slider.role,
     };
     
     // Handle image update if provided
     if (imageFile && imageFile.size > 0) {
-      console.log("Processing new image upload...");
-      
-      // Validate image file
+      // Validate image
       if (!imageFile.type.startsWith('image/')) {
-        console.error("Validation failed: File is not an image");
         return NextResponse.json(
-          { error: "File must be an image" },
+          { 
+            success: false,
+            error: "File must be an image" 
+          },
           { status: 400 }
         );
       }
       
-      // Check file size
       if (imageFile.size > 10 * 1024 * 1024) {
-        console.error("Validation failed: Image too large");
         return NextResponse.json(
-          { error: "Image must be less than 10MB" },
+          { 
+            success: false,
+            error: "Image must be less than 10MB" 
+          },
           { status: 400 }
         );
       }
       
-      // Delete old image if exists
-      if (slider.image) {
-        console.log("Deleting old image:", slider.image);
-        deleteImage(slider.image);
+      // Delete old image from Cloudinary
+      if (slider.cloudinaryId) {
+        try {
+          await cloudinary.uploader.destroy(slider.cloudinaryId);
+          console.log("Old Cloudinary image deleted:", slider.cloudinaryId);
+        } catch (error) {
+          console.error("Failed to delete old image from Cloudinary:", error);
+          // Continue anyway, don't fail the update
+        }
       }
       
       // Upload new image
+      const bytes = await imageFile.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const base64Image = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
+      
       try {
-        const imagePath = await uploadImage(imageFile);
-        updateData.image = imagePath;
-        console.log("New image uploaded:", imagePath);
+        const cloudinaryResult = await cloudinary.uploader.upload(base64Image, {
+          folder: 'sliders',
+          public_id: `slider_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          overwrite: false,
+          resource_type: 'auto'
+        });
+        
+        updateData.image = cloudinaryResult.secure_url;
+        updateData.cloudinaryId = cloudinaryResult.public_id;
+        console.log("New image uploaded to Cloudinary:", cloudinaryResult.secure_url);
       } catch (uploadError: any) {
-        console.error("Image upload failed:", uploadError);
+        console.error("Cloudinary upload failed:", uploadError);
         return NextResponse.json(
-          { error: `Failed to upload image: ${uploadError.message}` },
+          { 
+            success: false,
+            error: "Failed to upload image: " + uploadError.message 
+          },
           { status: 500 }
         );
       }
     }
-    
-    console.log("Update data to save:", updateData);
     
     const updatedSlider = await Slider.findByIdAndUpdate(
       id,
@@ -571,13 +1215,16 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Slider updated successfully",
-      slider: updatedSlider
+      data: updatedSlider
     });
     
   } catch (error: any) {
-    console.error("PUT SLIDER ERROR:", error.message);
+    console.error("PUT SLIDER ERROR:", error);
     return NextResponse.json(
-      { error: "Failed to update slider" },
+      { 
+        success: false,
+        error: "Failed to update slider: " + error.message 
+      },
       { status: 500 }
     );
   }
@@ -589,34 +1236,42 @@ export async function DELETE(req: NextRequest) {
   
   try {
     await connectDB();
-    console.log("Database connected");
     
     const { id } = await req.json();
     console.log("Delete slider ID:", id);
     
     if (!id) {
-      console.error("Validation failed: ID is required");
       return NextResponse.json(
-        { error: "Slider ID is required" },
+        { 
+          success: false,
+          error: "Slider ID is required" 
+        },
         { status: 400 }
       );
     }
     
     const slider = await Slider.findById(id);
     if (!slider) {
-      console.error("Slider not found:", id);
       return NextResponse.json(
-        { error: "Slider not found" },
+        { 
+          success: false,
+          error: "Slider not found" 
+        },
         { status: 404 }
       );
     }
     
     console.log("Found slider to delete:", slider.name);
     
-    // Delete associated image file
-    if (slider.image) {
-      console.log("Deleting image file:", slider.image);
-      deleteImage(slider.image);
+    // Delete from Cloudinary
+    if (slider.cloudinaryId) {
+      try {
+        await cloudinary.uploader.destroy(slider.cloudinaryId);
+        console.log("Cloudinary image deleted:", slider.cloudinaryId);
+      } catch (error) {
+        console.error("Failed to delete from Cloudinary:", error);
+        // Continue anyway, don't fail the delete
+      }
     }
     
     await Slider.findByIdAndDelete(id);
@@ -628,17 +1283,13 @@ export async function DELETE(req: NextRequest) {
     }, { status: 200 });
     
   } catch (error: any) {
-    console.error("DELETE SLIDER ERROR:", error.message);
+    console.error("DELETE SLIDER ERROR:", error);
     return NextResponse.json(
-      { error: "Failed to delete slider" },
+      { 
+        success: false,
+        error: "Failed to delete slider: " + error.message 
+      },
       { status: 500 }
     );
   }
 }
-
-
-
-
-
-
-
