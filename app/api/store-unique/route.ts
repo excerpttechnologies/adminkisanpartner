@@ -475,8 +475,7 @@ export async function GET(request: NextRequest) {
         pinCode: locationData.pinCode,
         state: locationData.state,
         district: locationData.district,
-        taluk: locationData.taluk,
-        source: locationData.source
+        taluk: locationData.taluk
        }) as any;
 
           results.push({
