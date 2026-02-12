@@ -1,4 +1,6 @@
 
+
+
 // 'use client';
 
 // import React, { useState, useEffect, useCallback } from 'react';
@@ -764,8 +766,7 @@
 //                     </span>
 //                   </label>
 //                 </div>
-//                 {renderFilePreview(formData.companyLogo, 'logo', isEditing && editingAd?.companyLogo)}
-//               </div>
+// {renderFilePreview(formData.companyLogo, 'logo', isEditing ? editingAd?.companyLogo : undefined)}              </div>
 //             </div>
 
 //             {/* Description and Advice */}
@@ -820,8 +821,7 @@
 //                   </span>
 //                 </label>
 //               </div>
-//               {renderFilePreview(formData.banner, 'banner', isEditing && editingAd?.banner)}
-//             </div>
+// {renderFilePreview(formData.banner, 'banner', isEditing ? editingAd?.banner : undefined)}            </div>
 
 //             {/* Call to Action Section */}
 //             <div className="mb-6">
@@ -1232,12 +1232,7 @@
 
 
 
-
-
-
-//UPDATED BY SAGAR
-
-
+//updated by sagar
 
 
 'use client';
@@ -1331,15 +1326,13 @@ const AdminAdvertisement: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [uploadingFiles, setUploadingFiles] = useState<boolean>(false);
   
-  // Product form state
+  // Product form state (simplified - no image uploads for now)
   const [currentProduct, setCurrentProduct] = useState<{
-    images: File[];
     productName: string;
     description: string;
     mrpPrice: number;
     salesPrice: number;
   }>({
-    images: [],
     productName: '',
     description: '',
     mrpPrice: 0,
@@ -1458,46 +1451,7 @@ const AdminAdvertisement: React.FC = () => {
     }
   };
 
-  // Handle product image upload
-  const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).slice(0, 3);
-      setCurrentProduct(prev => ({
-        ...prev,
-        images: [...prev.images, ...newImages],
-      }));
-    }
-  };
-
-  // Remove product image
-  const removeProductImage = (index: number) => {
-    setCurrentProduct(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-  };
-
-  // Upload file to server
-  const uploadFile = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch('/api/upload', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const result = await response.json();
-    
-    if (result.success && result.url) {
-      return result.url;
-    } else {
-      throw new Error(result.error || 'Failed to upload file');
-    }
-  };
-
-  // Add product to current advertisement
+  // Add product to current advertisement (simplified - no image uploads)
   const addProduct = async () => {
     if (!currentProduct.productName || !currentProduct.productName.trim()) {
       alert('Please enter product name');
@@ -1505,21 +1459,9 @@ const AdminAdvertisement: React.FC = () => {
     }
 
     try {
-      setUploadingFiles(true);
-      
-      // Upload product images if any
-      let imageUrls: string[] = [];
-      if (currentProduct.images.length > 0) {
-        // Upload each image sequentially
-        for (const file of currentProduct.images) {
-          const url = await uploadFile(file);
-          imageUrls.push(url);
-        }
-      }
-
       const newProduct: Product = {
         id: Date.now().toString(),
-        images: imageUrls,
+        images: [], // Empty array for now
         productName: currentProduct.productName,
         description: currentProduct.description,
         mrpPrice: currentProduct.mrpPrice,
@@ -1556,7 +1498,6 @@ const AdminAdvertisement: React.FC = () => {
 
       // Reset product form
       setCurrentProduct({
-        images: [],
         productName: '',
         description: '',
         mrpPrice: 0,
@@ -1567,8 +1508,6 @@ const AdminAdvertisement: React.FC = () => {
     } catch (error) {
       console.error('Error adding product:', error);
       alert('Failed to add product. Please try again.');
-    } finally {
-      setUploadingFiles(false);
     }
   };
 
@@ -1596,7 +1535,6 @@ const AdminAdvertisement: React.FC = () => {
     setIsEditing(false);
     setShowProductForm(false);
     setCurrentProduct({
-      images: [],
       productName: '',
       description: '',
       mrpPrice: 0,
@@ -1604,8 +1542,90 @@ const AdminAdvertisement: React.FC = () => {
     });
   };
 
-  // Submit advertisement
-// Submit advertisement
+  // Submit advertisement using FormData
+  // const submitAdvertisement = async () => {
+  //   try {
+  //     if (!formData.heading.trim()) {
+  //       alert('Please add a heading');
+  //       return;
+  //     }
+
+  //     setIsLoading(true);
+
+  //     // Create FormData for file upload
+  //     const formDataToSend = new FormData();
+      
+  //     // Add text fields
+  //     formDataToSend.append('stage', formData.stage);
+  //     formDataToSend.append('tab', activeTab);
+  //     formDataToSend.append('heading', formData.heading.trim());
+  //     formDataToSend.append('guide', formData.guide || '');
+  //     formDataToSend.append('companyName', formData.companyName || '');
+  //     formDataToSend.append('description', formData.description || '');
+  //     formDataToSend.append('advice', formData.advice || '');
+      
+  //     // Add call to action as JSON string
+  //     formDataToSend.append('callToAction', JSON.stringify(formData.callToAction));
+      
+  //     // Add products as JSON string
+  //     formDataToSend.append('products', JSON.stringify(editingAd?.products || []));
+      
+  //     // Handle company logo
+  //     if (formData.companyLogo) {
+  //       // New file uploaded
+  //       formDataToSend.append('companyLogo', formData.companyLogo);
+  //     } else if (isEditing && editingAd && editingAd.companyLogo) {
+  //       // Keep existing image
+  //       formDataToSend.append('existingCompanyLogo', editingAd.companyLogo);
+  //     }
+      
+  //     // Handle banner
+  //     if (formData.banner) {
+  //       // New file uploaded
+  //       formDataToSend.append('banner', formData.banner);
+  //     } else if (isEditing && editingAd && editingAd.banner) {
+  //       // Keep existing image
+  //       formDataToSend.append('existingBanner', editingAd.banner);
+  //     }
+
+  //     console.log('Submitting ad data via FormData');
+
+  //     let response;
+  //     if (isEditing && editingAd && editingAd._id && !editingAd._id.startsWith('temp_')) {
+  //       // Update existing advertisement
+  //       console.log('Updating advertisement:', editingAd._id);
+  //       response = await fetch(`/api/ads/${editingAd._id}`, {
+  //         method: 'PUT',
+  //         body: formDataToSend,
+  //       });
+  //     } else {
+  //       // Create new advertisement
+  //       console.log('Creating new advertisement');
+  //       response = await fetch('/api/ads', {
+  //         method: 'POST',
+  //         body: formDataToSend,
+  //       });
+  //     }
+
+  //     const result: ApiResponse = await response.json();
+  //     console.log('Submit response:', result);
+
+  //     if (result.success) {
+  //       alert(isEditing ? 'Advertisement updated successfully!' : 'Advertisement created successfully!');
+  //       resetForm();
+  //       fetchAdvertisements(); // Refresh the list
+  //     } else {
+  //       alert('Error: ' + (result.error || 'Unknown error occurred'));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error submitting advertisement:', error);
+  //     alert('Failed to submit advertisement. Please try again.');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+// Submit advertisement using FormData
 const submitAdvertisement = async () => {
   try {
     if (!formData.heading.trim()) {
@@ -1615,93 +1635,92 @@ const submitAdvertisement = async () => {
 
     setIsLoading(true);
 
-    // Upload files if any
-    let companyLogoUrl = '';
-    let bannerUrl = '';
-
-    // If editing, use existing URLs unless new files are uploaded
-    if (isEditing && editingAd) {
-      companyLogoUrl = editingAd.companyLogo || '';
-      bannerUrl = editingAd.banner || '';
+    // Create FormData for file upload
+    const formDataToSend = new FormData();
+    
+    // Add text fields
+    formDataToSend.append('stage', formData.stage);
+    formDataToSend.append('tab', activeTab);
+    formDataToSend.append('heading', formData.heading.trim());
+    formDataToSend.append('guide', formData.guide || '');
+    formDataToSend.append('companyName', formData.companyName || '');
+    formDataToSend.append('description', formData.description || '');
+    formDataToSend.append('advice', formData.advice || '');
+    
+    // Add call to action fields INDIVIDUALLY (not as JSON string)
+    formDataToSend.append('callToAction.buyNowLink', formData.callToAction.buyNowLink || '');
+    formDataToSend.append('callToAction.visitWebsiteLink', formData.callToAction.visitWebsiteLink || '');
+    formDataToSend.append('callToAction.callNowNumber', formData.callToAction.callNowNumber || '');
+    formDataToSend.append('callToAction.whatsappNowNumber', formData.callToAction.whatsappNowNumber || '');
+    formDataToSend.append('callToAction.price', formData.callToAction.price.toString());
+    formDataToSend.append('callToAction.selectedAction', formData.callToAction.selectedAction);
+    
+    // Add products as JSON string
+    formDataToSend.append('products', JSON.stringify(editingAd?.products || []));
+    
+    // Handle company logo
+    if (formData.companyLogo) {
+      // New file uploaded
+      formDataToSend.append('companyLogo', formData.companyLogo);
+    } else if (isEditing && editingAd && editingAd.companyLogo) {
+      // Keep existing image
+      formDataToSend.append('existingCompanyLogo', editingAd.companyLogo);
+    }
+    
+    // Handle banner
+    if (formData.banner) {
+      // New file uploaded
+      formDataToSend.append('banner', formData.banner);
+    } else if (isEditing && editingAd && editingAd.banner) {
+      // Keep existing image
+      formDataToSend.append('existingBanner', editingAd.banner);
     }
 
-    try {
-      // Upload company logo if a new file is selected
-      if (formData.companyLogo) {
-        companyLogoUrl = await uploadFile(formData.companyLogo);
-      }
-
-      // Upload banner if a new file is selected
-      if (formData.banner) {
-        bannerUrl = await uploadFile(formData.banner);
-      }
-    } catch (uploadError) {
-      console.error('Error uploading files:', uploadError);
-      alert('Error uploading files. Please try again.');
-      setIsLoading(false);
-      return;
-    }
-
-    // Prepare data for API
-    const adData = {
-      stage: formData.stage,
-      tab: activeTab,
-      heading: formData.heading,
-      guide: formData.guide || '',
-      companyLogo: companyLogoUrl,
-      companyName: formData.companyName || '',
-      description: formData.description || '',
-      advice: formData.advice || '',
-      banner: bannerUrl,
-      callToAction: {
-        buyNowLink: formData.callToAction.buyNowLink || '',
-        visitWebsiteLink: formData.callToAction.visitWebsiteLink || '',
-        callNowNumber: formData.callToAction.callNowNumber || '',
-        whatsappNowNumber: formData.callToAction.whatsappNowNumber || '',
-        price: formData.callToAction.price || 0,
-        selectedAction: formData.callToAction.selectedAction || 'buyNow',
-      },
-      products: editingAd?.products || [],
-    };
-
-    console.log('Submitting ad data:', {
-      isEditing,
-      editingAdId: editingAd?._id,
-      adData
-    });
+    console.log('Submitting ad data via FormData');
 
     let response;
+    let url;
+    
     if (isEditing && editingAd && editingAd._id && !editingAd._id.startsWith('temp_')) {
       // Update existing advertisement
       console.log('Updating advertisement:', editingAd._id);
-      response = await fetch(`/api/ads/${editingAd._id}`, {
+      url = `/api/ads/${editingAd._id}`;
+      response = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(adData),
+        body: formDataToSend,
       });
     } else {
       // Create new advertisement
       console.log('Creating new advertisement');
-      response = await fetch('/api/ads', {
+      url = '/api/ads';
+      response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(adData),
+        body: formDataToSend,
       });
     }
 
-    const result: ApiResponse = await response.json();
+    const resultText = await response.text();
+    console.log('Raw response:', resultText);
+    
+    let result;
+    try {
+      result = JSON.parse(resultText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      alert('Server returned invalid response. Check console for details.');
+      setIsLoading(false);
+      return;
+    }
+
     console.log('Submit response:', result);
+    console.log('Status:', response.status);
 
     if (result.success) {
       alert(isEditing ? 'Advertisement updated successfully!' : 'Advertisement created successfully!');
       resetForm();
       fetchAdvertisements(); // Refresh the list
     } else {
-      alert('Error: ' + (result.error || 'Unknown error occurred'));
+      alert('Error: ' + (result.error || result.details || 'Unknown error occurred'));
     }
   } catch (error) {
     console.error('Error submitting advertisement:', error);
@@ -1712,66 +1731,65 @@ const submitAdvertisement = async () => {
 };
 
   // Edit advertisement
-// Edit advertisement
-const editAdvertisement = async (ad: Advertisement) => {
-  try {
-    console.log('Editing advertisement:', ad._id);
-    
-    setFormData({
-      stage: ad.stage,
-      heading: ad.heading,
-      guide: ad.guide || '',
-      companyLogo: null,
-      companyName: ad.companyName || '',
-      description: ad.description || '',
-      advice: ad.advice || '',
-      banner: null,
-      callToAction: ad.callToAction,
-    });
-    setEditingAd(ad);
-    setIsEditing(true);
-    setActiveTab(ad.tab);
-    
-    console.log('Advertisement loaded for editing:', ad._id);
-  } catch (error) {
-    console.error('Error loading advertisement for edit:', error);
-    alert('Failed to load advertisement for editing');
-  }
-};
-
-// Delete advertisement
-const deleteAdvertisement = async (id: string) => {
-  if (confirm('Are you sure you want to delete this advertisement?')) {
+  const editAdvertisement = async (ad: Advertisement) => {
     try {
-      console.log('Deleting advertisement:', id);
-      setIsLoading(true);
+      console.log('Editing advertisement:', ad._id);
       
-      const response = await fetch(`/api/ads/${id}`, {
-        method: 'DELETE',
+      setFormData({
+        stage: ad.stage,
+        heading: ad.heading,
+        guide: ad.guide || '',
+        companyLogo: null,
+        companyName: ad.companyName || '',
+        description: ad.description || '',
+        advice: ad.advice || '',
+        banner: null,
+        callToAction: ad.callToAction,
       });
+      setEditingAd(ad);
+      setIsEditing(true);
+      setActiveTab(ad.tab);
       
-      const result: ApiResponse = await response.json();
-      console.log('Delete response:', result);
-      
-      if (result.success) {
-        alert('Advertisement deleted successfully!');
-        fetchAdvertisements(); // Refresh the list
-        
-        // If we were editing this ad, reset the form
-        if (editingAd?._id === id) {
-          resetForm();
-        }
-      } else {
-        alert('Error: ' + result.error);
-      }
+      console.log('Advertisement loaded for editing:', ad._id);
     } catch (error) {
-      console.error('Error deleting advertisement:', error);
-      alert('Failed to delete advertisement. Please try again.');
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading advertisement for edit:', error);
+      alert('Failed to load advertisement for editing');
     }
-  }
-};
+  };
+
+  // Delete advertisement
+  const deleteAdvertisement = async (id: string) => {
+    if (confirm('Are you sure you want to delete this advertisement?')) {
+      try {
+        console.log('Deleting advertisement:', id);
+        setIsLoading(true);
+        
+        const response = await fetch(`/api/ads/${id}`, {
+          method: 'DELETE',
+        });
+        
+        const result: ApiResponse = await response.json();
+        console.log('Delete response:', result);
+        
+        if (result.success) {
+          alert('Advertisement deleted successfully!');
+          fetchAdvertisements(); // Refresh the list
+          
+          // If we were editing this ad, reset the form
+          if (editingAd?._id === id) {
+            resetForm();
+          }
+        } else {
+          alert('Error: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error deleting advertisement:', error);
+        alert('Failed to delete advertisement. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   // Delete product from advertisement
   const deleteProduct = (productId: string) => {
@@ -1831,9 +1849,9 @@ const deleteAdvertisement = async (id: string) => {
     return null;
   };
 
-  // Render product preview
-  const renderProductPreview = (product: Product) => (
-    <div key={product.id} className="border rounded-lg p-4 mb-2 bg-white">
+  // Render product preview (simplified - no images)
+  const renderProductPreview = (product: Product,i:number) => (
+    <div key={i} className="border rounded-lg p-4 mb-2 bg-white">
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <h4 className="font-semibold text-gray-800">{product.productName}</h4>
@@ -1846,21 +1864,6 @@ const deleteAdvertisement = async (id: string) => {
               Sale: ₹{product.salesPrice}
             </span>
           </div>
-          {product.images && product.images.length > 0 && (
-            <div className="flex gap-2 mt-2">
-              {product.images.slice(0, 3).map((img, idx) => (
-                <div key={idx} className="w-16 h-16 relative">
-                  <Image
-                    src={img}
-                    alt={`Product ${idx + 1}`}
-                    fill
-                    className="object-cover rounded border"
-                    unoptimized
-                  />
-                </div>
-              ))}
-            </div>
-          )}
         </div>
         <button
           onClick={() => deleteProduct(product.id)}
@@ -2005,7 +2008,8 @@ const deleteAdvertisement = async (id: string) => {
                     </span>
                   </label>
                 </div>
-{renderFilePreview(formData.companyLogo, 'logo', isEditing ? editingAd?.companyLogo : undefined)}              </div>
+                {renderFilePreview(formData.companyLogo, 'logo', isEditing ? editingAd?.companyLogo : undefined)}
+              </div>
             </div>
 
             {/* Description and Advice */}
@@ -2060,7 +2064,8 @@ const deleteAdvertisement = async (id: string) => {
                   </span>
                 </label>
               </div>
-{renderFilePreview(formData.banner, 'banner', isEditing ? editingAd?.banner : undefined)}            </div>
+              {renderFilePreview(formData.banner, 'banner', isEditing ? editingAd?.banner : undefined)}
+            </div>
 
             {/* Call to Action Section */}
             <div className="mb-6">
@@ -2166,7 +2171,7 @@ const deleteAdvertisement = async (id: string) => {
               </div>
             </div>
 
-            {/* Product Management */}
+            {/* Product Management (Simplified - no images) */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Products</h3>
@@ -2202,50 +2207,6 @@ const deleteAdvertisement = async (id: string) => {
                     >
                       <X size={20} />
                     </button>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Product Images (2-3 images)
-                    </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-md p-4 text-center hover:border-gray-400 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleProductImageUpload}
-                        className="hidden"
-                        id="productImages"
-                        disabled={isLoading || uploadingFiles}
-                      />
-                      <label htmlFor="productImages" className="cursor-pointer">
-                        <Upload className="mx-auto mb-2 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          {uploadingFiles ? 'Uploading...' : 'Upload Product Images'}
-                        </span>
-                      </label>
-                    </div>
-                    {currentProduct.images.length > 0 && (
-                      <div className="flex gap-2 mt-2 flex-wrap">
-                        {currentProduct.images.map((img, idx) => (
-                          <div key={idx} className="relative w-20 h-20">
-                            <Image
-                              src={URL.createObjectURL(img)}
-                              alt={`Product ${idx + 1}`}
-                              fill
-                              className="object-cover rounded border"
-                            />
-                            <button
-                              onClick={() => removeProductImage(idx)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                              disabled={isLoading}
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -2324,7 +2285,7 @@ const deleteAdvertisement = async (id: string) => {
                       className="flex-1 bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isLoading || uploadingFiles || !currentProduct.productName.trim()}
                     >
-                      {uploadingFiles ? 'Uploading...' : 'Add Product'}
+                      Add Product
                     </button>
                     <button
                       onClick={() => setShowProductForm(false)}
@@ -2465,7 +2426,3 @@ const deleteAdvertisement = async (id: string) => {
 };
 
 export default AdminAdvertisement;
-
-
-
-
