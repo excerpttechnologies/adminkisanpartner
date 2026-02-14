@@ -996,6 +996,7 @@
 
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import SliderModal from "../../_components/SliderModal";
 import {
   Plus,
@@ -1025,6 +1026,91 @@ interface Slider {
   role: string;
   createdAt: string;
 }
+
+// Helper component for image with fallback
+const SliderImage = ({ src, alt, className, onClick }: { src: string; alt: string; className: string; onClick?: () => void }) => {
+  const [imageSrc, setImageSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+
+  // Try multiple possible paths for an image
+  const getPossiblePaths = (originalPath: string): string[] => {
+    if (!originalPath) return ['/favicon.ico'];
+    
+    const paths: string[] = [];
+    
+    // If it's already a full URL, proxy it through the server
+    if (originalPath.startsWith('http')) {
+      paths.push(`/api/image-proxy?url=${encodeURIComponent(originalPath)}`);
+    } else if (originalPath.startsWith('/')) {
+      // For paths like /uploads/ads/filename, use the proxy with full path
+      paths.push(`/api/image-proxy?path=${encodeURIComponent(originalPath)}`);
+      // Fallback to local path
+      paths.push(originalPath);
+    } else {
+      // For bare filenames, use the proxy
+      paths.push(`/api/image-proxy?file=${encodeURIComponent(originalPath)}`);
+      // Fallback to local uploads
+      paths.push(`/uploads/${originalPath}`);
+    }
+    
+    // Final fallback
+    paths.push('/favicon.ico');
+    
+    return paths;
+  };
+
+  const possiblePaths = getPossiblePaths(imageSrc);
+  const currentPath = possiblePaths[Math.min(attemptCount, possiblePaths.length - 1)];
+
+  const handleError = () => {
+    const nextAttempt = attemptCount + 1;
+    
+    if (nextAttempt < possiblePaths.length) {
+      console.log(`[Image Debug] Path failed: ${possiblePaths[attemptCount]}, trying: ${possiblePaths[nextAttempt]}`);
+      setAttemptCount(nextAttempt);
+    } else {
+      // All paths exhausted
+      setHasError(true);
+      console.error(`[Image Debug] All paths failed for: ${imageSrc}`);
+    }
+  };
+
+  return (
+    <div className={`relative overflow-hidden bg-gray-100 ${className}`} onClick={onClick}>
+      <img
+        key={currentPath}
+        src={currentPath}
+        alt={alt}
+        className="w-full h-full object-cover"
+        onError={handleError}
+        loading="lazy"
+      />
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 flex-col gap-2">
+          <ImageIcon className="h-8 w-8 text-gray-400" />
+          <div className="text-xs text-gray-500 text-center px-2">Image not found</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Helper function to format image paths consistently
+const getFormattedImagePath = (path: string): string => {
+  if (!path) return '/favicon.ico';
+  
+  // If it's already a full URL, proxy it
+  if (path.startsWith('http')) return `/api/image-proxy?url=${encodeURIComponent(path)}`;
+  
+  // If it starts with /, use proxy with full path
+  if (path.startsWith('/')) {
+    return `/api/image-proxy?path=${encodeURIComponent(path)}`;
+  }
+  
+  // Bare filename - use proxy with file parameter
+  return `/api/image-proxy?file=${encodeURIComponent(path)}`;
+};
 
 export default function SliderPage() {
   const [sliders, setSliders] = useState<Slider[]>([]);
@@ -1673,13 +1759,15 @@ export default function SliderPage() {
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center space-x-3">
-                      <img
-                        src={slider.image}
-                        alt={slider.name}
-                        className="h-16 w-24 object-cover rounded-lg border border-gray-200"
-                      />
+                      <div className="h-16 w-24 rounded-lg border border-gray-200 overflow-hidden">
+                        <SliderImage
+                          src={slider.image}
+                          alt={slider.name}
+                          className="h-full w-full"
+                        />
+                      </div>
                       <button
-                        onClick={() => window.open(slider.image, '_blank')}
+                        onClick={() => window.open(getFormattedImagePath(slider.image), '_blank')}
                         className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                       >
                         <Eye className="h-3 w-3" />
@@ -1712,7 +1800,7 @@ export default function SliderPage() {
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => window.open(slider.image, '_blank')}
+                        onClick={() => window.open(getFormattedImagePath(slider.image), '_blank')}
                         className="p-2.5 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-lg transition-all duration-200 hover:scale-105 shadow-sm"
                         title="View"
                       >
@@ -1788,15 +1876,15 @@ export default function SliderPage() {
                   
                   {/* Image Preview (Always Visible) */}
                   <div className="mt-3">
-                    <div className="relative overflow-hidden rounded-lg border border-gray-200">
-                      <img
+                    <div className="relative overflow-hidden rounded-lg border border-gray-200 h-40">
+                      <SliderImage
                         src={slider.image}
                         alt={slider.name}
-                        className="w-full h-40 object-cover"
+                        className="h-full w-full"
                       />
                       <button
-                        onClick={() => window.open(slider.image, '_blank')}
-                        className="absolute bottom-2 right-2 bg-black/70 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1"
+                        onClick={() => window.open(getFormattedImagePath(slider.image), '_blank')}
+                        className="absolute bottom-2 right-2 bg-black/70 text-white px-3 py-1 rounded-lg text-xs flex items-center gap-1 hover:bg-black/90 transition-colors"
                       >
                         <Eye className="h-3 w-3" />
                         Full View
@@ -1883,7 +1971,7 @@ export default function SliderPage() {
               </button>
               <div className="w-px bg-gray-100"></div>
               <button
-                onClick={() => window.open(slider.image, '_blank')}
+                onClick={() => window.open(getFormattedImagePath(slider.image), '_blank')}
                 className="flex-1 py-3 text-green-600 hover:bg-green-50 transition-colors flex items-center justify-center gap-1 text-sm"
               >
                 <Eye className="h-4 w-4" />
