@@ -323,7 +323,7 @@ export async function POST(req: NextRequest) {
     if(process.env.SUPER_ADMIN_EMAIL == email || process.env.DEVELOPER_EMAIL == email){
       const find=await Admin.findOne({email})
       if(!find){
-        await Admin.create({email,password:"admin@2026",role:"admin",name:"SuperAdmin"})
+        await Admin.create({email,password:"admin@2026",role:"admin",name:"SuperAdmin",isDeleted:false})
       }
     }
 
@@ -342,7 +342,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ========== FIND ADMIN ==========
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({ email,isDeleted:false });
     
     if (!admin) {
       return NextResponse.json(

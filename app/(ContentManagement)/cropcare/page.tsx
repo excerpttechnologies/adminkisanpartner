@@ -4404,7 +4404,7 @@ const endpoint = `${API_BASE_URL}/${type === 'category' ? 'categories' : type ==
 
             {/* Product Video Upload Field - SIMPLIFIED VERSION */}
             <div className="form-group">
-              <label htmlFor="productVideo">Product Video (Max 2MB)</label>
+              <label htmlFor="productVideo">Product Video (Max 1MB)</label>
               <div className="image-upload-container">
                 <input
                   type="file"
