@@ -31,12 +31,12 @@
 //   try {
 //     await connectDB();
 
-//     const { searchParams } = new URL(req.url);
-//     const search = searchParams.get("search") || "";
-//     const page = Number(searchParams.get("page")) || 1;
-//     const limit = Number(searchParams.get("limit")) || 10;
-//     const status = searchParams.get("status") || ""
-//     const filter: any = {};
+    // const { searchParams } = new URL(req.url);
+    // const search = searchParams.get("search") || "";
+    // const page = Number(searchParams.get("page")) || 1;
+    // const limit = Number(searchParams.get("limit")) || 10;
+    // const status = searchParams.get("status") || ""
+    // const filter: any = {};
 
 //     if (search) {
 //       filter.$or = [
