@@ -83,6 +83,7 @@ export interface IStatesDetails extends Document {
   taluk: string;
   createdAt: Date;
   updatedAt: Date;
+  ismanual: boolean
 }
 
 const StatesDetailsSchema: Schema<IStatesDetails> = new Schema({
@@ -94,17 +95,17 @@ const StatesDetailsSchema: Schema<IStatesDetails> = new Schema({
   },
   state: {
     type: String,
-    required: [true, 'State is required'],
+    // required: [true, 'State is required'],
     trim: true
   },
   district: {
     type: String,
-    required: [true, 'District is required'],
+    // required: [true, 'District is required'],
     trim: true
   },
   taluk: {
     type: String,
-    required: [true, 'Taluk is required'],
+    // required: [true, 'Taluk is required'],
     trim: true
   },
   createdAt: {
@@ -114,7 +115,14 @@ const StatesDetailsSchema: Schema<IStatesDetails> = new Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  
+    ismanual:{
+      type:Boolean,
+      default:false
+    }
+  
+  
 });
 
 // Using async/await to avoid next() parameter issue

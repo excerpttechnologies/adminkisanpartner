@@ -94,7 +94,7 @@ export async function GET() {
       {statename:"DAMAN & DIU"},
       {statename:"NULL"},
       {statename:"PONDICHERRY"},
-      // {statename:""},
+       {statename:"CHANDIGARH"},
       // {statename:""},
       // {statename:""},
     ]

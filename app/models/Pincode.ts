@@ -20,8 +20,8 @@ export interface IPincode extends Document {
 
 const PincodeSchema: Schema<IPincode> = new Schema(
   {
-    officename: { type: String, required: true },
-    pincode: { type: Number, required: true, index: true },
+    officename: { type: String,},
+    pincode: { type: Number,  index: true },
     officeType: { type: String },
     Deliverystatus: { type: String },
     divisionname: { type: String },
