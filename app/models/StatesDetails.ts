@@ -90,8 +90,7 @@ const StatesDetailsSchema: Schema<IStatesDetails> = new Schema({
   pinCode: {
     type: String,
     trim: true,
-    minlength: 6,
-    maxlength: 6
+   
   },
   state: {
     type: String,

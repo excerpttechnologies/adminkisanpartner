@@ -7500,7 +7500,7 @@ export default function StatesDetailsPage() {
       {/* Mobile Export Buttons */}
       <div className="lg:hidden flex flex-wrap gap-[.6rem] text-sm bg-white p-[.6rem] shadow mb-2">
         {[
-          { icon: FaCopy, onClick: handleCopy, color: "bg-gray-100 hover:bg-gray-200 text-gray-800", title: "Copy" },
+          // { icon: FaCopy, onClick: handleCopy, color: "bg-gray-100 hover:bg-gray-200 text-gray-800", title: "Copy" },
           { icon: FaFileExcel, onClick: handleExportExcel, color: "bg-green-100 hover:bg-green-200 text-green-800", title: "Excel" },
           { icon: FaFileCsv, onClick: () => { }, color: "bg-blue-100 hover:bg-blue-200 text-blue-800", title: "CSV" },
           { icon: FaFilePdf, onClick: handleExportPDF, color: "bg-red-100 hover:bg-red-200 text-red-800", title: "PDF" },

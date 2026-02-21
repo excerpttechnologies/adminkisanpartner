@@ -4048,7 +4048,7 @@ const endpoint = `${API_BASE_URL}/${type === 'category' ? 'categories' : type ==
             </div>
 
             <div className="form-group">
-              <label htmlFor="categoryImage">Category Image</label>
+              <label htmlFor="categoryImage">Category Image (Max 1mb) </label>
               <div className="image-upload-container">
                 <input
                   type="file"

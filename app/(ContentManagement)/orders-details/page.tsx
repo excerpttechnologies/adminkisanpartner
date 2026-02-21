@@ -2026,7 +2026,7 @@ const OrdersReport: React.FC = () => {
               <FaClipboardList className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={orderStatusFilter}
               onChange={(e) => setOrderStatusFilter(e.target.value)}
             >
@@ -2045,7 +2045,7 @@ const OrdersReport: React.FC = () => {
               <FaUserTie className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={traderIdFilter}
               onChange={(e) => setTraderIdFilter(e.target.value)}
             >
@@ -2078,7 +2078,7 @@ const OrdersReport: React.FC = () => {
               <FaTruck className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={transporterIdFilter}
               onChange={(e) => setTransporterIdFilter(e.target.value)}
             >

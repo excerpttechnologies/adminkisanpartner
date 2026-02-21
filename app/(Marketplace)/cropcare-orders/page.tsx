@@ -844,7 +844,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaClipboardList className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={orderStatusFilter}
               onChange={(e) => setOrderStatusFilter(e.target.value)}
             >
@@ -864,7 +864,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaCreditCard className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={paymentStatusFilter}
               onChange={(e) => setPaymentStatusFilter(e.target.value)}
             >
@@ -889,7 +889,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaGlobe className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={stateFilter}
               onChange={(e) => setStateFilter(e.target.value)}
             >
@@ -908,7 +908,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaCity className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white text-sm"
               value={districtFilter}
               onChange={(e) => setDistrictFilter(e.target.value)}
             >
@@ -927,7 +927,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaMapPin className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white text-sm"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white text-sm"
               value={talukFilter}
               onChange={(e) => setTalukFilter(e.target.value)}
             >

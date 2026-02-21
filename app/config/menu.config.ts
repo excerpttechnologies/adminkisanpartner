@@ -26,7 +26,7 @@ export interface MenuItem {
   path: string;
   icon: string;
   moduleId?: string;
-    allowSubAdmin?: boolean;
+  allowSubAdmin?: boolean;
 }
 
 export interface MenuSection {
@@ -55,13 +55,13 @@ export const MENU_CONFIG: MenuSection[] = [
   {
     section: "Marketplace Management",
     items: [
-        { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
-        { name: "Crop Care Orders", path: "/cropcare-orders", icon: "MdLocalHospital" },
-        { name: "Labours", path: "/labours", icon: "MdHandyman" },
-        { name: "Agent Requirement", path: "/agent-requirements", icon: "MdAssignmentTurnedIn" },
-        { name: "Crop Postings", path: "/postings", icon: "MdPostAdd" },
+      { name: "Orders", path: "/orders", icon: "MdShoppingCart" },
+      { name: "Crop Care Orders", path: "/cropcare-orders", icon: "MdLocalHospital" },
+      { name: "Labours", path: "/labours", icon: "MdHandyman" },
+      { name: "Agent Requirement", path: "/agent-requirements", icon: "MdAssignmentTurnedIn" },
+      { name: "Crop Postings", path: "/postings", icon: "MdPostAdd" },
     ],
-},
+  },
   // {
   //   section: "User Management",
   //   items: [
@@ -76,11 +76,11 @@ export const MENU_CONFIG: MenuSection[] = [
   {
     section: "User Management",
     items: [
-        { name: "Farmers", path: "/farmers", icon: "MdAgriculture" },
-        { name: "Agents", path: "/agents", icon: "MdBadge" },
-        { name: "Sub Admins", path: "/sub-admins", icon: "MdSecurity" , allowSubAdmin: false},
+      { name: "Farmers", path: "/farmers", icon: "MdAgriculture" },
+      { name: "Agents", path: "/agents", icon: "MdBadge" },
+      { name: "Sub Admins", path: "/sub-admins", icon: "MdSecurity", allowSubAdmin: false },
     ],
-},
+  },
   // {
   //   section: "Content Management",
   //   items: [
@@ -91,65 +91,65 @@ export const MENU_CONFIG: MenuSection[] = [
   //     { name: "Add Notes", path: "/adminnotes", icon: "MdMenu" },
   //     { name: "Menu Icons", path: "/menuicon", icon: "MdMenu" },
   //     { name: "Trader Trans Managment", path: "/trader-transport-managment", icon: "MdMenu" },
- 
+
   // { name: "Order Details", path: "/orders-details", icon: "MdMenu" },
 
   //   ],
   // },
-{
+  {
     section: "Content Management",
     items: [
-        // { name: "Slider", path: "/slider", icon: "MdSlideshow" },
-        { 
-  name: "Slider", 
-  path: "/slider", 
-  icon: "MdSlideshow",
-  allowSubAdmin: false // 👈 ADD THIS LINE
-},
+      // { name: "Slider", path: "/slider", icon: "MdSlideshow" },
+      // {
+      //   name: "Slider",
+      //   path: "/slider",
+      //   icon: "MdSlideshow",
+      //   allowSubAdmin: false // 👈 ADD THIS LINE
+      // },
 
-        { name: "Categories", path: "/categories", icon: "MdCategory" , allowSubAdmin: false},
-        { name: "Crop Care", path: "/cropcare", icon: "MdSpa", allowSubAdmin: false },
-        { name: "Post Ads", path: "/admin-advertisement", icon: "MdCampaign", allowSubAdmin: false },
-        { name: "Add Notes", path: "/adminnotes", icon: "MdNoteAdd", allowSubAdmin: false },
-        { name: "Menu Icons", path: "/menuicon", icon: "MdIcon" , allowSubAdmin: false},
-       
-        { name: "Farmer Trans Management", path: "/orders-details", icon: "MdReceiptLong" },
-         { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
-           { name: "Transport-vehicle-management", path: "transport-vehicle-management", icon: "MdLocalShipping", allowSubAdmin: false  },
-         { name: "All Transporters", path: "/transporters", icon: "MdLocalShipping" },
+      { name: "Categories", path: "/categories", icon: "MdCategory", allowSubAdmin: false },
+      { name: "Crop Care", path: "/cropcare", icon: "MdSpa", allowSubAdmin: false },
+      { name: "Post Ads", path: "/admin-advertisement", icon: "MdCampaign", allowSubAdmin: false },
+      { name: "Add Notes", path: "/adminnotes", icon: "MdNoteAdd", allowSubAdmin: false },
+      { name: "Menu Icons", path: "/menuicon", icon: "MdIcon", allowSubAdmin: false },
+
+      { name: "Farmer Trans Management", path: "/orders-details", icon: "MdReceiptLong" },
+      { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
+      { name: "Transport-vehicle-management", path: "transport-vehicle-management", icon: "MdLocalShipping", allowSubAdmin: false },
+      { name: "All Transporters", path: "/transporters", icon: "MdLocalShipping" },
     ],
-},
+  },
 
 
-// {
-//     section: "Reports",
-//     items: [
-//      { name: "Trader Payments ", path: "/order-payments", icon: "MdMenu" },
-//            { name: "Trader Bids", path: "/trader-bids", icon: "MdMenu" },
-//       { name: "Trader Payment Clearence ", path: "/payment-clearance", icon: "MdMenu" },
+  // {
+  //     section: "Reports",
+  //     items: [
+  //      { name: "Trader Payments ", path: "/order-payments", icon: "MdMenu" },
+  //            { name: "Trader Bids", path: "/trader-bids", icon: "MdMenu" },
+  //       { name: "Trader Payment Clearence ", path: "/payment-clearance", icon: "MdMenu" },
 
-//   { name: "Farmer accept ", path: "/farmer-accept-report", icon: "MdMenu" },
-//       { name: "Transporter Details", path: "/transporterDetails", icon: "MdMenu" },
+  //   { name: "Farmer accept ", path: "/farmer-accept-report", icon: "MdMenu" },
+  //       { name: "Transporter Details", path: "/transporterDetails", icon: "MdMenu" },
 
-//         { name: "Crop Sales ", path: "/crop-sales-report", icon: "MdMenu" },
-//       { name: "Admin To Farmer Payment ", path: "/adminToFarmerPayment-report", icon: "MdMenu" },
-//     ],
-//   },
+  //         { name: "Crop Sales ", path: "/crop-sales-report", icon: "MdMenu" },
+  //       { name: "Admin To Farmer Payment ", path: "/adminToFarmerPayment-report", icon: "MdMenu" },
+  //     ],
+  //   },
 
 
 
-{
+  {
     section: "Reports",
     items: [
-        { name: "Trader Payments", path: "/order-payments", icon: "MdPayments" },
-        { name: "Trader Bids", path: "/trader-bids", icon: "MdGavel" },
-        { name: "Trader Payment Clearance", path: "/payment-clearance", icon: "MdVerified" },
-        { name: "Farmer Accept", path: "/farmer-accept-report", icon: "MdCheckCircle" },
-        { name: "Transporter Details", path: "/transporterDetails", icon: "MdLocalShipping" },
-        { name: "Crop Sales", path: "/crop-sales-report", icon: "MdSell" },
-        { name: "Admin To Farmer Payment", path: "/admintofarmerpayment-report", icon: "MdAccountBalance" },
+      { name: "Trader Payments", path: "/order-payments", icon: "MdPayments" },
+      { name: "Trader Bids", path: "/trader-bids", icon: "MdGavel" },
+      { name: "Trader Payment Clearance", path: "/payment-clearance", icon: "MdVerified" },
+      { name: "Farmer Accept", path: "/farmer-accept-report", icon: "MdCheckCircle" },
+      { name: "Transporter Details", path: "/transporterDetails", icon: "MdLocalShipping" },
+      { name: "Crop Sales", path: "/crop-sales-report", icon: "MdSell" },
+      { name: "Admin To Farmer Payment", path: "/admintofarmerpayment-report", icon: "MdAccountBalance" },
     ],
-},
+  },
 
 
   {
@@ -173,8 +173,8 @@ export const MENU_CONFIG: MenuSection[] = [
       // { name: "District", path: "/district", icon: "MdOutlineMap" },
       // { name: "Taluk ", path: "/taluka", icon: "MdOutlinePlace" },
 
- { name: "Audit Logs", path: "/audit-logs", icon: "MdOutlineLocationCity", allowSubAdmin: false },
-       { name: "States", path: "/states-details", icon: "MdOutlineLocationCity", allowSubAdmin: false },
+      { name: "Audit Logs", path: "/audit-logs", icon: "MdOutlineLocationCity", allowSubAdmin: false },
+      { name: "States", path: "/states-details", icon: "MdOutlineLocationCity", allowSubAdmin: false },
       { name: "My Profile", path: "/my-profile", icon: "MdPersonOutline" },
       { name: "Logout", path: "/logout", icon: "MdLogout", moduleId: "logout" },
     ],
@@ -191,8 +191,8 @@ export const getAllMenuModules = (): string[] => {
       if (
         item.moduleId !== "logout" &&
         item.name !== "Logout" &&
-        item.name !== "My Profile"  &&
-           item.allowSubAdmin !== false
+        item.name !== "My Profile" &&
+        item.allowSubAdmin !== false
       ) {
         modules.add(item.name);
       }

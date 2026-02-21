@@ -7684,7 +7684,7 @@ const AdminOrdersRedesign: React.FC = () => {
                 <FaFilter className="text-gray-400" />
               </div>
               <select
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -7703,7 +7703,7 @@ const AdminOrdersRedesign: React.FC = () => {
                 <FaTruck className="text-gray-400" />
               </div>
               <select
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500  outline-none bg-white"
                 value={transporterStatusFilter}
                 onChange={(e) => setTransporterStatusFilter(e.target.value)}
               >

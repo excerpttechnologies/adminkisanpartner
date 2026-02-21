@@ -791,7 +791,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaTags className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white"
               value={paymentStatusFilter}
               onChange={(e) => setPaymentStatusFilter(e.target.value)}
             >
@@ -807,7 +807,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaCreditCard className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white"
               value={paymentMethodFilter}
               onChange={(e) => setPaymentMethodFilter(e.target.value)}
             >
@@ -827,7 +827,7 @@ const handleCopyToClipboard = async (): Promise<void> => {
               <FaSort className="text-gray-400" />
             </div>
             <select
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none appearance-none bg-white"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none  bg-white"
               value={sortField}
               onChange={(e) => {
                 setSortField(e.target.value);
