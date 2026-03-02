@@ -81,21 +81,7 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Sub Admins", path: "/sub-admins", icon: "MdSecurity", allowSubAdmin: false },
     ],
   },
-  // {
-  //   section: "Content Management",
-  //   items: [
-  //     { name: "Slider", path: "/slider", icon: "MdPages" },
-  //     { name: "Categories", path: "/categories", icon: "MdCategory" },
-  //     { name: "Crop Care", path: "/cropcare", icon: "MdMenu" },
-  //     { name: "Post Ads", path: "/admin-advertisement", icon: "MdPages" },
-  //     { name: "Add Notes", path: "/adminnotes", icon: "MdMenu" },
-  //     { name: "Menu Icons", path: "/menuicon", icon: "MdMenu" },
-  //     { name: "Trader Trans Managment", path: "/trader-transport-managment", icon: "MdMenu" },
-
-  // { name: "Order Details", path: "/orders-details", icon: "MdMenu" },
-
-  //   ],
-  // },
+ 
   {
     section: "Content Management",
     items: [
