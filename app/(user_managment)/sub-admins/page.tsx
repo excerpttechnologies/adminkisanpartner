@@ -135,6 +135,14 @@ export default function SubAdminAccountsPage() {
   const [editing, setEditing] = useState<SubAdmin | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
 
+  const uniqueStates = [
+  ...new Map(
+    states.map(s => [s.toLowerCase().trim(), s])
+  ).values()
+];
+ 
+
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -673,6 +681,7 @@ export default function SubAdminAccountsPage() {
   };
 
   const loadAdminForEdit = (admin: SubAdmin) => {
+    
     setEditing(admin);
     
     const displayModules: string[] = [];
@@ -1230,7 +1239,7 @@ export default function SubAdminAccountsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
             >
               <option value="">All States</option>
-              {states.map(state => (
+              {uniqueStates.map(state => (
                 <option key={state} value={state}>
                   {state}
                 </option>
@@ -1686,7 +1695,7 @@ export default function SubAdminAccountsPage() {
                 }`}
               >
                 <option value="">Select State</option>
-                {states.map(state => (
+                {uniqueStates.map(state => (
                   <option key={state} value={state}>
                     {state}
                   </option>

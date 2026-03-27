@@ -130,7 +130,9 @@ function AdminLoginContent() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-            <span className="text-2xl">🔐</span>
+            <span className="text-2xl">
+              <img src="/assets/LOGO.jpeg" alt="Kisan Partner Logo" className="h-20 w-auto rounded-full" />
+            </span>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">
             {showForgotPassword ? "Reset Password" : "Admin Portal"}
