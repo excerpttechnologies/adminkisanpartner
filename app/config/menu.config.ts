@@ -76,6 +76,7 @@ export const MENU_CONFIG: MenuSection[] = [
   {
     section: "User Management",
     items: [
+      { name: "B2B Portal", path: "/b2b-portal", icon: "MdBusiness" },
       { name: "Farmers", path: "/farmers", icon: "MdAgriculture" },
       { name: "Agents", path: "/agents", icon: "MdBadge" },
       { name: "Sub Admins", path: "/sub-admins", icon: "MdSecurity", allowSubAdmin: false },
@@ -103,6 +104,8 @@ export const MENU_CONFIG: MenuSection[] = [
       { name: "Trader Trans Management", path: "/trader-transport-managment", icon: "MdLocalShipping" },
       { name: "Transport-vehicle-management", path: "transport-vehicle-management", icon: "MdLocalShipping", allowSubAdmin: false },
       { name: "All Transporters", path: "/transporters", icon: "MdLocalShipping" },
+
+      { name: "Mandi", icon: "MdStore", path: "/mandi" }
     ],
   },
 
@@ -155,11 +158,15 @@ export const MENU_CONFIG: MenuSection[] = [
   {
     section: "Lookups",
     items: [
+
+
+            { name: "Crop Postings Map ", path: "/karnataka-crop-map", icon: "MdOutlinePlace" },
+
       // { name: "States", path: "/states", icon: "MdOutlineLocationCity" },
       // { name: "District", path: "/district", icon: "MdOutlineMap" },
       // { name: "Taluk ", path: "/taluka", icon: "MdOutlinePlace" },
 
-      { name: "Audit Logs", path: "/audit-logs", icon: "MdOutlineLocationCity", allowSubAdmin: false },
+      { name: "Audit Logs", path: "/audit-logs", icon: "MdFactCheck", allowSubAdmin: false },
       { name: "States", path: "/states-details", icon: "MdOutlineLocationCity", allowSubAdmin: false },
       { name: "My Profile", path: "/my-profile", icon: "MdPersonOutline" },
       { name: "Logout", path: "/logout", icon: "MdLogout", moduleId: "logout" },

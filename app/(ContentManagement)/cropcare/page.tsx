@@ -4465,11 +4465,14 @@ const endpoint = `${API_BASE_URL}/${type === 'category' ? 'categories' : type ==
                 <option value="">-- Select Sub Category --</option>
                 {subCategories.map((subCategory) => (
                   <option key={subCategory._id} value={subCategory._id}>
-                    {subCategory.name} ({typeof subCategory.categoryId === 'string'
-                      ? getCategoryName(subCategory.categoryId)
-                      : subCategory.categoryId.name
-                    })
-                  </option>
+  {subCategory.name} (
+  {typeof subCategory.categoryId === 'string'
+    ? getCategoryName(subCategory.categoryId)
+    : subCategory.categoryId && typeof subCategory.categoryId === 'object'
+      ? subCategory.categoryId.name
+      : 'Unassigned'
+  })
+</option>
                 ))}
               </select>
               {subCategories.length === 0 && (

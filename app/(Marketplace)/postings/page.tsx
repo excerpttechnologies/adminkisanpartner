@@ -2,10 +2,6 @@
 
 
 
-
-
-
-
 // "use client";
 
 // import React, { useRef, useState, useEffect } from "react";
@@ -40,6 +36,8 @@
 //   FaChevronUp,
 //   FaEnvelope,
 //   FaIdCard,
+//   FaChevronLeft,
+//   FaChevronRight,
 // } from "react-icons/fa";
 // import * as XLSX from "xlsx";
 // import jsPDF from "jspdf";
@@ -62,6 +60,7 @@
 //   LinearProgress,
 //   Tooltip,
 //   Collapse,
+//   Slider,
 // } from "@mui/material";
 // import { getAdminSessionAction } from "@/app/actions/auth-actions";
 // import { AiOutlineClose } from "react-icons/ai";
@@ -836,9 +835,6 @@
 //                 }`}>
 //                   {index + 1}
 //                 </span>
-//                 {/* {stage.status === "completed" && (
-//                   <FaCheckCircle className="absolute -top-1 -right-1 w-3 h-3 text-green-500" />
-//                 )} */}
 //               </div>
 //               <div className="mt-1">
 //                 {getStageStatusIcon(stage.status)}
@@ -1046,8 +1042,8 @@
 //   const [expanded, setExpanded] = useState(false);
 
 //   return (
-//     <div  onClick={() => setExpanded(!expanded)} className="space-y-1 cursor-pointer">
-//       <div  onClick={() => setExpanded(!expanded)} className="flex items-center justify-between">
+//     <div onClick={() => setExpanded(!expanded)} className="space-y-1 cursor-pointer">
+//       <div onClick={() => setExpanded(!expanded)} className="flex items-center justify-between">
 //         <div className="flex items-center gap-2">
 //           <FaUser className="w-4 h-4 text-gray-500" />
 //           <span className="text-xs font-semibold text-gray-700">Farmer Info</span>
@@ -1059,12 +1055,10 @@
 //           {expanded ? (
 //             <>
 //               <FaChevronUp className="w-3 h-3" />
-             
 //             </>
 //           ) : (
 //             <>
 //               <FaChevronDown className="w-3 h-3" />
-             
 //             </>
 //           )}
 //         </button>
@@ -1175,12 +1169,14 @@
 //   const [trackingLoading, setTrackingLoading] = useState(false);
 //   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
 
-//   const[user,setUser]=useState<{
-//       taluka:string,
-//       role:string
-//     }>()
-  
+//   const [user, setUser] = useState<{
+//     taluka: string,
+//     role: string
+//   }>()
+
 //   const tableRef = useRef<HTMLDivElement>(null);
+//   const [tableScrollPosition, setTableScrollPosition] = useState<number>(0);
+//   const [showTableScrollControl, setShowTableScrollControl] = useState<boolean>(false);
 
 //   // Get unique farming types and seed types from all crops data
 //   const farmingTypes = [...new Set(allCrops.map(crop => crop.farmingType))];
@@ -1207,11 +1203,11 @@
 //       }
 //       // params.taluk="Tarikere"
 
-//        const session = await getAdminSessionAction();
-//             setUser(session?.admin)
-//             if(session?.admin?.role == "subadmin"){
-//              params.taluk= session?.admin.taluka;
-//             }
+//       const session = await getAdminSessionAction();
+//       setUser(session?.admin)
+//       if (session?.admin?.role == "subadmin") {
+//         params.taluk = session?.admin.taluka;
+//       }
 
 //       const response = await axios.get(`/api/postings`, {
 //         params,
@@ -1364,6 +1360,27 @@
 //     return () => clearTimeout(timer);
 //   }, [searchTerm, filterFarmingType, filterSeedType]);
 
+//   // Check if table needs horizontal scrolling
+//   useEffect(() => {
+//     const checkTableScroll = () => {
+//       if (tableRef.current) {
+//         const tableElement = tableRef.current.querySelector('table');
+//         if (tableElement) {
+//           const tableWidth = tableElement.scrollWidth;
+//           const containerWidth = tableRef.current.clientWidth;
+//           setShowTableScrollControl(tableWidth > containerWidth);
+//         }
+//       }
+//     };
+
+//     checkTableScroll();
+//     window.addEventListener('resize', checkTableScroll);
+    
+//     return () => {
+//       window.removeEventListener('resize', checkTableScroll);
+//     };
+//   }, [crops]);
+
 //   /* ================= UTILITY FUNCTIONS ================= */
 
 //   const showSnackbar = (
@@ -1488,164 +1505,198 @@
 //     return crop.farmer?.registrationStatus || "N/A";
 //   };
 
-//   /* ================= EXPORT FUNCTIONS ================= */
+//   /* ================= TABLE SCROLL FUNCTIONS ================= */
 
-//   // const copyData = () => {
-//   //   if (crops.length === 0) {
-//   //     showSnackbar("No data to copy", "warning");
-//   //     return;
-//   //   }
+// /* ================= SMOOTH SCROLL FUNCTIONS ================= */
 
-//   //   try {
-//   //     const headers = [
-//   //       "Farming Type", "Seed Type", "Acres", "Sowing Date", 
-//   //       "Farmer Name", "Farmer Phone", "Farmer Email", "Farmer Address",
-//   //       "Farmer ID", "Farmer Location", "Registration Status",
-//   //       "Tracking ID", "Progress", "Current Stage", "Total Stages",
-//   //       "Stages Completed", "Created Date"
-//   //     ];
-      
-//   //     const rows = crops.map((crop) => [
-//   //       getFarmingTypeLabel(crop.farmingType) || "",
-//   //       getSeedTypeLabel(crop.seedType) || "",
-//   //       crop.acres?.toString() || "0",
-//   //       formatDate(crop.sowingDate) || "",
-//   //       getFarmerName(crop) || "",
-//   //       getFarmerContact(crop) || "",
-//   //       getFarmerEmail(crop) || "",
-//   //       getFarmerAddress(crop) || "",
-//   //       getFarmerDisplayId(crop) || "",
-//   //       getFarmerLocation(crop) || "",
-//   //       getFarmerRegistrationStatus(crop) || "",
-//   //       crop.trackingId || "",
-//   //       crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
-//   //       crop.tracking?.currentStageName || "Not Started",
-//   //       crop.tracking?.stages?.length || 0,
-//   //       crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
-//   //       formatDate(crop.createdAt) || ""
-//   //     ]);
-      
-//   //     const columnWidths = headers.map((header, colIndex) => {
-//   //       const maxHeaderLength = header.length;
-//   //       const maxDataLength = rows.reduce((max, row) => {
-//   //         const cell = row[colIndex] || "";
-//   //         const cellLength = cell.toString().length;
-//   //         return Math.max(max, cellLength);
-//   //       }, 0);
-//   //       return Math.max(maxHeaderLength, maxDataLength, 10);
-//   //     });
-      
-//   //     let tableString = "";
-      
-//   //     tableString += headers.map((header, i) => 
-//   //       header.padEnd(columnWidths[i])
-//   //     ).join(" | ") + "\n";
-      
-//   //     tableString += headers.map((_, i) => 
-//   //       "-".repeat(columnWidths[i])
-//   //     ).join("-+-") + "\n";
-      
-//   //     rows.forEach(row => {
-//   //       tableString += row.map((cell, i) => {
-//   //         const cellStr = cell?.toString() || "";
-//   //         return cellStr.padEnd(columnWidths[i]);
-//   //       }).join(" | ") + "\n";
-//   //     });
-      
-//   //     tableString += `\nTotal Crops: ${totalItems}\n`;
-//   //     tableString += `Generated: ${new Date().toLocaleDateString()}\n`;
-      
-//   //     navigator.clipboard.writeText(tableString);
-//   //     showSnackbar("Data copied in table format", "success");
-//   //   } catch (error) {
-//   //     console.error("Error copying data:", error);
-//   //     showSnackbar("Failed to copy data", "error");
-//   //   }
-//   // };
+// /* ================= SMOOTH SCROLL FUNCTIONS ================= */
 
-// const copyData = () => {
-//   if (crops.length === 0) {
-//     showSnackbar("No data to copy", "warning");
-//     return;
-//   }
-
-//   try {
-//     // Only essential columns
-//     const headers = [
-//       "Farming", "Seed", "Acres", "Sowing", 
-//       "Farmer", "Phone", "ID", "Location",
-//       "Progress", "Stage", "Tracking ID"
-//     ];
-    
-//     const rows = crops.map((crop) => [
-//       getFarmingTypeLabel(crop.farmingType)?.substring(0, 8) || "",
-//       getSeedTypeLabel(crop.seedType)?.substring(0, 8) || "",
-//       crop.acres?.toString() || "0",
-//       formatDate(crop.sowingDate)?.split(',')[0] || "", // Just date part
-//       getFarmerName(crop)?.substring(0, 12) || "",
-//       getFarmerContact(crop) || "",
-//       getFarmerDisplayId(crop) || "",
-//       getFarmerLocation(crop)?.split(',')[0]?.substring(0, 15) || "", // Just first part
-//       crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
-//       crop.tracking?.currentStageName?.substring(0, 12) || "Not Started",
-//       crop.trackingId?.substring(0, 8) + "..." || ""
-//     ]);
-    
-//     const columnWidths = [10, 10, 8, 12, 14, 12, 10, 16, 10, 14, 15];
-    
-//     let tableString = "";
-    
-//     // Create compact table
-//     tableString += "┌" + columnWidths.map(w => "─".repeat(w)).join("┬") + "┐\n";
-//     tableString += "│" + headers.map((h, i) => ` ${h.padEnd(columnWidths[i] - 2)} `).join("│") + "│\n";
-//     tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
-    
-//     rows.forEach((row, i) => {
-//       tableString += "│" + row.map((cell, j) => {
-//         const cellStr = cell?.toString() || "";
-//         return ` ${cellStr.padEnd(columnWidths[j] - 2)} `;
-//       }).join("│") + "│\n";
+// const handleSmoothScroll = (event: Event, newValue: number | number[]) => {
+//   const scrollValue = Array.isArray(newValue) ? newValue[0] : newValue;
+//   setTableScrollPosition(scrollValue);
+  
+//   if (tableRef.current) {
+//     const tableElement = tableRef.current.querySelector('table');
+//     if (tableElement) {
+//       const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
+//       const scrollTo = (scrollValue / 50) * maxScroll;
       
-//       if ((i + 1) % 5 === 0 && i < rows.length - 1) {
-//         tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
-//       }
-//     });
-    
-//     tableString += "└" + columnWidths.map(w => "─".repeat(w)).join("┴") + "┘\n\n";
-    
-//     // Full details for first few records
-//     if (crops.length > 0) {
-//       tableString += "DETAILED VIEW (First 3 records):\n";
-//       tableString += "════════════════════════════════════════════════════════════\n";
-      
-//       crops.slice(0, 3).forEach((crop, index) => {
-//         tableString += `\nRECORD ${index + 1}:\n`;
-//         tableString += `  Farming Type: ${getFarmingTypeLabel(crop.farmingType)}\n`;
-//         tableString += `  Seed Type: ${getSeedTypeLabel(crop.seedType)}\n`;
-//         tableString += `  Acres: ${crop.acres}\n`;
-//         tableString += `  Sowing Date: ${formatDate(crop.sowingDate)}\n`;
-//         tableString += `  Farmer: ${getFarmerName(crop)} (${getFarmerDisplayId(crop)})\n`;
-//         tableString += `  Phone: ${getFarmerContact(crop)}\n`;
-//         tableString += `  Email: ${getFarmerEmail(crop)}\n`;
-//         tableString += `  Location: ${getFarmerLocation(crop)}\n`;
-//         tableString += `  Tracking ID: ${crop.trackingId}\n`;
-//         tableString += `  Progress: ${crop.tracking?.progress || 0}%\n`;
-//         tableString += `  Current Stage: ${crop.tracking?.currentStageName || "Not Started"}\n`;
-//         tableString += `  Stages: ${crop.tracking?.stages?.filter(s => s.status === "completed").length || 0}/${crop.tracking?.stages?.length || 0}\n`;
-//       });
+//       // Smooth scroll with requestAnimationFrame for better performance
+//       smoothScrollTo(tableRef.current, scrollTo, 200);
 //     }
-    
-//     tableString += `\nTotal Records: ${totalItems}\n`;
-//     tableString += `Generated: ${new Date().toLocaleString()}\n`;
-    
-//     navigator.clipboard.writeText(tableString);
-//     showSnackbar("Data copied in compact table format", "success");
-//   } catch (error) {
-//     console.error("Error copying data:", error);
-//     showSnackbar("Failed to copy data", "error");
 //   }
 // };
- 
+
+// const handleSmoothScrollLeft = () => {
+//   if (tableRef.current) {
+//     const currentScroll = tableRef.current.scrollLeft;
+//     const newScroll = Math.max(0, currentScroll - 800); // Increased scroll amount
+//     smoothScrollTo(tableRef.current, newScroll, 800);
+//   }
+// };
+
+// const handleSmoothScrollRight = () => {
+//   if (tableRef.current) {
+//     const tableElement = tableRef.current.querySelector('table');
+//     if (tableElement) {
+//       const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
+//       const currentScroll = tableRef.current.scrollLeft;
+//       const newScroll = Math.min(maxScroll, currentScroll + 800); // Increased scroll amount
+//       smoothScrollTo(tableRef.current, newScroll, 800);
+//     }
+//   }
+// };
+
+// const smoothScrollTo = (element: HTMLElement, to: number, duration: number) => {
+//   const start = element.scrollLeft;
+//   const change = to - start;
+//   const startTime = performance.now();
+
+//   const animateScroll = (currentTime: number) => {
+//     const elapsed = currentTime - startTime;
+    
+//     if (elapsed < duration) {
+//       // Using easeOutCubic for smoother animation
+//       const easeOutCubic = (t: number) => {
+//         return 1 - Math.pow(1 - t, 3);
+//       };
+      
+//       const progress = easeOutCubic(elapsed / duration);
+//       element.scrollLeft = start + change * progress;
+//       requestAnimationFrame(animateScroll);
+//     } else {
+//       element.scrollLeft = to;
+//       updateTableScrollPosition(); // Update position after animation completes
+//     }
+//   };
+
+//   requestAnimationFrame(animateScroll);
+// };
+
+// const updateTableScrollPosition = () => {
+//   if (tableRef.current) {
+//     const tableElement = tableRef.current.querySelector('table');
+//     if (tableElement) {
+//       const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
+//       if (maxScroll > 0) {
+//         const scrollPercentage = (tableRef.current.scrollLeft / maxScroll) * 100;
+//         setTableScrollPosition(scrollPercentage);
+//       }
+//     }
+//   }
+// };
+
+// // Update the scroll event listener with throttling
+// useEffect(() => {
+//   const tableContainer = tableRef.current;
+//   if (tableContainer) {
+//     let animationFrameId: number;
+    
+//     const handleScroll = () => {
+//       if (animationFrameId) {
+//         cancelAnimationFrame(animationFrameId);
+//       }
+      
+//       animationFrameId = requestAnimationFrame(() => {
+//         updateTableScrollPosition();
+//       });
+//     };
+    
+//     tableContainer.addEventListener('scroll', handleScroll, { passive: true });
+//     return () => {
+//       tableContainer.removeEventListener('scroll', handleScroll);
+//       if (animationFrameId) {
+//         cancelAnimationFrame(animationFrameId);
+//       }
+//     };
+//   }
+// }, []);
+
+//   /* ================= EXPORT FUNCTIONS ================= */
+
+//   const copyData = () => {
+//     if (crops.length === 0) {
+//       showSnackbar("No data to copy", "warning");
+//       return;
+//     }
+
+//     try {
+//       // Only essential columns
+//       const headers = [
+//         "Farming", "Seed", "Acres", "Sowing", 
+//         "Farmer", "Phone", "ID", "Location",
+//         "Progress", "Stage", "Tracking ID"
+//       ];
+      
+//       const rows = crops.map((crop) => [
+//         getFarmingTypeLabel(crop.farmingType)?.substring(0, 8) || "",
+//         getSeedTypeLabel(crop.seedType)?.substring(0, 8) || "",
+//         crop.acres?.toString() || "0",
+//         formatDate(crop.sowingDate)?.split(',')[0] || "", // Just date part
+//         getFarmerName(crop)?.substring(0, 12) || "",
+//         getFarmerContact(crop) || "",
+//         getFarmerDisplayId(crop) || "",
+//         getFarmerLocation(crop)?.split(',')[0]?.substring(0, 15) || "", // Just first part
+//         crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+//         crop.tracking?.currentStageName?.substring(0, 12) || "Not Started",
+//         crop.trackingId?.substring(0, 8) + "..." || ""
+//       ]);
+      
+//       const columnWidths = [10, 10, 8, 12, 14, 12, 10, 16, 10, 14, 15];
+      
+//       let tableString = "";
+      
+//       // Create compact table
+//       tableString += "┌" + columnWidths.map(w => "─".repeat(w)).join("┬") + "┐\n";
+//       tableString += "│" + headers.map((h, i) => ` ${h.padEnd(columnWidths[i] - 2)} `).join("│") + "│\n";
+//       tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
+      
+//       rows.forEach((row, i) => {
+//         tableString += "│" + row.map((cell, j) => {
+//           const cellStr = cell?.toString() || "";
+//           return ` ${cellStr.padEnd(columnWidths[j] - 2)} `;
+//         }).join("│") + "│\n";
+        
+//         if ((i + 1) % 5 === 0 && i < rows.length - 1) {
+//           tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
+//         }
+//       });
+      
+//       tableString += "└" + columnWidths.map(w => "─".repeat(w)).join("┴") + "┘\n\n";
+      
+//       // Full details for first few records
+//       if (crops.length > 0) {
+//         tableString += "DETAILED VIEW (First 3 records):\n";
+//         tableString += "════════════════════════════════════════════════════════════\n";
+        
+//         crops.slice(0, 3).forEach((crop, index) => {
+//           tableString += `\nRECORD ${index + 1}:\n`;
+//           tableString += `  Farming Type: ${getFarmingTypeLabel(crop.farmingType)}\n`;
+//           tableString += `  Seed Type: ${getSeedTypeLabel(crop.seedType)}\n`;
+//           tableString += `  Acres: ${crop.acres}\n`;
+//           tableString += `  Sowing Date: ${formatDate(crop.sowingDate)}\n`;
+//           tableString += `  Farmer: ${getFarmerName(crop)} (${getFarmerDisplayId(crop)})\n`;
+//           tableString += `  Phone: ${getFarmerContact(crop)}\n`;
+//           tableString += `  Email: ${getFarmerEmail(crop)}\n`;
+//           tableString += `  Location: ${getFarmerLocation(crop)}\n`;
+//           tableString += `  Tracking ID: ${crop.trackingId}\n`;
+//           tableString += `  Progress: ${crop.tracking?.progress || 0}%\n`;
+//           tableString += `  Current Stage: ${crop.tracking?.currentStageName || "Not Started"}\n`;
+//           tableString += `  Stages: ${crop.tracking?.stages?.filter(s => s.status === "completed").length || 0}/${crop.tracking?.stages?.length || 0}\n`;
+//         });
+//       }
+      
+//       tableString += `\nTotal Records: ${totalItems}\n`;
+//       tableString += `Generated: ${new Date().toLocaleString()}\n`;
+      
+//       navigator.clipboard.writeText(tableString);
+//       showSnackbar("Data copied in compact table format", "success");
+//     } catch (error) {
+//       console.error("Error copying data:", error);
+//       showSnackbar("Failed to copy data", "error");
+//     }
+//   };
+
 //   const exportCSV = () => {
 //     if (crops.length === 0) {
 //       showSnackbar("No data to export", "warning");
@@ -1768,60 +1819,60 @@
 //   };
 
 //   const exportPDF = () => {
-//   if (crops.length === 0) {
-//     showSnackbar("No data to export", "warning");
-//     return;
-//   }
+//     if (crops.length === 0) {
+//       showSnackbar("No data to export", "warning");
+//       return;
+//     }
 
-//   try {
-//     const doc = new jsPDF();
+//     try {
+//       const doc = new jsPDF();
 
-//     doc.setFontSize(18);
-//     doc.text("Crops Management Report", 14, 22);
-//     doc.setFontSize(11);
-//     doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
-//     doc.text(`Total Crops: ${totalItems}`, 14, 37);
+//       doc.setFontSize(18);
+//       doc.text("Crops Management Report", 14, 22);
+//       doc.setFontSize(11);
+//       doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+//       doc.text(`Total Crops: ${totalItems}`, 14, 37);
 
-//     const tableColumn = [
-//       "Farming Type",
-//       "Seed Type",
-//       "Acres",
-//       "Sowing Date",
-//       "Farmer Name",
-//       "Farmer Phone",
-//       "Tracking ID",
-//       "Progress",
-//       "Current Stage",
-//     ];
-//     const tableRows = crops.map((crop) => [
-//       getFarmingTypeLabel(crop.farmingType),
-//       getSeedTypeLabel(crop.seedType),
-//       crop.acres.toString(),
-//       formatDate(crop.sowingDate),
-//       getFarmerName(crop).substring(0, 15) + (getFarmerName(crop).length > 15 ? "..." : ""),
-//       getFarmerContact(crop).substring(0, 15),
-//       formatTrackingId(crop.trackingId || ""),
-//       crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
-//       // Fix: Add proper null checking with default empty string
-//       (crop.tracking?.currentStageName || "").substring(0, 15) + 
-//       ((crop.tracking?.currentStageName || "").length > 15 ? "..." : "") || "N/A",
-//     ]);
+//       const tableColumn = [
+//         "Farming Type",
+//         "Seed Type",
+//         "Acres",
+//         "Sowing Date",
+//         "Farmer Name",
+//         "Farmer Phone",
+//         "Tracking ID",
+//         "Progress",
+//         "Current Stage",
+//       ];
+//       const tableRows = crops.map((crop) => [
+//         getFarmingTypeLabel(crop.farmingType),
+//         getSeedTypeLabel(crop.seedType),
+//         crop.acres.toString(),
+//         formatDate(crop.sowingDate),
+//         getFarmerName(crop).substring(0, 15) + (getFarmerName(crop).length > 15 ? "..." : ""),
+//         getFarmerContact(crop).substring(0, 15),
+//         formatTrackingId(crop.trackingId || ""),
+//         crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+//         // Fix: Add proper null checking with default empty string
+//         (crop.tracking?.currentStageName || "").substring(0, 15) + 
+//         ((crop.tracking?.currentStageName || "").length > 15 ? "..." : "") || "N/A",
+//       ]);
 
-//     autoTable(doc, {
-//       head: [tableColumn],
-//       body: tableRows,
-//       startY: 45,
-//       styles: { fontSize: 8, cellPadding: 2 },
-//       headStyles: { fillColor: [59, 130, 246] },
-//     });
+//       autoTable(doc, {
+//         head: [tableColumn],
+//         body: tableRows,
+//         startY: 45,
+//         styles: { fontSize: 8, cellPadding: 2 },
+//         headStyles: { fillColor: [59, 130, 246] },
+//       });
 
-//     doc.save(`crops_${new Date().toISOString().split("T")[0]}.pdf`);
-//     showSnackbar("PDF exported successfully", "success");
-//   } catch (error) {
-//     console.error("Error exporting PDF:", error);
-//     showSnackbar("Failed to export PDF", "error");
-//   }
-// };
+//       doc.save(`crops_${new Date().toISOString().split("T")[0]}.pdf`);
+//       showSnackbar("PDF exported successfully", "success");
+//     } catch (error) {
+//       console.error("Error exporting PDF:", error);
+//       showSnackbar("Failed to export PDF", "error");
+//     }
+//   };
 
 //   const printTable = () => {
 //     const printContent = tableRef.current?.innerHTML;
@@ -1948,14 +1999,6 @@
 //               </p>
 //             </div>
 //           </div>
-//           {/* <button
-//             onClick={() => setFormModalOpen(true)}
-//             className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all flex items-center gap-2"
-//           >
-//             <FaChartLine className="w-5 h-5" />
-//             <span className="hidden sm:inline">Add New Crop</span>
-//             <span className="sm:hidden">Add Crop</span>
-//           </button> */}
 //         </div>
 
 //         {/* Stats Indicators */}
@@ -2018,12 +2061,12 @@
 //                   onChange={(e) => setSearchTerm(e.target.value)}
 //                   className="w-full lg:w-[40vw] px-10 py-2 text-xs sm:text-base border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
 //                 />
-//                { searchTerm.length >0 &&<AiOutlineClose onClick={()=>setSearchTerm("")} className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5" />}
+//                 {searchTerm.length > 0 && <AiOutlineClose onClick={() => setSearchTerm("")} className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5" />}
 //               </div>
 //               <div className="flex items-center justify-between">
 //                 <button
 //                   onClick={() => setShowFilters(!showFilters)}
-//                   className="lg:flex hidden items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+//                   className="lg:flex hidden items-center gap-2 px-3 py-2 sm:px-3 sm:py-2.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
 //                 >
 //                   <FaFilter className="w-4 h-4 text-gray-600" />
 //                   <span className="text-xs font-medium hidden sm:inline">
@@ -2037,7 +2080,7 @@
 //                 <div className="flex items-center gap-2">
 //                   <button
 //                     onClick={() => setShowFilters(!showFilters)}
-//                     className="flex lg:hidden items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+//                     className="flex lg:hidden items-center gap-2 px-3 py-2 sm:px-3 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
 //                   >
 //                     <FaFilter className="w-4 h-4 text-gray-600" />
 //                     <span className="text-xs font-medium hidden sm:inline">
@@ -2136,7 +2179,7 @@
 //                   <div className="sm:col-span-2 lg:col-span-1 flex items-end">
 //                     <button
 //                       onClick={handleClearFilters}
-//                       className="w-full px-4 py-2 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded font-bold hover:from-green-600 hover:to-emerald-600 transition-all"
+//                       className="w-full px-3 py-2 text-xs bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded font-bold hover:from-green-600 hover:to-emerald-600 transition-all"
 //                     >
 //                       Clear Filters
 //                     </button>
@@ -2147,321 +2190,187 @@
 //           </div>
 //         </div>
 
-//         {/* Table Section */}
-//         <div ref={tableRef} className="w-full overflow-x-scroll">
-//           {/* Desktop Table */}
-//           <table className="min-w-full hidden bg-white lg:table">
-//             <thead className="bg-gray-50">
-//               <tr>
-//                 <th className="px-4 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-700 uppercase w-10">
-//                   <input
-//                     type="checkbox"
-//                     checked={
-//                       selectedIds.length === crops.length &&
-//                       crops.length > 0
-//                     }
-//                     onChange={(e) => handleSelectAll(e.target.checked)}
-//                     className="rounded border-gray-300"
-//                   />
-//                 </th>
-//                 {[
-//                   "Farming Type",
-//                   "Seed Type",
-//                   "Acres",
-//                   "Sowing Date",
-//                   "Farmer Info",
-//                   "Tracking Info",
-//                   "Progress",
-//                   "All Stages",
-//                   "Created",
-//                   "Actions",
-//                 ].map((header) => (
-//                   <th
-//                     key={header}
-//                     className="px-2 py-3 min-w-28 text-left text-[10px] font-semibold text-gray-700 uppercase border-b border-gray-200"
-//                   >
-//                     {header}
-//                   </th>
-//                 ))}
-//               </tr>
-//             </thead>
-//             <tbody className="divide-y divide-gray-200">
-//               {crops.map((row) => (
-//                 <tr key={row._id} className="hover:bg-gray-50">
-//                   <td className="px-4 py-2">
+//         {/* Table Section with Scroll Control */}
+//         <div className="relative">
+//           {/* Table Scroll Control */}
+//           {showTableScrollControl && (
+//             <div className="fixed -bottom-5 right-5  transform -translate-y-1/2 z-10 hidden lg:flex  items-center gap-2 bg-white p-3 rounded-lg shadow-md border border-gray-200">
+//    <Tooltip title="Scroll Left" arrow>
+//       <IconButton
+//         onClick={handleSmoothScrollLeft}
+//         size="small"
+//         className="bg-gray-100 hover:bg-gray-200"
+//       >
+//         <FaChevronLeft className="w-4 h-4 text-gray-700" />
+//       </IconButton>
+//     </Tooltip>
+    
+//     {/* <div className="w-32 h-2 flex items-center">
+//       <Slider
+//         value={tableScrollPosition}
+//         onChange={handleSmoothScroll}
+//         aria-labelledby="table-scroll-slider"
+//         size="small"
+//         step={1}
+//         min={0}
+//         max={100}
+//         sx={{
+//           color: '#10B981',
+//           '& .MuiSlider-track': {
+//             backgroundColor: '#10B981',
+//             transition: 'none',
+//           },
+//           '& .MuiSlider-thumb': {
+//             backgroundColor: '#10B981',
+//             width: 12,
+//             height: 12,
+//             '&:hover, &.Mui-focusVisible': {
+//               boxShadow: '0px 0px 0px 8px rgba(16, 185, 129, 0.16)',
+//             },
+//           },
+//           '& .MuiSlider-rail': {
+//             backgroundColor: '#E5E7EB',
+//           },
+//         }}
+//       />
+//     </div> */}
+//     <div className="text-xs text-gray-500 mt-1">
+//       scroll: {Math.round(tableScrollPosition)}%
+//     </div>
+    
+//     <Tooltip title="Scroll Right" arrow>
+//       <IconButton
+//         onClick={handleSmoothScrollRight}
+//         size="small"
+//         className="bg-gray-100 hover:bg-gray-200"
+//       >
+//         <FaChevronRight className="w-4 h-4 text-gray-700" />
+//       </IconButton>
+//     </Tooltip>
+    
+//               {/* <div className="text-xs text-gray-500 mt-1">
+//                 Scroll: {Math.round(tableScrollPosition)}%
+//               </div> */}
+//             </div>
+//           )}
+
+//           {/* Mobile Scroll Buttons */}
+//           {/* {showTableScrollControl && (
+//             <div className="lg:hidden flex justify-center gap-4 p-2 bg-gray-50 border-t border-gray-200">
+//               <button
+//                 onClick={handleTableScrollLeft}
+//                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-gray-700 text-sm"
+//               >
+//                 <FaChevronLeft className="w-3 h-3" />
+//                 Scroll Left
+//               </button>
+//               <button
+//                 onClick={handleTableScrollRight}
+//                 className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-gray-700 text-sm"
+//               >
+//                 Scroll Right
+//                 <FaChevronRight className="w-3 h-3" />
+//               </button>
+//             </div>
+//           )} */}
+
+//           <div ref={tableRef} className="w-full overflow-x-scroll">
+//             {/* Desktop Table */}
+//             <table className="min-w-full hidden scroll-smooth bg-white lg:table">
+//               <thead className="bg-gray-50">
+//                 <tr>
+//                   <th className="px-3 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-700 uppercase w-10">
 //                     <input
 //                       type="checkbox"
-//                       checked={selectedIds.includes(row._id)}
-//                       onChange={(e) => handleSelectOne(row._id, e.target.checked)}
+//                       checked={
+//                         selectedIds.length === crops.length &&
+//                         crops.length > 0
+//                       }
+//                       onChange={(e) => handleSelectAll(e.target.checked)}
 //                       className="rounded border-gray-300"
 //                     />
-//                   </td>
-//                   <td className="px-3 py-2">
-//                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
-//                       {getFarmingTypeLabel(row.farmingType)}
-//                     </span>
-//                   </td>
-//                   <td className="px-3 py-2">
-//                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
-//                       {getSeedTypeLabel(row.seedType)}
-//                     </span>
-//                   </td>
-//                   <td className="px-4 py-2 text-xs font-bold text-gray-900">
-//                     {row.acres}
-//                   </td>
-//                   <td className="px-2 w-32 py-2">
-//                     <div className="flex items-center gap-2">
-//                       <FaCalendarAlt className="w-4 h-4 text-gray-400" />
-//                       <span className="text-xs text-gray-700">
-//                         {formatDate(row.sowingDate)}
+//                   </th>
+//                   {[
+//                     "Farming Type",
+//                     "Seed Type",
+//                     "Acres",
+//                     "Sowing Date",
+//                     "Farmer Info",
+//                     "Tracking Info",
+//                     "Progress",
+//                     "All Stages",
+//                     "Created",
+//                     "Actions",
+//                   ].map((header) => (
+//                     <th
+//                       key={header}
+//                       className="py-3 min-w-28 text-left text-[10px] font-semibold text-gray-700 uppercase border-b border-gray-200"
+//                     >
+//                       {header}
+//                     </th>
+//                   ))}
+//                 </tr>
+//               </thead>
+//               <tbody className="divide-y divide-gray-200">
+//                 {crops.map((row) => (
+//                   <tr key={row._id} className="hover:bg-gray-50">
+//                     <td className="px-3 py-1">
+//                       <input
+//                         type="checkbox"
+//                         checked={selectedIds.includes(row._id)}
+//                         onChange={(e) => handleSelectOne(row._id, e.target.checked)}
+//                         className="rounded border-gray-300"
+//                       />
+//                     </td>
+//                     <td className="px-1 py-1">
+//                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
+//                         {getFarmingTypeLabel(row.farmingType)}
 //                       </span>
-//                     </div>
-//                   </td>
-//                   <td className="px-4 py-2 min-w-[200px]">
-//                     {row.farmer ? (
-//                       <FarmerInfoDisplay farmer={row.farmer} />
-//                     ) : (
-//                       <div className="text-xs text-gray-500 italic">
-//                         No farmer data
-//                       </div>
-//                     )}
-//                   </td>
-//                   <td className="px-4 py-2">
-//                     {row.tracking ? (
-//                       <div className="space-y-1">
-//                         <div className="flex items-center gap-2">
-//                           <FaChartLine className="w-3 h-3 text-purple-500" />
-//                           <span className="text-xs font-semibold text-gray-700 truncate max-w-[150px]">
-//                             {row.tracking.name}
-//                           </span>
-//                         </div>
-//                         <div className="text-xs text-gray-600">
-//                           ID: {formatTrackingId(row.tracking._id)}
-//                         </div>
-//                         <div className="flex items-center gap-1 text-xs">
-//                           <span className="text-gray-600">Created:</span>
-//                           <span className="text-gray-900">
-//                             {formatDate(row.tracking.createdAt)}
-//                           </span>
-//                         </div>
-//                         <div className="flex items-center gap-2 text-xs">
-//                           <span className="text-gray-600">Status:</span>
-//                           <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-//                             row.tracking.isCompleted ? "bg-green-100 text-green-800" :
-//                             "bg-blue-100 text-blue-800"
-//                           }`}>
-//                             {row.tracking.isCompleted ? "Completed" : "Active"}
-//                           </span>
-//                         </div>
-//                       </div>
-//                     ) : (
-//                       <div className="text-xs text-gray-500 italic">
-//                         No tracking data
-//                       </div>
-//                     )}
-//                   </td>
-//                   <td className="px-4 py-2">
-//                     <div className="space-y-1">
+//                     </td>
+//                     <td className="px-1 py-1">
+//                       <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
+//                         {getSeedTypeLabel(row.seedType)}
+//                       </span>
+//                     </td>
+//                     <td className="py-1 text-xs font-bold text-gray-900">
+//                       {row.acres}
+//                     </td>
+//                     <td className="w-32 py-1">
 //                       <div className="flex items-center gap-2">
-//                         <div className="w-16 bg-gray-200 rounded-full h-2">
-//                           <div 
-//                             className="bg-green-500 h-2 rounded-full" 
-//                             style={{ width: `${row.tracking?.progress || 0}%` }}
-//                           ></div>
-//                         </div>
-//                         <span className="text-xs font-bold text-gray-900">
-//                           {row.tracking?.progress || 0}%
+//                         <FaCalendarAlt className="w-4 h-4 text-gray-400" />
+//                         <span className="text-xs text-gray-700">
+//                           {formatDate(row.sowingDate)}
 //                         </span>
 //                       </div>
-//                       {row.tracking?.currentStageName && (
-//                         <div className="text-xs text-gray-500">
-//                           Current: {row.tracking.currentStageName}
+//                     </td>
+//                     <td className="px-2 py-1 min-w-[200px]">
+//                       {row.farmer ? (
+//                         <FarmerInfoDisplay farmer={row.farmer} />
+//                       ) : (
+//                         <div className="text-xs text-gray-500 italic">
+//                           No farmer data
 //                         </div>
 //                       )}
-//                       <div className="flex items-center gap-2 text-xs">
-//                         <span className="text-gray-600">Stages:</span>
-//                         <span className="font-semibold">
-//                           {row.tracking?.currentStageIndex !== undefined ? row.tracking.currentStageIndex + 1 : 0}/{row.tracking?.stages?.length || 0}
-//                         </span>
-//                       </div>
-//                     </div>
-//                   </td>
-//                   <td className="px-4 py-2 min-w-[250px]">
-//                     {row.tracking?.stages ? (
-//                       <StagesDisplay 
-//                         stages={row.tracking.stages} 
-//                         currentStageIndex={row.tracking.currentStageIndex} 
-//                       />
-//                     ) : (
-//                       <div className="text-xs text-gray-500 italic">No stages data</div>
-//                     )}
-//                   </td>
-//                   <td className="px-4 py-2">
-//                     <div className="text-xs text-gray-500">
-//                       {formatDate(row.createdAt)}
-//                     </div>
-//                   </td>
-//                   <td className="px-4 py-2">
-//                     <div className="flex items-center gap-2">
-//                       {/* <button
-//                         onClick={() => handleViewTracking(row)}
-//                         className="p-2 rounded-lg text-purple-700 hover:bg-purple-200 transition-colors"
-//                         title="View Tracking Details"
-//                       >
-//                         <FaChartLine className="w-4 h-4" />
-//                       </button> */}
-//                       <button
-//                         onClick={() => handleEditClick(row)}
-//                         className="p-2 rounded-lg text-blue-700 hover:bg-blue-200 transition-colors"
-//                         title="Edit Crop"
-//                       >
-//                         <FaEdit className="w-4 h-4" />
-//                       </button>
-//                       <button
-//                         onClick={() => setModal({ type: "delete", row })}
-//                         className="p-2 rounded-lg text-red-700 hover:bg-red-200 transition-colors"
-//                         title="Delete Crop"
-//                       >
-//                         <FaTrash className="w-4 h-4" />
-//                       </button>
-//                     </div>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-
-//           {/* Mobile Cards */}
-//           <div className="lg:hidden space-y-3 mt-2 p-4">
-//             {crops.map((row) => (
-//               <div
-//                 key={row._id}
-//                 className="bg-white border border-gray-200 rounded shadow p-4"
-//               >
-//                 <div className="flex justify-between items-start mb-3">
-//                   <div className="flex items-center gap-2">
-//                     <input
-//                       type="checkbox"
-//                       checked={selectedIds.includes(row._id)}
-//                       onChange={(e) => handleSelectOne(row._id, e.target.checked)}
-//                       className="rounded border-gray-300 -mt-12 -ml-2"
-//                     />
-//                     <div>
-//                       <div className="flex items-center gap-2 mb-1">
-//                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
-//                           {getFarmingTypeLabel(row.farmingType)}
-//                         </span>
-//                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
-//                           {getSeedTypeLabel(row.seedType)}
-//                         </span>
-//                       </div>
-//                       <div className="text-xs text-gray-500 mb-1">
-//                         <span className="text-xs ml-2 mr-2">Sowing Date</span>
-//                         <FaCalendarAlt className="inline w-3 h-3 mr-1" />
-//                         {formatDate(row.sowingDate)}
-//                       </div>
-//                     </div>
-//                   </div>
-//                   <div className="flex gap-1">
-//                     {/* <button
-//                       onClick={() => handleViewTracking(row)}
-//                       className="p-1.5 rounded-lg text-purple-700 hover:bg-purple-200"
-//                       title="View Tracking Details"
-//                     >
-//                       <FaChartLine className="w-3.5 h-3.5" />
-//                     </button> */}
-//                     <button
-//                       onClick={() => handleEditClick(row)}
-//                       className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-200"
-//                       title="Edit Crop"
-//                     >
-//                       <FaEdit className="w-3.5 h-3.5" />
-//                     </button>
-//                     <button
-//                       onClick={() => setModal({ type: "delete", row })}
-//                       className="p-1.5 rounded-lg text-red-700 hover:bg-red-200"
-//                       title="Delete Crop"
-//                     >
-//                       <FaTrash className="w-3.5 h-3.5" />
-//                     </button>
-//                   </div>
-//                 </div>
-                
-//                 {/* Basic Info */}
-//                 <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
-//                   <div>
-//                     <span className="font-medium">Acres:</span>
-//                     <span className="ml-2 font-bold text-gray-900">
-//                       {row.acres}
-//                     </span>
-//                   </div>
-//                   <div>
-//                     <span className="font-medium">Progress:</span>
-//                     <span className="ml-2 font-bold text-gray-900">
-//                       {row.tracking?.progress || 0}%
-//                     </span>
-//                   </div>
-                  
-//                   {/* Farmer Info */}
-//                   {row.farmer && (
-//                     <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-//                       <div className="font-medium text-gray-700 mb-2">Farmer Information:</div>
-//                       <div className="space-y-2">
-//                         <div className="flex justify-between">
-//                           <span className="text-gray-600">Name:</span>
-//                           <span className="font-medium">{row.farmer.personalInfo.name}</span>
-//                         </div>
-//                         <div className="flex justify-between">
-//                           <span className="text-gray-600">Phone:</span>
-//                           <span className="font-medium">{row.farmer.personalInfo.mobileNo}</span>
-//                         </div>
-//                         {row.farmer.personalInfo.email && (
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">Email:</span>
-//                             <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.email}</span>
+//                     </td>
+//                     <td className="px-1 py-1">
+//                       {row.tracking ? (
+//                         <div className="space-y-1">
+//                           <div className="flex items-center gap-2">
+//                             <FaChartLine className="w-3 h-3 text-purple-500" />
+//                             <span className="text-xs font-semibold text-gray-700 truncate max-w-[150px]">
+//                               {row.tracking.name}
+//                             </span>
 //                           </div>
-//                         )}
-//                         {row.farmer.personalInfo.address && (
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">Address:</span>
-//                             <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.address}</span>
+//                           <div className="text-xs text-gray-600">
+//                             ID: {formatTrackingId(row.tracking._id)}
 //                           </div>
-//                         )}
-//                         <div className="flex justify-between">
-//                           <span className="text-gray-600">Location:</span>
-//                           <span className="font-medium">
-//                             {row.farmer.personalInfo.villageGramaPanchayat}, {row.farmer.personalInfo.district}
-//                           </span>
-//                         </div>
-//                         <div className="flex justify-between">
-//                           <span className="text-gray-600">Status:</span>
-//                           <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-//                             row.farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
-//                             row.farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
-//                             "bg-gray-100 text-gray-800"
-//                           }`}>
-//                             {row.farmer.registrationStatus}
-//                           </span>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   )}
-
-//                   {/* Tracking Info */}
-//                   {row.tracking && (
-//                     <>
-//                       <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-//                         <div className="font-medium text-gray-700 mb-2">Tracking Information:</div>
-//                         <div className="space-y-2">
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">Name:</span>
-//                             <span className="font-medium truncate max-w-[150px]">{row.tracking.name}</span>
+//                           <div className="flex items-center gap-1 text-xs">
+//                             <span className="text-gray-600">Created:</span>
+//                             <span className="text-gray-900">
+//                               {formatDate(row.tracking.createdAt)}
+//                             </span>
 //                           </div>
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">ID:</span>
-//                             <span className="font-medium">{formatTrackingId(row.tracking._id)}</span>
-//                           </div>
-//                           <div className="flex justify-between">
+//                           <div className="flex items-center gap-2 text-xs">
 //                             <span className="text-gray-600">Status:</span>
 //                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
 //                               row.tracking.isCompleted ? "bg-green-100 text-green-800" :
@@ -2470,64 +2379,268 @@
 //                               {row.tracking.isCompleted ? "Completed" : "Active"}
 //                             </span>
 //                           </div>
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">Current Stage:</span>
-//                             <span className="font-medium text-green-600">
-//                               {row.tracking.currentStageName || 
-//                                row.tracking.stages[row.tracking.currentStageIndex]?.name || 
-//                                "Not Started"}
-//                             </span>
+//                         </div>
+//                       ) : (
+//                         <div className="text-xs text-gray-500 italic">
+//                           No tracking data
+//                         </div>
+//                       )}
+//                     </td>
+//                     <td className="px-2 py-1">
+//                       <div className="space-y-1">
+//                         <div className="flex items-center gap-2">
+//                           <div className="w-16 bg-gray-200 rounded-full h-2">
+//                             <div 
+//                               className="bg-green-500 h-2 rounded-full" 
+//                               style={{ width: `${row.tracking?.progress || 0}%` }}
+//                             ></div>
 //                           </div>
-//                           <div className="flex justify-between">
-//                             <span className="text-gray-600">Created:</span>
-//                             <span className="font-medium">{formatDate(row.tracking.createdAt)}</span>
+//                           <span className="text-xs font-bold text-gray-900">
+//                             {row.tracking?.progress || 0}%
+//                           </span>
+//                         </div>
+//                         {row.tracking?.currentStageName && (
+//                           <div className="text-xs text-gray-500">
+//                             Current: {row.tracking.currentStageName}
 //                           </div>
+//                         )}
+//                         <div className="flex items-center gap-2 text-xs">
+//                           <span className="text-gray-600">Stages:</span>
+//                           <span className="font-semibold">
+//                             {row.tracking?.currentStageIndex !== undefined ? row.tracking.currentStageIndex + 1 : 0}/{row.tracking?.stages?.length || 0}
+//                           </span>
 //                         </div>
 //                       </div>
-
-//                       {/* Stages Display */}
-//                       <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+//                     </td>
+//                     <td className="px-2 py-1 min-w-[250px]">
+//                       {row.tracking?.stages ? (
 //                         <StagesDisplay 
 //                           stages={row.tracking.stages} 
 //                           currentStageIndex={row.tracking.currentStageIndex} 
 //                         />
+//                       ) : (
+//                         <div className="text-xs text-gray-500 italic">No stages data</div>
+//                       )}
+//                     </td>
+//                     <td className="px-2 py-1">
+//                       <div className="text-xs text-gray-500">
+//                         {formatDate(row.createdAt)}
 //                       </div>
-//                     </>
-//                   )}
+//                     </td>
+//                     <td className="px-2 py-1">
+//                       <div className="flex items-center gap-2">
+//                         <button
+//                           onClick={() => handleEditClick(row)}
+//                           className="p-2 rounded-lg text-blue-700 hover:bg-blue-200 transition-colors"
+//                           title="Edit Crop"
+//                         >
+//                           <FaEdit className="w-4 h-4" />
+//                         </button>
+//                         <button
+//                           onClick={() => setModal({ type: "delete", row })}
+//                           className="p-2 rounded-lg text-red-700 hover:bg-red-200 transition-colors"
+//                           title="Delete Crop"
+//                         >
+//                           <FaTrash className="w-4 h-4" />
+//                         </button>
+//                       </div>
+//                     </td>
+//                   </tr>
+//                 ))}
+//               </tbody>
+//             </table>
+
+//             {/* Mobile Cards */}
+//             <div className="lg:hidden space-y-3 mt-2 p-4">
+//               {crops.map((row) => (
+//                 <div
+//                   key={row._id}
+//                   className="bg-white border border-gray-200 rounded shadow p-4"
+//                 >
+//                   <div className="flex justify-between items-start mb-3">
+//                     <div className="flex items-center gap-2">
+//                       <input
+//                         type="checkbox"
+//                         checked={selectedIds.includes(row._id)}
+//                         onChange={(e) => handleSelectOne(row._id, e.target.checked)}
+//                         className="rounded border-gray-300 -mt-12 -ml-2"
+//                       />
+//                       <div>
+//                         <div className="flex items-center gap-2 mb-1">
+//                           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
+//                             {getFarmingTypeLabel(row.farmingType)}
+//                           </span>
+//                           <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
+//                             {getSeedTypeLabel(row.seedType)}
+//                           </span>
+//                         </div>
+//                         <div className="text-xs text-gray-500 mb-1">
+//                           <span className="text-xs ml-2 mr-2">Sowing Date</span>
+//                           <FaCalendarAlt className="inline w-3 h-3 mr-1" />
+//                           {formatDate(row.sowingDate)}
+//                         </div>
+//                       </div>
+//                     </div>
+//                     <div className="flex gap-1">
+//                       <button
+//                         onClick={() => handleEditClick(row)}
+//                         className="p-1.5 rounded-lg text-blue-700 hover:bg-blue-200"
+//                         title="Edit Crop"
+//                       >
+//                         <FaEdit className="w-3.5 h-3.5" />
+//                       </button>
+//                       <button
+//                         onClick={() => setModal({ type: "delete", row })}
+//                         className="p-1.5 rounded-lg text-red-700 hover:bg-red-200"
+//                         title="Delete Crop"
+//                       >
+//                         <FaTrash className="w-3.5 h-3.5" />
+//                       </button>
+//                     </div>
+//                   </div>
                   
-//                   <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
-//                     Created: {formatDate(row.createdAt)}
+//                   {/* Basic Info */}
+//                   <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
+//                     <div>
+//                       <span className="font-medium">Acres:</span>
+//                       <span className="ml-2 font-bold text-gray-900">
+//                         {row.acres}
+//                       </span>
+//                     </div>
+//                     <div>
+//                       <span className="font-medium">Progress:</span>
+//                       <span className="ml-2 font-bold text-gray-900">
+//                         {row.tracking?.progress || 0}%
+//                       </span>
+//                     </div>
+                    
+//                     {/* Farmer Info */}
+//                     {row.farmer && (
+//                       <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+//                         <div className="font-medium text-gray-700 mb-2">Farmer Information:</div>
+//                         <div className="space-y-2">
+//                           <div className="flex justify-between">
+//                             <span className="text-gray-600">Name:</span>
+//                             <span className="font-medium">{row.farmer.personalInfo.name}</span>
+//                           </div>
+//                           <div className="flex justify-between">
+//                             <span className="text-gray-600">Phone:</span>
+//                             <span className="font-medium">{row.farmer.personalInfo.mobileNo}</span>
+//                           </div>
+//                           {row.farmer.personalInfo.email && (
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Email:</span>
+//                               <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.email}</span>
+//                             </div>
+//                           )}
+//                           {row.farmer.personalInfo.address && (
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Address:</span>
+//                               <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.address}</span>
+//                             </div>
+//                           )}
+//                           <div className="flex justify-between">
+//                             <span className="text-gray-600">Location:</span>
+//                             <span className="font-medium">
+//                               {row.farmer.personalInfo.villageGramaPanchayat}, {row.farmer.personalInfo.district}
+//                             </span>
+//                           </div>
+//                           <div className="flex justify-between">
+//                             <span className="text-gray-600">Status:</span>
+//                             <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+//                               row.farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
+//                               row.farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
+//                               "bg-gray-100 text-gray-800"
+//                             }`}>
+//                               {row.farmer.registrationStatus}
+//                             </span>
+//                           </div>
+//                         </div>
+//                       </div>
+//                     )}
+
+//                     {/* Tracking Info */}
+//                     {row.tracking && (
+//                       <>
+//                         <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+//                           <div className="font-medium text-gray-700 mb-2">Tracking Information:</div>
+//                           <div className="space-y-2">
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Name:</span>
+//                               <span className="font-medium truncate max-w-[150px]">{row.tracking.name}</span>
+//                             </div>
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">ID:</span>
+//                               <span className="font-medium">{formatTrackingId(row.tracking._id)}</span>
+//                             </div>
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Status:</span>
+//                               <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+//                                 row.tracking.isCompleted ? "bg-green-100 text-green-800" :
+//                                 "bg-blue-100 text-blue-800"
+//                               }`}>
+//                                 {row.tracking.isCompleted ? "Completed" : "Active"}
+//                               </span>
+//                             </div>
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Current Stage:</span>
+//                               <span className="font-medium text-green-600">
+//                                 {row.tracking.currentStageName || 
+//                                  row.tracking.stages[row.tracking.currentStageIndex]?.name || 
+//                                  "Not Started"}
+//                               </span>
+//                             </div>
+//                             <div className="flex justify-between">
+//                               <span className="text-gray-600">Created:</span>
+//                               <span className="font-medium">{formatDate(row.tracking.createdAt)}</span>
+//                             </div>
+//                           </div>
+//                         </div>
+
+//                         {/* Stages Display */}
+//                         <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+//                           <StagesDisplay 
+//                             stages={row.tracking.stages} 
+//                             currentStageIndex={row.tracking.currentStageIndex} 
+//                           />
+//                         </div>
+//                       </>
+//                     )}
+                    
+//                     <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
+//                       Created: {formatDate(row.createdAt)}
+//                     </div>
 //                   </div>
 //                 </div>
+//               ))}
+//             </div>
+
+//             {/* Empty State */}
+//             {!loading && crops.length === 0 && (
+//               <div className="text-center py-12 px-3">
+//                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+//                   <FaSearch className="w-8 h-8 text-gray-400" />
+//                 </div>
+//                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
+//                   No crop records found
+//                 </h3>
+//                 <p className="text-gray-600 max-w-md mx-auto text-xs">
+//                   Try adjusting your search or filters to find what you&apos;re looking for.
+//                 </p>
 //               </div>
-//             ))}
+//             )}
+
+//             {/* Loading State */}
+//             {loading && crops.length > 0 && (
+//               <div className="flex justify-center py-4">
+//                 <CircularProgress size={24} />
+//               </div>
+//             )}
 //           </div>
-
-//           {/* Empty State */}
-//           {!loading && crops.length === 0 && (
-//             <div className="text-center py-12 px-4">
-//               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-//                 <FaSearch className="w-8 h-8 text-gray-400" />
-//               </div>
-//               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-//                 No crop records found
-//               </h3>
-//               <p className="text-gray-600 max-w-md mx-auto text-xs">
-//                 Try adjusting your search or filters to find what you&apos;re looking for.
-//               </p>
-//             </div>
-//           )}
-
-//           {/* Loading State */}
-//           {loading && crops.length > 0 && (
-//             <div className="flex justify-center py-4">
-//               <CircularProgress size={24} />
-//             </div>
-//           )}
 //         </div>
 
 //         {/* Pagination */}
-//         <div className="px-4 py-2 border-t border-gray-200 bg-white">
+//         <div className="px-3 py-2 border-t border-gray-200 bg-white">
 //           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 //             <div className="text-xs sm:text-xs text-gray-600">
 //               Showing{" "}
@@ -2670,6 +2783,12 @@
 //     </Box>
 //   </Modal>
 // );
+
+
+
+
+
+
 
 
 
@@ -2857,7 +2976,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
   const calculateProgress = () => {
     if (!trackingData?.stages?.length) return 0;
     const completedStages = trackingData.stages.filter(
-      (stage) => stage.status === "completed"
+      (stage) => stage.status === "completed",
     ).length;
     return Math.round((completedStages / trackingData.stages.length) * 100);
   };
@@ -2867,7 +2986,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid Date";
-      
+
       return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -2883,7 +3002,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid Date";
-      
+
       return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -2962,14 +3081,17 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                 <span>
                   Current Stage:{" "}
                   <span className="font-semibold">
-                    {trackingData.currentStageName || 
-                     trackingData.stages[trackingData.currentStageIndex]?.name ||
-                     "Not Started"}
+                    {trackingData.currentStageName ||
+                      trackingData.stages[trackingData.currentStageIndex]
+                        ?.name ||
+                      "Not Started"}
                   </span>
                 </span>
                 <span>
-                  {trackingData.stages.filter((s) => s.status === "completed")
-                    .length}{" "}
+                  {
+                    trackingData.stages.filter((s) => s.status === "completed")
+                      .length
+                  }{" "}
                   of {trackingData.stages.length} stages completed
                 </span>
               </div>
@@ -3004,8 +3126,13 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Tracking Created:</span>
-                    <span className="text-sm" title={formatDateTime(trackingData.createdAt)}>
+                    <span className="text-sm text-gray-600">
+                      Tracking Created:
+                    </span>
+                    <span
+                      className="text-sm"
+                      title={formatDateTime(trackingData.createdAt)}
+                    >
                       {formatDateString(trackingData.createdAt)}
                     </span>
                   </div>
@@ -3023,13 +3150,13 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                   {["pending", "in-progress", "completed", "skipped"].map(
                     (status) => {
                       const count = trackingData.stages.filter(
-                        (s) => s.status === status
+                        (s) => s.status === status,
                       ).length;
                       return (
                         <div key={status} className="flex items-center gap-2">
                           <div
                             className={`w-3 h-3 rounded-full ${getStageStatusColor(
-                              status
+                              status,
                             )}`}
                           />
                           <span className="text-xs text-gray-600">
@@ -3037,7 +3164,7 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                           </span>
                         </div>
                       );
-                    }
+                    },
                   )}
                 </div>
                 <div>
@@ -3051,7 +3178,8 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                     label={
                       trackingData.currentStageName ||
                       trackingData.stages[trackingData.currentStageIndex]
-                        ?.name || "Not Started"
+                        ?.name ||
+                      "Not Started"
                     }
                     color="primary"
                     size="small"
@@ -3119,10 +3247,10 @@ const TrackingModal: React.FC<TrackingModalProps> = ({
                           stage.status === "completed"
                             ? "bg-green-100 text-green-800"
                             : stage.status === "in-progress"
-                            ? "bg-blue-100 text-blue-800"
-                            : stage.status === "skipped"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
+                              ? "bg-blue-100 text-blue-800"
+                              : stage.status === "skipped"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
                         }`}
                       />
                       {index === trackingData.currentStageIndex && (
@@ -3201,7 +3329,7 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
     farmingType: "organic",
     seedType: "gmo",
     acres: 0,
-    sowingDate: new Date().toISOString().split('T')[0],
+    sowingDate: new Date().toISOString().split("T")[0],
     farmerId: "",
   });
 
@@ -3213,7 +3341,9 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
         farmingType: initialData.farmingType || "organic",
         seedType: initialData.seedType || "gmo",
         acres: initialData.acres || 0,
-        sowingDate: initialData.sowingDate ? new Date(initialData.sowingDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        sowingDate: initialData.sowingDate
+          ? new Date(initialData.sowingDate).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
         farmerId: initialData.farmerId || "",
       });
     } else {
@@ -3221,7 +3351,7 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
         farmingType: "organic",
         seedType: "gmo",
         acres: 0,
-        sowingDate: new Date().toISOString().split('T')[0],
+        sowingDate: new Date().toISOString().split("T")[0],
         farmerId: "",
       });
     }
@@ -3265,7 +3395,7 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
   const handleInputChange = (field: keyof CropFormData, value: any) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: field === 'acres' ? Number(value) || 0 : value,
+      [field]: field === "acres" ? Number(value) || 0 : value,
     }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -3296,7 +3426,9 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
               </label>
               <select
                 value={formData.farmingType}
-                onChange={(e) => handleInputChange("farmingType", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("farmingType", e.target.value)
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-white ${
                   errors.farmingType ? "border-red-500" : "border-gray-300"
                 }`}
@@ -3308,7 +3440,9 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
                 <option value="regular">Regular</option>
               </select>
               {errors.farmingType && (
-                <p className="mt-1 text-xs text-red-600">{errors.farmingType}</p>
+                <p className="mt-1 text-xs text-red-600">
+                  {errors.farmingType}
+                </p>
               )}
             </div>
 
@@ -3362,7 +3496,9 @@ const CropFormModal: React.FC<CropFormModalProps> = ({
               <input
                 type="date"
                 value={formData.sowingDate}
-                onChange={(e) => handleInputChange("sowingDate", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("sowingDate", e.target.value)
+                }
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${
                   errors.sowingDate ? "border-red-500" : "border-gray-300"
                 }`}
@@ -3437,33 +3573,51 @@ const modalStyle = {
 
 /* ================= STAGES DISPLAY COMPONENT ================= */
 
-const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = ({ stages, currentStageIndex }) => {
+const StagesDisplay: React.FC<{
+  stages: Stage[];
+  currentStageIndex: number;
+}> = ({ stages, currentStageIndex }) => {
   const [expanded, setExpanded] = useState(false);
 
   const getStageStatusColor = (status: string) => {
     switch (status) {
-      case "completed": return "bg-green-500";
-      case "in-progress": return "bg-blue-500";
-      case "skipped": return "bg-yellow-500";
-      case "pending": default: return "bg-gray-300";
+      case "completed":
+        return "bg-green-500";
+      case "in-progress":
+        return "bg-blue-500";
+      case "skipped":
+        return "bg-yellow-500";
+      case "pending":
+      default:
+        return "bg-gray-300";
     }
   };
 
   const getStageStatusText = (status: string) => {
     switch (status) {
-      case "completed": return "Completed";
-      case "in-progress": return "In Progress";
-      case "skipped": return "Skipped";
-      case "pending": default: return "Pending";
+      case "completed":
+        return "Completed";
+      case "in-progress":
+        return "In Progress";
+      case "skipped":
+        return "Skipped";
+      case "pending":
+      default:
+        return "Pending";
     }
   };
 
   const getStageStatusIcon = (status: string) => {
     switch (status) {
-      case "completed": return <FaCheckCircle className="w-3 h-3 text-green-500" />;
-      case "in-progress": return <FaClock className="w-3 h-3 text-blue-500" />;
-      case "skipped": return <FaExclamationTriangle className="w-3 h-3 text-yellow-500" />;
-      case "pending": default: return <FaClock className="w-3 h-3 text-gray-400" />;
+      case "completed":
+        return <FaCheckCircle className="w-3 h-3 text-green-500" />;
+      case "in-progress":
+        return <FaClock className="w-3 h-3 text-blue-500" />;
+      case "skipped":
+        return <FaExclamationTriangle className="w-3 h-3 text-yellow-500" />;
+      case "pending":
+      default:
+        return <FaClock className="w-3 h-3 text-gray-400" />;
     }
   };
 
@@ -3473,7 +3627,9 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <FaList className="w-3 h-3 text-gray-500" />
-          <span className="text-xs font-semibold text-gray-700">Stages ({stages.length})</span>
+          <span className="text-xs font-semibold text-gray-700">
+            Stages ({stages.length})
+          </span>
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
@@ -3492,32 +3648,46 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
           )}
         </button>
       </div>
-      
+
       {/* Compact stages view */}
       <div className="flex items-center gap-1 overflow-x-auto pb-2">
         {stages.map((stage, index) => (
-          <Tooltip key={stage._id} title={`${stage.name}: ${getStageStatusText(stage.status)}`} arrow>
-            <div className={`relative flex flex-col items-center min-w-[50px] px-1 py-1 rounded ${
-              index === currentStageIndex ? "bg-blue-50 border border-blue-200" : ""
-            }`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                index < currentStageIndex ? "bg-green-100" :
-                index === currentStageIndex ? "bg-blue-100" :
-                "bg-gray-100"
-              }`}>
-                <span className={`text-xs font-bold ${
-                  index < currentStageIndex ? "text-green-600" :
-                  index === currentStageIndex ? "text-blue-600" :
-                  "text-gray-400"
-                }`}>
+          <Tooltip
+            key={stage._id}
+            title={`${stage.name}: ${getStageStatusText(stage.status)}`}
+            arrow
+          >
+            <div
+              className={`relative flex flex-col items-center min-w-[50px] px-1 py-1 rounded ${
+                index === currentStageIndex
+                  ? "bg-blue-50 border border-blue-200"
+                  : ""
+              }`}
+            >
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                  index < currentStageIndex
+                    ? "bg-green-100"
+                    : index === currentStageIndex
+                      ? "bg-blue-100"
+                      : "bg-gray-100"
+                }`}
+              >
+                <span
+                  className={`text-xs font-bold ${
+                    index < currentStageIndex
+                      ? "text-green-600"
+                      : index === currentStageIndex
+                        ? "text-blue-600"
+                        : "text-gray-400"
+                  }`}
+                >
                   {index + 1}
                 </span>
               </div>
-              <div className="mt-1">
-                {getStageStatusIcon(stage.status)}
-              </div>
+              <div className="mt-1">{getStageStatusIcon(stage.status)}</div>
               <div className="text-xs mt-1 text-center font-medium truncate max-w-[50px]">
-                {stage.name.split(' ')[0]}
+                {stage.name.split(" ")[0]}
               </div>
             </div>
           </Tooltip>
@@ -3529,27 +3699,35 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
         <div className="mt-2 pt-2 border-t border-gray-200">
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {stages.map((stage, index) => (
-              <div 
-                key={stage._id} 
+              <div
+                key={stage._id}
                 className={`p-2 rounded text-xs ${
-                  index === currentStageIndex ? "bg-blue-50 border-l-4 border-blue-500" :
-                  "bg-gray-50"
+                  index === currentStageIndex
+                    ? "bg-blue-50 border-l-4 border-blue-500"
+                    : "bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${getStageStatusColor(stage.status)}`} />
-                    <span className="font-semibold">{index + 1}. {stage.name}</span>
+                    <div
+                      className={`w-2 h-2 rounded-full ${getStageStatusColor(stage.status)}`}
+                    />
+                    <span className="font-semibold">
+                      {index + 1}. {stage.name}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Chip
                       label={getStageStatusText(stage.status)}
                       size="small"
                       className={`text-xs ${
-                        stage.status === "completed" ? "bg-green-100 text-green-800" :
-                        stage.status === "in-progress" ? "bg-blue-100 text-blue-800" :
-                        stage.status === "skipped" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-gray-100 text-gray-800"
+                        stage.status === "completed"
+                          ? "bg-green-100 text-green-800"
+                          : stage.status === "in-progress"
+                            ? "bg-blue-100 text-blue-800"
+                            : stage.status === "skipped"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-gray-100 text-gray-800"
                       }`}
                     />
                     {index === currentStageIndex && (
@@ -3564,10 +3742,22 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
                 <div className="mt-1 flex items-center gap-2 text-gray-600">
                   <FaCamera className="w-3 h-3" />
                   <span>{stage.photos?.length || 0} photos</span>
+                  {stage.photos?.map((photo, i) => {
+                    const result = photo.substring(photo.indexOf("/uploads"));
+                    const img= result.startsWith("/uploads") ? `https://kisan.etpl.ai${result}` : `https://kisan.etpl.ai/${result}`;
+                    return (
+                      <img
+                        key={i}
+                        src={img}
+                        className="w-16 h-16"
+                      />
+                    );
+                  })}
                 </div>
                 {stage.completedAt && (
                   <div className="mt-1 text-gray-500 text-xs">
-                    Completed: {new Date(stage.completedAt).toLocaleDateString()}
+                    Completed:{" "}
+                    {new Date(stage.completedAt).toLocaleDateString()}
                   </div>
                 )}
               </div>
@@ -3584,7 +3774,9 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FaList className="w-4 h-4 text-gray-500" />
-          <span className="font-medium text-gray-700">All Stages ({stages.length})</span>
+          <span className="font-medium text-gray-700">
+            All Stages ({stages.length})
+          </span>
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
@@ -3593,40 +3785,53 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
           {expanded ? <FaChevronUp /> : <FaChevronDown />}
         </button>
       </div>
-      
+
       {/* Stages progress bar */}
       <div className="flex items-center gap-2">
         <div className="flex-1 bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-green-500 h-2 rounded-full" 
-            style={{ width: `${(stages.filter(s => s.status === "completed").length / stages.length) * 100}%` }}
+          <div
+            className="bg-green-500 h-2 rounded-full"
+            style={{
+              width: `${(stages.filter((s) => s.status === "completed").length / stages.length) * 100}%`,
+            }}
           ></div>
         </div>
         <span className="text-xs font-bold">
-          {stages.filter(s => s.status === "completed").length}/{stages.length}
+          {stages.filter((s) => s.status === "completed").length}/
+          {stages.length}
         </span>
       </div>
 
       {/* Stages visualization */}
       <div className="flex items-center gap-1 overflow-x-auto py-2">
         {stages.map((stage, index) => (
-          <div 
-            key={stage._id} 
+          <div
+            key={stage._id}
             className={`flex flex-col items-center min-w-[60px] p-2 rounded ${
-              index === currentStageIndex ? "bg-blue-50 border border-blue-200" : "bg-gray-50"
+              index === currentStageIndex
+                ? "bg-blue-50 border border-blue-200"
+                : "bg-gray-50"
             }`}
           >
             <div className="relative">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                index < currentStageIndex ? "bg-green-100" :
-                index === currentStageIndex ? "bg-blue-100" :
-                "bg-gray-100"
-              }`}>
-                <span className={`text-sm font-bold ${
-                  index < currentStageIndex ? "text-green-600" :
-                  index === currentStageIndex ? "text-blue-600" :
-                  "text-gray-400"
-                }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  index < currentStageIndex
+                    ? "bg-green-100"
+                    : index === currentStageIndex
+                      ? "bg-blue-100"
+                      : "bg-gray-100"
+                }`}
+              >
+                <span
+                  className={`text-sm font-bold ${
+                    index < currentStageIndex
+                      ? "text-green-600"
+                      : index === currentStageIndex
+                        ? "text-blue-600"
+                        : "text-gray-400"
+                  }`}
+                >
                   {index + 1}
                 </span>
                 {stage.status === "completed" && (
@@ -3634,9 +3839,7 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
                 )}
               </div>
             </div>
-            <div className="mt-1">
-              {getStageStatusIcon(stage.status)}
-            </div>
+            <div className="mt-1">{getStageStatusIcon(stage.status)}</div>
             <div className="text-xs mt-1 text-center font-medium truncate max-w-[60px]">
               {stage.name}
             </div>
@@ -3648,25 +3851,35 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
       {expanded && (
         <div className="space-y-2 mt-2 pt-2 border-t border-gray-200">
           {stages.map((stage, index) => (
-            <div 
-              key={stage._id} 
+            <div
+              key={stage._id}
               className={`p-3 rounded ${
-                index === currentStageIndex ? "bg-blue-50 border-l-4 border-blue-500" :
-                "bg-gray-50"
+                index === currentStageIndex
+                  ? "bg-blue-50 border-l-4 border-blue-500"
+                  : "bg-gray-50"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${getStageStatusColor(stage.status)}`} />
+                  <div
+                    className={`w-3 h-3 rounded-full ${getStageStatusColor(stage.status)}`}
+                  />
                   <div>
-                    <div className="font-semibold text-sm">{index + 1}. {stage.name}</div>
+                    <div className="font-semibold text-sm">
+                      {index + 1}. {stage.name}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className={`px-2 py-0.5 rounded text-xs font-medium ${
-                        stage.status === "completed" ? "bg-green-100 text-green-800" :
-                        stage.status === "in-progress" ? "bg-blue-100 text-blue-800" :
-                        stage.status === "skipped" ? "bg-yellow-100 text-yellow-800" :
-                        "bg-gray-100 text-gray-800"
-                      }`}>
+                      <div
+                        className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          stage.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : stage.status === "in-progress"
+                              ? "bg-blue-100 text-blue-800"
+                              : stage.status === "skipped"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
                         {getStageStatusText(stage.status)}
                       </div>
                       {index === currentStageIndex && (
@@ -3678,12 +3891,14 @@ const StagesDisplay: React.FC<{ stages: Stage[]; currentStageIndex: number }> = 
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 <div className="flex items-center gap-1">
                   <FaCamera className="w-3 h-3 text-gray-500" />
                   <span className="text-gray-600">Photos:</span>
-                  <span className="font-semibold">{stage.photos?.length || 0}</span>
+                  <span className="font-semibold">
+                    {stage.photos?.length || 0}
+                  </span>
                 </div>
                 {stage.completedAt && (
                   <div className="flex items-center gap-1">
@@ -3719,11 +3934,19 @@ const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div onClick={() => setExpanded(!expanded)} className="space-y-1 cursor-pointer">
-      <div onClick={() => setExpanded(!expanded)} className="flex items-center justify-between">
+    <div
+      onClick={() => setExpanded(!expanded)}
+      className="space-y-1 cursor-pointer"
+    >
+      <div
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between"
+      >
         <div className="flex items-center gap-2">
           <FaUser className="w-4 h-4 text-gray-500" />
-          <span className="text-xs font-semibold text-gray-700">Farmer Info</span>
+          <span className="text-xs font-semibold text-gray-700">
+            Farmer Info
+          </span>
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
@@ -3740,11 +3963,13 @@ const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
           )}
         </button>
       </div>
-      
+
       <div className="space-y-1 text-xs">
         <div className="flex items-center gap-2">
           <FaUser className="w-3 h-3 text-gray-400" />
-          <span className="font-medium text-gray-900">{farmer.personalInfo.name}</span>
+          <span className="font-medium text-gray-900">
+            {farmer.personalInfo.name}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <FaPhone className="w-3 h-3 text-gray-400" />
@@ -3753,13 +3978,17 @@ const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
         {farmer.personalInfo.email && (
           <div className="flex items-center gap-2">
             <FaEnvelope className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-600 truncate max-w-[150px]">{farmer.personalInfo.email}</span>
+            <span className="text-gray-600 truncate max-w-[150px]">
+              {farmer.personalInfo.email}
+            </span>
           </div>
         )}
         {(farmer.farmerId || farmer.traderId) && (
           <div className="flex items-center gap-2">
             <FaIdCard className="w-3 h-3 text-gray-400" />
-            <span className="text-gray-600">{farmer.farmerId || farmer.traderId}</span>
+            <span className="text-gray-600">
+              {farmer.farmerId || farmer.traderId}
+            </span>
           </div>
         )}
       </div>
@@ -3770,21 +3999,27 @@ const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
             {farmer.personalInfo.address && (
               <div>
                 <span className="text-gray-600">Address: </span>
-                <span className="font-medium">{farmer.personalInfo.address}</span>
+                <span className="font-medium">
+                  {farmer.personalInfo.address}
+                </span>
               </div>
             )}
             {farmer.personalInfo.villageGramaPanchayat && (
               <div>
                 <span className="text-gray-600">Village: </span>
-                <span className="font-medium">{farmer.personalInfo.villageGramaPanchayat}</span>
+                <span className="font-medium">
+                  {farmer.personalInfo.villageGramaPanchayat}
+                </span>
               </div>
             )}
             {(farmer.personalInfo.taluk || farmer.personalInfo.district) && (
               <div className="flex items-center gap-1">
                 <FaMapMarkerAlt className="w-3 h-3 text-gray-400" />
                 <span className="text-gray-600">
-                  {farmer.personalInfo.taluk && `${farmer.personalInfo.taluk}, `}
-                  {farmer.personalInfo.district && `${farmer.personalInfo.district}, `}
+                  {farmer.personalInfo.taluk &&
+                    `${farmer.personalInfo.taluk}, `}
+                  {farmer.personalInfo.district &&
+                    `${farmer.personalInfo.district}, `}
                   {farmer.personalInfo.state}
                 </span>
               </div>
@@ -3792,16 +4027,22 @@ const FarmerInfoDisplay: React.FC<{ farmer: Farmer }> = ({ farmer }) => {
             {farmer.personalInfo.pincode && (
               <div>
                 <span className="text-gray-600">Pincode: </span>
-                <span className="font-medium">{farmer.personalInfo.pincode}</span>
+                <span className="font-medium">
+                  {farmer.personalInfo.pincode}
+                </span>
               </div>
             )}
             <div className="mt-1">
               <span className="text-gray-600">Status: </span>
-              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
-                farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
-                "bg-gray-100 text-gray-800"
-              }`}>
+              <span
+                className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                  farmer.registrationStatus === "approved"
+                    ? "bg-green-100 text-green-800"
+                    : farmer.registrationStatus === "pending"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                }`}
+              >
                 {farmer.registrationStatus}
               </span>
             </div>
@@ -3847,41 +4088,42 @@ export default function CropManagementPage() {
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
 
   const [user, setUser] = useState<{
-    taluka: string,
-    role: string
-  }>()
+    taluka: string;
+    role: string;
+  }>();
 
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableScrollPosition, setTableScrollPosition] = useState<number>(0);
-  const [showTableScrollControl, setShowTableScrollControl] = useState<boolean>(false);
+  const [showTableScrollControl, setShowTableScrollControl] =
+    useState<boolean>(false);
 
   // Get unique farming types and seed types from all crops data
-  const farmingTypes = [...new Set(allCrops.map(crop => crop.farmingType))];
-  const seedTypes = [...new Set(allCrops.map(crop => crop.seedType))];
+  const farmingTypes = [...new Set(allCrops.map((crop) => crop.farmingType))];
+  const seedTypes = [...new Set(allCrops.map((crop) => crop.seedType))];
 
   /* ================= API FUNCTIONS ================= */
 
   const fetchCrops = async () => {
     try {
       setLoading(true);
-      
+
       const params: any = {
         search: searchTerm,
         page,
         limit: limit,
       };
-      
+
       if (filterFarmingType !== "all") {
         params.farmingType = filterFarmingType;
       }
-      
+
       if (filterSeedType !== "all") {
         params.seedType = filterSeedType;
       }
       // params.taluk="Tarikere"
 
       const session = await getAdminSessionAction();
-      setUser(session?.admin)
+      setUser(session?.admin);
       if (session?.admin?.role == "subadmin") {
         params.taluk = session?.admin.taluka;
       }
@@ -3893,7 +4135,7 @@ export default function CropManagementPage() {
       if (response.data.success) {
         const data = response.data.data || [];
         const total = response.data.total || 0;
-        
+
         setCrops(data);
         setAllCrops(response.data.allData || []);
         setTotalItems(total);
@@ -3913,7 +4155,7 @@ export default function CropManagementPage() {
     try {
       setTrackingLoading(true);
       const response = await axios.get(`/api/tracking?id=${trackingId}`);
-      
+
       if (response.data.success) {
         setTrackingData(response.data.data);
         setModal({ type: "tracking" });
@@ -3952,15 +4194,20 @@ export default function CropManagementPage() {
     }
 
     try {
-      const deletePromises = selectedIds.map(id => 
-        axios.delete(`/api/postings/${id}`)
+      const deletePromises = selectedIds.map((id) =>
+        axios.delete(`/api/postings/${id}`),
       );
       const results = await Promise.allSettled(deletePromises);
-      
-      const successfulDeletes = results.filter(r => r.status === 'fulfilled').length;
-      
+
+      const successfulDeletes = results.filter(
+        (r) => r.status === "fulfilled",
+      ).length;
+
       if (successfulDeletes > 0) {
-        showSnackbar(`${successfulDeletes} crops deleted successfully`, "success");
+        showSnackbar(
+          `${successfulDeletes} crops deleted successfully`,
+          "success",
+        );
         setSelectedIds([]);
         fetchCrops();
       } else {
@@ -3989,7 +4236,7 @@ export default function CropManagementPage() {
       console.error("Error creating crop:", error);
       showSnackbar(
         error.response?.data?.message || "Error creating crop",
-        "error"
+        "error",
       );
     } finally {
       setFormModalLoading(false);
@@ -4001,7 +4248,10 @@ export default function CropManagementPage() {
 
     try {
       setFormModalLoading(true);
-      const response = await axios.put(`/api/postings/${editingCrop._id}`, data);
+      const response = await axios.put(
+        `/api/postings/${editingCrop._id}`,
+        data,
+      );
 
       if (response.data.success) {
         showSnackbar("Crop updated successfully", "success");
@@ -4015,7 +4265,7 @@ export default function CropManagementPage() {
       console.error("Error updating crop:", error);
       showSnackbar(
         error.response?.data?.message || "Error updating crop",
-        "error"
+        "error",
       );
     } finally {
       setFormModalLoading(false);
@@ -4041,7 +4291,7 @@ export default function CropManagementPage() {
   useEffect(() => {
     const checkTableScroll = () => {
       if (tableRef.current) {
-        const tableElement = tableRef.current.querySelector('table');
+        const tableElement = tableRef.current.querySelector("table");
         if (tableElement) {
           const tableWidth = tableElement.scrollWidth;
           const containerWidth = tableRef.current.clientWidth;
@@ -4051,10 +4301,10 @@ export default function CropManagementPage() {
     };
 
     checkTableScroll();
-    window.addEventListener('resize', checkTableScroll);
-    
+    window.addEventListener("resize", checkTableScroll);
+
     return () => {
-      window.removeEventListener('resize', checkTableScroll);
+      window.removeEventListener("resize", checkTableScroll);
     };
   }, [crops]);
 
@@ -4062,7 +4312,7 @@ export default function CropManagementPage() {
 
   const showSnackbar = (
     message: string,
-    severity: "success" | "error" | "info" | "warning"
+    severity: "success" | "error" | "info" | "warning",
   ) => {
     setSnackbar({ open: true, message, severity });
   };
@@ -4104,7 +4354,7 @@ export default function CropManagementPage() {
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return "Invalid Date";
-      
+
       return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
@@ -4121,7 +4371,7 @@ export default function CropManagementPage() {
       natural: "Natural",
       hydroponic: "Hydroponic",
       inorganic: "Inorganic",
-      regular: "Regular"
+      regular: "Regular",
     };
     return labels[type] || type;
   };
@@ -4131,7 +4381,7 @@ export default function CropManagementPage() {
       gmo: "GMO",
       hybrid: "Hybrid",
       heirloom: "Heirloom",
-      naati: "Naati"
+      naati: "Naati",
     };
     return labels[type] || type;
   };
@@ -4159,14 +4409,14 @@ export default function CropManagementPage() {
   const getFarmerLocation = (crop: Crop) => {
     const farmer = crop.farmer;
     if (!farmer?.personalInfo) return "N/A";
-    
+
     const loc = farmer.personalInfo;
     const parts = [];
     if (loc.villageGramaPanchayat) parts.push(loc.villageGramaPanchayat);
     if (loc.taluk) parts.push(loc.taluk);
     if (loc.district) parts.push(loc.district);
     if (loc.state) parts.push(loc.state);
-    
+
     return parts.length > 0 ? parts.join(", ") : "N/A";
   };
 
@@ -4184,110 +4434,120 @@ export default function CropManagementPage() {
 
   /* ================= TABLE SCROLL FUNCTIONS ================= */
 
-/* ================= SMOOTH SCROLL FUNCTIONS ================= */
+  /* ================= SMOOTH SCROLL FUNCTIONS ================= */
 
-/* ================= SMOOTH SCROLL FUNCTIONS ================= */
+  /* ================= SMOOTH SCROLL FUNCTIONS ================= */
 
-const handleSmoothScroll = (event: Event, newValue: number | number[]) => {
-  const scrollValue = Array.isArray(newValue) ? newValue[0] : newValue;
-  setTableScrollPosition(scrollValue);
-  
-  if (tableRef.current) {
-    const tableElement = tableRef.current.querySelector('table');
-    if (tableElement) {
-      const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
-      const scrollTo = (scrollValue / 50) * maxScroll;
-      
-      // Smooth scroll with requestAnimationFrame for better performance
-      smoothScrollTo(tableRef.current, scrollTo, 200);
-    }
-  }
-};
+  const handleSmoothScroll = (event: Event, newValue: number | number[]) => {
+    const scrollValue = Array.isArray(newValue) ? newValue[0] : newValue;
+    setTableScrollPosition(scrollValue);
 
-const handleSmoothScrollLeft = () => {
-  if (tableRef.current) {
-    const currentScroll = tableRef.current.scrollLeft;
-    const newScroll = Math.max(0, currentScroll - 800); // Increased scroll amount
-    smoothScrollTo(tableRef.current, newScroll, 800);
-  }
-};
+    if (tableRef.current) {
+      const tableElement = tableRef.current.querySelector("table");
+      if (tableElement) {
+        const maxScroll =
+          tableElement.scrollWidth - tableRef.current.clientWidth;
+        const scrollTo = (scrollValue / 50) * maxScroll;
 
-const handleSmoothScrollRight = () => {
-  if (tableRef.current) {
-    const tableElement = tableRef.current.querySelector('table');
-    if (tableElement) {
-      const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
-      const currentScroll = tableRef.current.scrollLeft;
-      const newScroll = Math.min(maxScroll, currentScroll + 800); // Increased scroll amount
-      smoothScrollTo(tableRef.current, newScroll, 800);
-    }
-  }
-};
-
-const smoothScrollTo = (element: HTMLElement, to: number, duration: number) => {
-  const start = element.scrollLeft;
-  const change = to - start;
-  const startTime = performance.now();
-
-  const animateScroll = (currentTime: number) => {
-    const elapsed = currentTime - startTime;
-    
-    if (elapsed < duration) {
-      // Using easeOutCubic for smoother animation
-      const easeOutCubic = (t: number) => {
-        return 1 - Math.pow(1 - t, 3);
-      };
-      
-      const progress = easeOutCubic(elapsed / duration);
-      element.scrollLeft = start + change * progress;
-      requestAnimationFrame(animateScroll);
-    } else {
-      element.scrollLeft = to;
-      updateTableScrollPosition(); // Update position after animation completes
+        // Smooth scroll with requestAnimationFrame for better performance
+        smoothScrollTo(tableRef.current, scrollTo, 200);
+      }
     }
   };
 
-  requestAnimationFrame(animateScroll);
-};
+  const handleSmoothScrollLeft = () => {
+    if (tableRef.current) {
+      const currentScroll = tableRef.current.scrollLeft;
+      const newScroll = Math.max(0, currentScroll - 800); // Increased scroll amount
+      smoothScrollTo(tableRef.current, newScroll, 800);
+    }
+  };
 
-const updateTableScrollPosition = () => {
-  if (tableRef.current) {
-    const tableElement = tableRef.current.querySelector('table');
-    if (tableElement) {
-      const maxScroll = tableElement.scrollWidth - tableRef.current.clientWidth;
-      if (maxScroll > 0) {
-        const scrollPercentage = (tableRef.current.scrollLeft / maxScroll) * 100;
-        setTableScrollPosition(scrollPercentage);
+  const handleSmoothScrollRight = () => {
+    if (tableRef.current) {
+      const tableElement = tableRef.current.querySelector("table");
+      if (tableElement) {
+        const maxScroll =
+          tableElement.scrollWidth - tableRef.current.clientWidth;
+        const currentScroll = tableRef.current.scrollLeft;
+        const newScroll = Math.min(maxScroll, currentScroll + 800); // Increased scroll amount
+        smoothScrollTo(tableRef.current, newScroll, 800);
       }
     }
-  }
-};
+  };
 
-// Update the scroll event listener with throttling
-useEffect(() => {
-  const tableContainer = tableRef.current;
-  if (tableContainer) {
-    let animationFrameId: number;
-    
-    const handleScroll = () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
+  const smoothScrollTo = (
+    element: HTMLElement,
+    to: number,
+    duration: number,
+  ) => {
+    const start = element.scrollLeft;
+    const change = to - start;
+    const startTime = performance.now();
+
+    const animateScroll = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+
+      if (elapsed < duration) {
+        // Using easeOutCubic for smoother animation
+        const easeOutCubic = (t: number) => {
+          return 1 - Math.pow(1 - t, 3);
+        };
+
+        const progress = easeOutCubic(elapsed / duration);
+        element.scrollLeft = start + change * progress;
+        requestAnimationFrame(animateScroll);
+      } else {
+        element.scrollLeft = to;
+        updateTableScrollPosition(); // Update position after animation completes
       }
-      
-      animationFrameId = requestAnimationFrame(() => {
-        updateTableScrollPosition();
+    };
+
+    requestAnimationFrame(animateScroll);
+  };
+
+  const updateTableScrollPosition = () => {
+    if (tableRef.current) {
+      const tableElement = tableRef.current.querySelector("table");
+      if (tableElement) {
+        const maxScroll =
+          tableElement.scrollWidth - tableRef.current.clientWidth;
+        if (maxScroll > 0) {
+          const scrollPercentage =
+            (tableRef.current.scrollLeft / maxScroll) * 100;
+          setTableScrollPosition(scrollPercentage);
+        }
+      }
+    }
+  };
+
+  // Update the scroll event listener with throttling
+  useEffect(() => {
+    const tableContainer = tableRef.current;
+    if (tableContainer) {
+      let animationFrameId: number;
+
+      const handleScroll = () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+
+        animationFrameId = requestAnimationFrame(() => {
+          updateTableScrollPosition();
+        });
+      };
+
+      tableContainer.addEventListener("scroll", handleScroll, {
+        passive: true,
       });
-    };
-    
-    tableContainer.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      tableContainer.removeEventListener('scroll', handleScroll);
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }
-}, []);
+      return () => {
+        tableContainer.removeEventListener("scroll", handleScroll);
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }
+  }, []);
 
   /* ================= EXPORT FUNCTIONS ================= */
 
@@ -4300,52 +4560,73 @@ useEffect(() => {
     try {
       // Only essential columns
       const headers = [
-        "Farming", "Seed", "Acres", "Sowing", 
-        "Farmer", "Phone", "ID", "Location",
-        "Progress", "Stage", "Tracking ID"
+        "Farming",
+        "Seed",
+        "Acres",
+        "Sowing",
+        "Farmer",
+        "Phone",
+        "ID",
+        "Location",
+        "Progress",
+        "Stage",
+        "Tracking ID",
       ];
-      
+
       const rows = crops.map((crop) => [
         getFarmingTypeLabel(crop.farmingType)?.substring(0, 8) || "",
         getSeedTypeLabel(crop.seedType)?.substring(0, 8) || "",
         crop.acres?.toString() || "0",
-        formatDate(crop.sowingDate)?.split(',')[0] || "", // Just date part
+        formatDate(crop.sowingDate)?.split(",")[0] || "", // Just date part
         getFarmerName(crop)?.substring(0, 12) || "",
         getFarmerContact(crop) || "",
         getFarmerDisplayId(crop) || "",
-        getFarmerLocation(crop)?.split(',')[0]?.substring(0, 15) || "", // Just first part
+        getFarmerLocation(crop)?.split(",")[0]?.substring(0, 15) || "", // Just first part
         crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
         crop.tracking?.currentStageName?.substring(0, 12) || "Not Started",
-        crop.trackingId?.substring(0, 8) + "..." || ""
+        crop.trackingId?.substring(0, 8) + "..." || "",
       ]);
-      
+
       const columnWidths = [10, 10, 8, 12, 14, 12, 10, 16, 10, 14, 15];
-      
+
       let tableString = "";
-      
+
       // Create compact table
-      tableString += "┌" + columnWidths.map(w => "─".repeat(w)).join("┬") + "┐\n";
-      tableString += "│" + headers.map((h, i) => ` ${h.padEnd(columnWidths[i] - 2)} `).join("│") + "│\n";
-      tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
-      
+      tableString +=
+        "┌" + columnWidths.map((w) => "─".repeat(w)).join("┬") + "┐\n";
+      tableString +=
+        "│" +
+        headers.map((h, i) => ` ${h.padEnd(columnWidths[i] - 2)} `).join("│") +
+        "│\n";
+      tableString +=
+        "├" + columnWidths.map((w) => "─".repeat(w)).join("┼") + "┤\n";
+
       rows.forEach((row, i) => {
-        tableString += "│" + row.map((cell, j) => {
-          const cellStr = cell?.toString() || "";
-          return ` ${cellStr.padEnd(columnWidths[j] - 2)} `;
-        }).join("│") + "│\n";
-        
+        tableString +=
+          "│" +
+          row
+            .map((cell, j) => {
+              const cellStr = cell?.toString() || "";
+              return ` ${cellStr.padEnd(columnWidths[j] - 2)} `;
+            })
+            .join("│") +
+          "│\n";
+
         if ((i + 1) % 5 === 0 && i < rows.length - 1) {
-          tableString += "├" + columnWidths.map(w => "─".repeat(w)).join("┼") + "┤\n";
+          tableString +=
+            "├" + columnWidths.map((w) => "─".repeat(w)).join("┼") + "┤\n";
         }
       });
-      
-      tableString += "└" + columnWidths.map(w => "─".repeat(w)).join("┴") + "┘\n\n";
-      
+
+      tableString +=
+        "└" + columnWidths.map((w) => "─".repeat(w)).join("┴") + "┘\n\n";
+
       // Full details for first few records
       if (crops.length > 0) {
         tableString += "DETAILED VIEW (First 3 records):\n";
-        tableString += "════════════════════════════════════════════════════════════\n";
-        
+        tableString +=
+          "════════════════════════════════════════════════════════════\n";
+
         crops.slice(0, 3).forEach((crop, index) => {
           tableString += `\nRECORD ${index + 1}:\n`;
           tableString += `  Farming Type: ${getFarmingTypeLabel(crop.farmingType)}\n`;
@@ -4359,13 +4640,13 @@ useEffect(() => {
           tableString += `  Tracking ID: ${crop.trackingId}\n`;
           tableString += `  Progress: ${crop.tracking?.progress || 0}%\n`;
           tableString += `  Current Stage: ${crop.tracking?.currentStageName || "Not Started"}\n`;
-          tableString += `  Stages: ${crop.tracking?.stages?.filter(s => s.status === "completed").length || 0}/${crop.tracking?.stages?.length || 0}\n`;
+          tableString += `  Stages: ${crop.tracking?.stages?.filter((s) => s.status === "completed").length || 0}/${crop.tracking?.stages?.length || 0}\n`;
         });
       }
-      
+
       tableString += `\nTotal Records: ${totalItems}\n`;
       tableString += `Generated: ${new Date().toLocaleString()}\n`;
-      
+
       navigator.clipboard.writeText(tableString);
       showSnackbar("Data copied in compact table format", "success");
     } catch (error) {
@@ -4382,14 +4663,30 @@ useEffect(() => {
 
     try {
       const headers = [
-        "Farming Type", "Seed Type", "Acres", "Sowing Date", 
-        "Farmer Name", "Farmer Phone", "Farmer Email", "Farmer Address",
-        "Farmer Village", "Farmer Taluk", "Farmer District", "Farmer State",
-        "Farmer Pincode", "Farmer ID", "Registration Status",
-        "Tracking ID", "Progress", "Current Stage", "Total Stages",
-        "Stages Completed", "Tracking Created", "Created Date"
+        "Farming Type",
+        "Seed Type",
+        "Acres",
+        "Sowing Date",
+        "Farmer Name",
+        "Farmer Phone",
+        "Farmer Email",
+        "Farmer Address",
+        "Farmer Village",
+        "Farmer Taluk",
+        "Farmer District",
+        "Farmer State",
+        "Farmer Pincode",
+        "Farmer ID",
+        "Registration Status",
+        "Tracking ID",
+        "Progress",
+        "Current Stage",
+        "Total Stages",
+        "Stages Completed",
+        "Tracking Created",
+        "Created Date",
       ];
-      
+
       const rows = crops.map((crop) => [
         getFarmingTypeLabel(crop.farmingType),
         getSeedTypeLabel(crop.seedType),
@@ -4410,36 +4707,46 @@ useEffect(() => {
         crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
         crop.tracking?.currentStageName || "Not Started",
         crop.tracking?.stages?.length || 0,
-        crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
+        crop.tracking?.stages?.filter((s) => s.status === "completed").length ||
+          0,
         crop.tracking ? formatDate(crop.tracking.createdAt) : "N/A",
-        formatDate(crop.createdAt)
+        formatDate(crop.createdAt),
       ]);
-      
+
       const csvContent = [
         headers.join(","),
-        ...rows.map(row => 
-          row.map(cell => {
-            const cellStr = String(cell);
-            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
-              return `"${cellStr.replace(/"/g, '""')}"`;
-            }
-            return cellStr;
-          }).join(",")
-        )
+        ...rows.map((row) =>
+          row
+            .map((cell) => {
+              const cellStr = String(cell);
+              if (
+                cellStr.includes(",") ||
+                cellStr.includes('"') ||
+                cellStr.includes("\n")
+              ) {
+                return `"${cellStr.replace(/"/g, '""')}"`;
+              }
+              return cellStr;
+            })
+            .join(","),
+        ),
       ].join("\n");
-      
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      
+
       link.setAttribute("href", url);
-      link.setAttribute("download", `crops_${new Date().toISOString().split("T")[0]}.csv`);
-      link.style.visibility = 'hidden';
-      
+      link.setAttribute(
+        "download",
+        `crops_${new Date().toISOString().split("T")[0]}.csv`,
+      );
+      link.style.visibility = "hidden";
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       showSnackbar("CSV exported successfully", "success");
     } catch (error) {
       console.error("Error exporting CSV:", error);
@@ -4457,13 +4764,14 @@ useEffect(() => {
       const data = crops.map((crop) => ({
         "Farming Type": getFarmingTypeLabel(crop.farmingType),
         "Seed Type": getSeedTypeLabel(crop.seedType),
-        "Acres": crop.acres,
+        Acres: crop.acres,
         "Sowing Date": formatDate(crop.sowingDate),
         "Farmer Name": crop.farmer?.personalInfo?.name || "",
         "Farmer Phone": crop.farmer?.personalInfo?.mobileNo || "",
         "Farmer Email": crop.farmer?.personalInfo?.email || "",
         "Farmer Address": crop.farmer?.personalInfo?.address || "",
-        "Farmer Village": crop.farmer?.personalInfo?.villageGramaPanchayat || "",
+        "Farmer Village":
+          crop.farmer?.personalInfo?.villageGramaPanchayat || "",
         "Farmer Taluk": crop.farmer?.personalInfo?.taluk || "",
         "Farmer District": crop.farmer?.personalInfo?.district || "",
         "Farmer State": crop.farmer?.personalInfo?.state || "",
@@ -4471,13 +4779,21 @@ useEffect(() => {
         "Farmer ID": getFarmerDisplayId(crop),
         "Registration Status": crop.farmer?.registrationStatus || "",
         "Tracking ID": crop.trackingId,
-        "Progress": crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
+        Progress: crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
         "Current Stage": crop.tracking?.currentStageName || "N/A",
         "Total Stages": crop.tracking?.stages?.length || 0,
-        "Stages Completed": crop.tracking?.stages?.filter(s => s.status === "completed").length || 0,
-        "Stages In Progress": crop.tracking?.stages?.filter(s => s.status === "in-progress").length || 0,
-        "Stages Pending": crop.tracking?.stages?.filter(s => s.status === "pending").length || 0,
-        "Tracking Created": crop.tracking ? formatDate(crop.tracking.createdAt) : "N/A",
+        "Stages Completed":
+          crop.tracking?.stages?.filter((s) => s.status === "completed")
+            .length || 0,
+        "Stages In Progress":
+          crop.tracking?.stages?.filter((s) => s.status === "in-progress")
+            .length || 0,
+        "Stages Pending":
+          crop.tracking?.stages?.filter((s) => s.status === "pending").length ||
+          0,
+        "Tracking Created": crop.tracking
+          ? formatDate(crop.tracking.createdAt)
+          : "N/A",
         "Created Date": formatDate(crop.createdAt),
       }));
 
@@ -4486,7 +4802,7 @@ useEffect(() => {
       XLSX.utils.book_append_sheet(wb, ws, "Crops");
       XLSX.writeFile(
         wb,
-        `crops_${new Date().toISOString().split("T")[0]}.xlsx`
+        `crops_${new Date().toISOString().split("T")[0]}.xlsx`,
       );
       showSnackbar("Excel exported successfully", "success");
     } catch (error) {
@@ -4526,13 +4842,15 @@ useEffect(() => {
         getSeedTypeLabel(crop.seedType),
         crop.acres.toString(),
         formatDate(crop.sowingDate),
-        getFarmerName(crop).substring(0, 15) + (getFarmerName(crop).length > 15 ? "..." : ""),
+        getFarmerName(crop).substring(0, 15) +
+          (getFarmerName(crop).length > 15 ? "..." : ""),
         getFarmerContact(crop).substring(0, 15),
         formatTrackingId(crop.trackingId || ""),
         crop.tracking?.progress ? `${crop.tracking.progress}%` : "0%",
         // Fix: Add proper null checking with default empty string
-        (crop.tracking?.currentStageName || "").substring(0, 15) + 
-        ((crop.tracking?.currentStageName || "").length > 15 ? "..." : "") || "N/A",
+        (crop.tracking?.currentStageName || "").substring(0, 15) +
+          ((crop.tracking?.currentStageName || "").length > 15 ? "..." : "") ||
+          "N/A",
       ]);
 
       autoTable(doc, {
@@ -4687,10 +5005,15 @@ useEffect(() => {
             >
               <div
                 className={`w-2 h-2 rounded-full ${
-                  type === "organic" ? "bg-green-500" :
-                  type === "natural" ? "bg-blue-500" :
-                  type === "hydroponic" ? "bg-purple-500" :
-                  type === "inorganic" ? "bg-yellow-500" : "bg-gray-500"
+                  type === "organic"
+                    ? "bg-green-500"
+                    : type === "natural"
+                      ? "bg-blue-500"
+                      : type === "hydroponic"
+                        ? "bg-purple-500"
+                        : type === "inorganic"
+                          ? "bg-yellow-500"
+                          : "bg-gray-500"
                 }`}
               />
               <span className="text-xs font-medium text-gray-700">
@@ -4738,7 +5061,12 @@ useEffect(() => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full lg:w-[40vw] px-10 py-2 text-xs sm:text-base border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                 />
-                {searchTerm.length > 0 && <AiOutlineClose onClick={() => setSearchTerm("")} className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5" />}
+                {searchTerm.length > 0 && (
+                  <AiOutlineClose
+                    onClick={() => setSearchTerm("")}
+                    className="absolute cursor-pointer right-3 top-1/2 transform -translate-y-1/2 text-zinc-600 w-5 h-5"
+                  />
+                )}
               </div>
               <div className="flex items-center justify-between">
                 <button
@@ -4872,17 +5200,17 @@ useEffect(() => {
           {/* Table Scroll Control */}
           {showTableScrollControl && (
             <div className="fixed -bottom-5 right-5  transform -translate-y-1/2 z-10 hidden lg:flex  items-center gap-2 bg-white p-3 rounded-lg shadow-md border border-gray-200">
-   <Tooltip title="Scroll Left" arrow>
-      <IconButton
-        onClick={handleSmoothScrollLeft}
-        size="small"
-        className="bg-gray-100 hover:bg-gray-200"
-      >
-        <FaChevronLeft className="w-4 h-4 text-gray-700" />
-      </IconButton>
-    </Tooltip>
-    
-    {/* <div className="w-32 h-2 flex items-center">
+              <Tooltip title="Scroll Left" arrow>
+                <IconButton
+                  onClick={handleSmoothScrollLeft}
+                  size="small"
+                  className="bg-gray-100 hover:bg-gray-200"
+                >
+                  <FaChevronLeft className="w-4 h-4 text-gray-700" />
+                </IconButton>
+              </Tooltip>
+
+              {/* <div className="w-32 h-2 flex items-center">
       <Slider
         value={tableScrollPosition}
         onChange={handleSmoothScroll}
@@ -4911,20 +5239,20 @@ useEffect(() => {
         }}
       />
     </div> */}
-    <div className="text-xs text-gray-500 mt-1">
-      scroll: {Math.round(tableScrollPosition)}%
-    </div>
-    
-    <Tooltip title="Scroll Right" arrow>
-      <IconButton
-        onClick={handleSmoothScrollRight}
-        size="small"
-        className="bg-gray-100 hover:bg-gray-200"
-      >
-        <FaChevronRight className="w-4 h-4 text-gray-700" />
-      </IconButton>
-    </Tooltip>
-    
+              <div className="text-xs text-gray-500 mt-1">
+                scroll: {Math.round(tableScrollPosition)}%
+              </div>
+
+              <Tooltip title="Scroll Right" arrow>
+                <IconButton
+                  onClick={handleSmoothScrollRight}
+                  size="small"
+                  className="bg-gray-100 hover:bg-gray-200"
+                >
+                  <FaChevronRight className="w-4 h-4 text-gray-700" />
+                </IconButton>
+              </Tooltip>
+
               {/* <div className="text-xs text-gray-500 mt-1">
                 Scroll: {Math.round(tableScrollPosition)}%
               </div> */}
@@ -4960,8 +5288,7 @@ useEffect(() => {
                     <input
                       type="checkbox"
                       checked={
-                        selectedIds.length === crops.length &&
-                        crops.length > 0
+                        selectedIds.length === crops.length && crops.length > 0
                       }
                       onChange={(e) => handleSelectAll(e.target.checked)}
                       className="rounded border-gray-300"
@@ -4995,17 +5322,23 @@ useEffect(() => {
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row._id)}
-                        onChange={(e) => handleSelectOne(row._id, e.target.checked)}
+                        onChange={(e) =>
+                          handleSelectOne(row._id, e.target.checked)
+                        }
                         className="rounded border-gray-300"
                       />
                     </td>
                     <td className="px-1 py-1">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}
+                      >
                         {getFarmingTypeLabel(row.farmingType)}
                       </span>
                     </td>
                     <td className="px-1 py-1">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
+                      <span
+                        className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}
+                      >
                         {getSeedTypeLabel(row.seedType)}
                       </span>
                     </td>
@@ -5049,11 +5382,16 @@ useEffect(() => {
                           </div>
                           <div className="flex items-center gap-2 text-xs">
                             <span className="text-gray-600">Status:</span>
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                              row.tracking.isCompleted ? "bg-green-100 text-green-800" :
-                              "bg-blue-100 text-blue-800"
-                            }`}>
-                              {row.tracking.isCompleted ? "Completed" : "Active"}
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                row.tracking.isCompleted
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {row.tracking.isCompleted
+                                ? "Completed"
+                                : "Active"}
                             </span>
                           </div>
                         </div>
@@ -5067,9 +5405,11 @@ useEffect(() => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div 
-                              className="bg-green-500 h-2 rounded-full" 
-                              style={{ width: `${row.tracking?.progress || 0}%` }}
+                            <div
+                              className="bg-green-500 h-2 rounded-full"
+                              style={{
+                                width: `${row.tracking?.progress || 0}%`,
+                              }}
                             ></div>
                           </div>
                           <span className="text-xs font-bold text-gray-900">
@@ -5084,19 +5424,24 @@ useEffect(() => {
                         <div className="flex items-center gap-2 text-xs">
                           <span className="text-gray-600">Stages:</span>
                           <span className="font-semibold">
-                            {row.tracking?.currentStageIndex !== undefined ? row.tracking.currentStageIndex + 1 : 0}/{row.tracking?.stages?.length || 0}
+                            {row.tracking?.currentStageIndex !== undefined
+                              ? row.tracking.currentStageIndex + 1
+                              : 0}
+                            /{row.tracking?.stages?.length || 0}
                           </span>
                         </div>
                       </div>
                     </td>
                     <td className="px-2 py-1 min-w-[250px]">
                       {row.tracking?.stages ? (
-                        <StagesDisplay 
-                          stages={row.tracking.stages} 
-                          currentStageIndex={row.tracking.currentStageIndex} 
+                        <StagesDisplay
+                          stages={row.tracking.stages}
+                          currentStageIndex={row.tracking.currentStageIndex}
                         />
                       ) : (
-                        <div className="text-xs text-gray-500 italic">No stages data</div>
+                        <div className="text-xs text-gray-500 italic">
+                          No stages data
+                        </div>
                       )}
                     </td>
                     <td className="px-2 py-1">
@@ -5139,15 +5484,21 @@ useEffect(() => {
                       <input
                         type="checkbox"
                         checked={selectedIds.includes(row._id)}
-                        onChange={(e) => handleSelectOne(row._id, e.target.checked)}
+                        onChange={(e) =>
+                          handleSelectOne(row._id, e.target.checked)
+                        }
                         className="rounded border-gray-300 -mt-12 -ml-2"
                       />
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}>
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFarmingTypeColor(row.farmingType)}`}
+                          >
                             {getFarmingTypeLabel(row.farmingType)}
                           </span>
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}>
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium ${getSeedTypeColor(row.seedType)}`}
+                          >
                             {getSeedTypeLabel(row.seedType)}
                           </span>
                         </div>
@@ -5175,7 +5526,7 @@ useEffect(() => {
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Basic Info */}
                   <div className="grid ml-4 grid-cols-2 gap-3 text-xs">
                     <div>
@@ -5190,45 +5541,60 @@ useEffect(() => {
                         {row.tracking?.progress || 0}%
                       </span>
                     </div>
-                    
+
                     {/* Farmer Info */}
                     {row.farmer && (
                       <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-                        <div className="font-medium text-gray-700 mb-2">Farmer Information:</div>
+                        <div className="font-medium text-gray-700 mb-2">
+                          Farmer Information:
+                        </div>
                         <div className="space-y-2">
                           <div className="flex justify-between">
                             <span className="text-gray-600">Name:</span>
-                            <span className="font-medium">{row.farmer.personalInfo.name}</span>
+                            <span className="font-medium">
+                              {row.farmer.personalInfo.name}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Phone:</span>
-                            <span className="font-medium">{row.farmer.personalInfo.mobileNo}</span>
+                            <span className="font-medium">
+                              {row.farmer.personalInfo.mobileNo}
+                            </span>
                           </div>
                           {row.farmer.personalInfo.email && (
                             <div className="flex justify-between">
                               <span className="text-gray-600">Email:</span>
-                              <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.email}</span>
+                              <span className="font-medium truncate max-w-[150px]">
+                                {row.farmer.personalInfo.email}
+                              </span>
                             </div>
                           )}
                           {row.farmer.personalInfo.address && (
                             <div className="flex justify-between">
                               <span className="text-gray-600">Address:</span>
-                              <span className="font-medium truncate max-w-[150px]">{row.farmer.personalInfo.address}</span>
+                              <span className="font-medium truncate max-w-[150px]">
+                                {row.farmer.personalInfo.address}
+                              </span>
                             </div>
                           )}
                           <div className="flex justify-between">
                             <span className="text-gray-600">Location:</span>
                             <span className="font-medium">
-                              {row.farmer.personalInfo.villageGramaPanchayat}, {row.farmer.personalInfo.district}
+                              {row.farmer.personalInfo.villageGramaPanchayat},{" "}
+                              {row.farmer.personalInfo.district}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">Status:</span>
-                            <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                              row.farmer.registrationStatus === "approved" ? "bg-green-100 text-green-800" :
-                              row.farmer.registrationStatus === "pending" ? "bg-yellow-100 text-yellow-800" :
-                              "bg-gray-100 text-gray-800"
-                            }`}>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                row.farmer.registrationStatus === "approved"
+                                  ? "bg-green-100 text-green-800"
+                                  : row.farmer.registrationStatus === "pending"
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
                               {row.farmer.registrationStatus}
                             </span>
                           </div>
@@ -5240,50 +5606,67 @@ useEffect(() => {
                     {row.tracking && (
                       <>
                         <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-                          <div className="font-medium text-gray-700 mb-2">Tracking Information:</div>
+                          <div className="font-medium text-gray-700 mb-2">
+                            Tracking Information:
+                          </div>
                           <div className="space-y-2">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Name:</span>
-                              <span className="font-medium truncate max-w-[150px]">{row.tracking.name}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">ID:</span>
-                              <span className="font-medium">{formatTrackingId(row.tracking._id)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Status:</span>
-                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                                row.tracking.isCompleted ? "bg-green-100 text-green-800" :
-                                "bg-blue-100 text-blue-800"
-                              }`}>
-                                {row.tracking.isCompleted ? "Completed" : "Active"}
+                              <span className="font-medium truncate max-w-[150px]">
+                                {row.tracking.name}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Current Stage:</span>
+                              <span className="text-gray-600">ID:</span>
+                              <span className="font-medium">
+                                {formatTrackingId(row.tracking._id)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Status:</span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                  row.tracking.isCompleted
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-blue-100 text-blue-800"
+                                }`}
+                              >
+                                {row.tracking.isCompleted
+                                  ? "Completed"
+                                  : "Active"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">
+                                Current Stage:
+                              </span>
                               <span className="font-medium text-green-600">
-                                {row.tracking.currentStageName || 
-                                 row.tracking.stages[row.tracking.currentStageIndex]?.name || 
-                                 "Not Started"}
+                                {row.tracking.currentStageName ||
+                                  row.tracking.stages[
+                                    row.tracking.currentStageIndex
+                                  ]?.name ||
+                                  "Not Started"}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Created:</span>
-                              <span className="font-medium">{formatDate(row.tracking.createdAt)}</span>
+                              <span className="font-medium">
+                                {formatDate(row.tracking.createdAt)}
+                              </span>
                             </div>
                           </div>
                         </div>
 
                         {/* Stages Display */}
                         <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-                          <StagesDisplay 
-                            stages={row.tracking.stages} 
-                            currentStageIndex={row.tracking.currentStageIndex} 
+                          <StagesDisplay
+                            stages={row.tracking.stages}
+                            currentStageIndex={row.tracking.currentStageIndex}
                           />
                         </div>
                       </>
                     )}
-                    
+
                     <div className="col-span-2 text-xs text-gray-500 mt-2 pt-2 border-t border-gray-100">
                       Created: {formatDate(row.createdAt)}
                     </div>
@@ -5302,7 +5685,8 @@ useEffect(() => {
                   No crop records found
                 </h3>
                 <p className="text-gray-600 max-w-md mx-auto text-xs">
-                  Try adjusting your search or filters to find what you&apos;re looking for.
+                  Try adjusting your search or filters to find what you&apos;re
+                  looking for.
                 </p>
               </div>
             )}
@@ -5344,7 +5728,7 @@ useEffect(() => {
                     <option key={i} value={data}>
                       {data}
                     </option>
-                  )
+                  ),
                 )}
               </select>
             </div>
@@ -5416,7 +5800,8 @@ const DeleteModal = ({ row, onClose, onDelete }: any) => (
           Are you sure you want to delete the crop record for{" "}
           <span className="font-bold text-gray-900">
             {row.farmer?.personalInfo?.name || row.farmerId}
-          </span>?
+          </span>
+          ?
           <br />
           This action cannot be undone.
         </Typography>
