@@ -1,3 +1,14 @@
+
+
+
+
+
+
+
+
+
+
+
 // import { NextRequest, NextResponse } from "next/server";
 // import connectDB from "@/app/lib/Db";
 // import Mandi from "@/app/models/Mandi";
@@ -22,7 +33,7 @@
 //     const { searchParams } = new URL(req.url);
 //     const search    = searchParams.get("search") || "";
 //     const page      = Math.max(1, Number(searchParams.get("page"))  || 1);
-//     const limit     = Math.min(100, Number(searchParams.get("limit")) || 10);
+//     const limit     = Math.min(100, Number(searchParams.get("limit")) || 0);
 //     const state     = searchParams.get("state") || "";
 //     const district  = searchParams.get("district") || "";
 //     const isActive  = searchParams.get("isActive");
@@ -85,7 +96,7 @@
 //     }
 
 //     const body = await req.json();
-//     const { mandiName, state, district, taluka, address, pincode, allowPostingView } = body;
+//     const { mandiName, state, district, taluka, address, pincode, allowPostingView, allowMobileView } = body;
 
 //     // Validation
 //     if (!mandiName?.trim()) {
@@ -119,6 +130,7 @@
 //       address:          address?.trim() || "",
 //       pincode:          pincode?.trim() || "",
 //       allowPostingView: allowPostingView === true,
+//       allowMobileView:  allowMobileView  === true,
 //       createdBy:        session.admin._id,
 //       subAdmins:        [],
 //     });
@@ -145,17 +157,11 @@
 
 
 
-
-
-
-
-
-
-
-
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/Db";
 import Mandi from "@/app/models/Mandi";
+import "@/app/models/Admin"; // ✅ ADD THIS LINE
+
 import { getAdminSession } from "@/app/lib/auth";
 
 /* ─── helpers ─────────────────────────────────────────── */
@@ -165,19 +171,17 @@ function generateMandiId(): string {
   return `MND-${ts}-${rand}`;
 }
 
-/* ─── GET  /api/mandi  ────────────────────────────────── */
+/* ─── GET  /api/mandi  (PUBLIC) ───────────────────────── */
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const session = await getAdminSession();
-    if (!session?.admin) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-    }
+
+    // ❌ Removed admin session check → now public
 
     const { searchParams } = new URL(req.url);
     const search    = searchParams.get("search") || "";
     const page      = Math.max(1, Number(searchParams.get("page"))  || 1);
-    const limit     = Math.min(100, Number(searchParams.get("limit")) || 10);
+    const limit     = Math.min(100, Number(searchParams.get("limit")) || 0);
     const state     = searchParams.get("state") || "";
     const district  = searchParams.get("district") || "";
     const isActive  = searchParams.get("isActive");
@@ -196,11 +200,6 @@ export async function GET(req: NextRequest) {
     if (district) filter.district = { $regex: district, $options: "i" };
     if (isActive !== null && isActive !== "") {
       filter.isActive = isActive === "true";
-    }
-
-    // Subadmins can only see mandis they belong to
-    if (session.admin.role === "subadmin") {
-      filter.subAdmins = session.admin._id;
     }
 
     const total = await Mandi.countDocuments(filter);
@@ -228,19 +227,31 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/* ─── POST  /api/mandi  ──────────────────────────────── */
+/* ─── POST  /api/mandi  (PROTECTED) ───────────────────── */
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
     const session = await getAdminSession();
 
-    // Only admin (not subadmin) can create a mandi
+    // ✅ Only admin can create
     if (!session?.admin || session.admin.role !== "admin") {
-      return NextResponse.json({ success: false, message: "Unauthorized. Only admin can create mandis." }, { status: 403 });
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Only admin can create mandis." },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
-    const { mandiName, state, district, taluka, address, pincode, allowPostingView, allowMobileView } = body;
+    const {
+      mandiName,
+      state,
+      district,
+      taluka,
+      address,
+      pincode,
+      allowPostingView,
+      allowMobileView,
+    } = body;
 
     // Validation
     if (!mandiName?.trim()) {
@@ -253,11 +264,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "District is required" }, { status: 400 });
     }
 
-    // Duplicate name check within same district
+    // Duplicate check
     const existing = await Mandi.findOne({
       mandiName: { $regex: `^${mandiName.trim()}$`, $options: "i" },
       district:  { $regex: `^${district.trim()}$`,  $options: "i" },
     });
+
     if (existing) {
       return NextResponse.json(
         { success: false, message: "A mandi with this name already exists in the same district" },
@@ -285,12 +297,32 @@ export async function POST(req: NextRequest) {
     );
   } catch (error: any) {
     console.error("POST /api/mandi error:", error);
+
     if (error.code === 11000) {
-      return NextResponse.json({ success: false, message: "Mandi ID conflict, please retry" }, { status: 409 });
+      return NextResponse.json(
+        { success: false, message: "Mandi ID conflict, please retry" },
+        { status: 409 }
+      );
     }
+
     return NextResponse.json(
       { success: false, message: error.message || "Failed to create mandi" },
       { status: 500 }
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
