@@ -1,0 +1,3 @@
+{
+  "/(users)/my-profile/page": "app/(users)/my-profile/page.js"
+}

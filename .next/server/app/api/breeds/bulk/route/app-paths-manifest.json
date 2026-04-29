@@ -1,0 +1,3 @@
+{
+  "/api/breeds/bulk/route": "app/api/breeds/bulk/route.js"
+}

@@ -1,0 +1,3 @@
+{
+  "/api/b2b-products/image/[filename]/route": "app/api/b2b-products/image/[filename]/route.js"
+}

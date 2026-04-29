@@ -1,0 +1,3 @@
+{
+  "/api/admin/validate-reset-token/route": "app/api/admin/validate-reset-token/route.js"
+}

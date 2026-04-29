@@ -1,0 +1,3 @@
+{
+  "/api/mandi/[id]/subadmins/route": "app/api/mandi/[id]/subadmins/route.js"
+}

@@ -1,0 +1,20 @@
+{
+  "node": {
+    "0080be0f09e47bc46dc74266fe2ae22f3de82d3ad9": {
+      "workers": {
+        "app/(ContentManagement)/trader-bids/page": {
+          "moduleId": 558070,
+          "async": false,
+          "exportedName": "getAdminSessionAction",
+          "filename": "Downloads/adminkisanpartner-1/adminkisanpartner/app/actions/auth-actions.ts"
+        }
+      },
+      "layer": {
+        "app/(ContentManagement)/trader-bids/page": "action-browser"
+      },
+      "exportedName": "getAdminSessionAction",
+      "filename": "Downloads/adminkisanpartner-1/adminkisanpartner/app/actions/auth-actions.ts"
+    }
+  },
+  "edge": {}
+}

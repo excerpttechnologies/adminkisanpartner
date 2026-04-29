@@ -1,0 +1,3 @@
+{
+  "/(ContentManagement)/mandi/[id]/page": "app/(ContentManagement)/mandi/[id]/page.js"
+}

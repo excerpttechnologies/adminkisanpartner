@@ -1,0 +1,3 @@
+{
+  "/api/trader-bids-reports/route": "app/api/trader-bids-reports/route.js"
+}

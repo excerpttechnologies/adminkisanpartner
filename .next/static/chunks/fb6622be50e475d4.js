@@ -1,0 +1,119 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,261829,e=>{"use strict";var t=e.i(475100),a=e.i(442775),s=e.i(521601),r=e.i(157471),i=e.i(66541),l=e.i(852963),d=e.i(315338),n=e.i(858015),o=e.i(910265),c=e.i(891048),m=e.i(553439),x=e.i(22656),u=e.i(159006),h=e.i(544445),p=e.i(538170),g=e.i(485827);function f(){let[e,f]=(0,a.useState)([]),[b,j]=(0,a.useState)([]),[y,N]=(0,a.useState)(""),[v,w]=(0,a.useState)(!1),[S,C]=(0,a.useState)(!0),[k,D]=(0,a.useState)(!1),[F,A]=(0,a.useState)(!1),[P,$]=(0,a.useState)(null),[E,_]=(0,a.useState)(""),[z,T]=(0,a.useState)(""),[L,U]=(0,a.useState)([]),[I,R]=(0,a.useState)(!1),[M,O]=(0,a.useState)(!1),[B,K]=(0,a.useState)(!1),[V,Y]=(0,a.useState)({id:null,name:""}),[q,G]=(0,a.useState)({total:0,page:1,limit:10,totalPages:1}),[H,J]=(0,a.useState)(""),Q=(0,a.useCallback)(async()=>{D(!0);try{let e=await u.default.get("/api/states",{params:{page:1,limit:100}});e.data.success&&j(e.data.data)}catch(e){console.error("Error fetching states:",e),x.default.error("Failed to load states")}finally{D(!1)}},[]),W=(0,a.useCallback)(async(e=1,t="",a="",s)=>{w(!0);try{let r={page:e,limit:s||q.limit,search:t};a&&(r.stateId=a);let i=(await u.default.get("/api/districts",{params:r})).data;if(i.success){let e=i.data.map(e=>{let t="Unknown State";if(e.state&&e.state.name)t=e.state.name;else if(e.stateId){let a=b.find(t=>t._id===e.stateId);t=a?.name||"Unknown State"}return{...e,state:e.state||{_id:e.stateId,name:t},stateName:t,selected:!1}});f(e),G({total:i.pagination?.total||i.total||0,page:i.pagination?.page||i.page||1,limit:i.pagination?.limit||i.limit||s||q.limit,totalPages:i.pagination?.totalPages||Math.ceil((i.pagination?.total||i.total||0)/(i.pagination?.limit||i.limit||s||q.limit))}),U([]),R(!1)}}catch(e){console.error("Error fetching districts:",e),x.default.error(e.response?.data?.message||"Failed to fetch districts")}finally{w(!1),C(!1)}},[q.limit,b]),X=async()=>{try{if((await u.default.post("/api/districts",{name:E,stateId:z})).data.success)return x.default.success("District added successfully"),await W(q.page,y,H),!0;return!1}catch(e){return x.default.error(e.response?.data?.message||"Failed to add district"),!1}},Z=async e=>{try{if((await u.default.put(`/api/districts/${e}`,{name:E,stateId:z})).data.success)return x.default.success("District updated successfully"),await W(q.page,y,H),!0;return!1}catch(e){return x.default.error(e.response?.data?.message||"Failed to update district"),!1}},ee=async t=>{w(!0);try{return await u.default.delete(`/api/districts/${t}`),x.default.success("District deleted successfully"),1===e.length&&q.page>1?await W(q.page-1,y,H):await W(q.page,y,H),!0}catch(e){return x.default.error(e.response?.data?.message||"Failed to delete district"),!1}finally{w(!1)}},et=async t=>{w(!0);try{return await u.default.delete("/api/districts",{data:{ids:t}}),x.default.success(`${t.length} district(s) deleted successfully`),e.length===t.length&&q.page>1?await W(q.page-1,y,H):await W(q.page,y,H),!0}catch(e){return x.default.error(e.response?.data?.message||"Failed to delete districts"),!1}finally{w(!1)}};(0,a.useEffect)(()=>{Q()},[Q]),(0,a.useEffect)(()=>{b.length>0&&S&&W(1,y,H)},[b,S]);let ea=(e,t)=>{t?U([...L,e]):(U(L.filter(t=>t!==e)),R(!1))},es=e=>{$(e._id),_(e.name),T(e.stateId),A(!0)},er=async()=>{E.trim()?z?(w(!0),(P?await Z(P):await X())&&A(!1),w(!1)):x.default.error("Please select a state"):x.default.error("Please enter district name")},ei=e=>{Y({id:e._id,name:e.name}),O(!0)},el=async()=>{V.id&&(await ee(V.id),O(!1),Y({id:null,name:""}))},ed=async()=>{await et(L),K(!1)},en=async()=>{let t=e.length.toString().length+1,a=Math.max(8,...e.map(e=>e.name.length)),s=Math.max(5,...e.map(e=>e.stateName?.length||0)),r="No.".padEnd(t)+"	"+"District".padEnd(a)+"	"+"State".padEnd(s),i="-".repeat(t)+"	"+"-".repeat(a)+"	"+"-".repeat(s),l=e.map((e,r)=>(r+1).toString().padEnd(t)+"	"+e.name.padEnd(a)+"	"+(e.stateName||"").padEnd(s)).join("\n"),d=[...new Set(e.map(e=>e.stateName))].length,n=`
+
+=== Summary ===
+Total Districts: ${e.length}
+Unique States: ${d}`,o=`${r}
+${i}
+${l}${n}`;try{await navigator.clipboard.writeText(o),x.default.success("Districts data with summary copied!")}catch(e){x.default.error("Failed to copy to clipboard")}},eo=()=>{if(0===e.length)return void x.default.error("No districts to export");try{let t=h.utils.json_to_sheet(e.map((e,t)=>({"Sr.":t+1+(q.page-1)*q.limit,"District Name":e.name,State:e.stateName,"Created At":e.createdAt?new Date(e.createdAt).toLocaleDateString():"N/A","Updated At":e.updatedAt?new Date(e.updatedAt).toLocaleDateString():"N/A"}))),a=h.utils.book_new();h.utils.book_append_sheet(a,t,"Districts"),h.writeFile(a,`districts-${new Date().toISOString().split("T")[0]}.xlsx`),x.default.success("Excel file exported successfully!")}catch(e){x.default.error("Failed to export Excel file")}},ec=()=>{if(0===e.length)return void x.default.error("No districts to export");try{let t=h.utils.json_to_sheet(e.map((e,t)=>({"Sr.":t+1+(q.page-1)*q.limit,"District Name":e.name,State:e.stateName}))),a=h.utils.sheet_to_csv(t),s=new Blob([a],{type:"text/csv;charset=utf-8;"}),r=document.createElement("a");r.href=URL.createObjectURL(s),r.download=`districts-${new Date().toISOString().split("T")[0]}.csv`,r.click(),x.default.success("CSV file exported successfully!")}catch(e){x.default.error("Failed to export CSV file")}},em=()=>{if(0===e.length)return void x.default.error("No districts to export");try{let t=new p.default;t.text("Districts Management Report",14,16);let a=e.map((e,t)=>[t+1+(q.page-1)*q.limit,e.name,e.stateName||"N/A"]);(0,g.default)(t,{head:[["Sr.","District Name","State"]],body:a,startY:20,styles:{fontSize:8},headStyles:{fillColor:[76,175,80]}}),t.save(`districts-${new Date().toISOString().split("T")[0]}.pdf`),x.default.success("PDF file exported successfully!")}catch(e){x.default.error("Failed to export PDF file")}},ex=()=>{if(0===e.length)return void x.default.error("No districts to print");let t=window.open("","_blank","width=900,height=700");if(!t)return void x.default.error("Please allow popups to print");let a=`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Districts Report</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #4CAF50;
+          }
+          .header h1 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+            font-size: 24px;
+          }
+          .header-info {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 5px 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px;
+          }
+          th {
+            background-color: #f3f4f6;
+            color: #374151;
+            font-weight: 600;
+            padding: 12px 8px;
+            text-align: left;
+            border: 1px solid #d1d5db;
+          }
+          td {
+            padding: 10px 8px;
+            border: 1px solid #e5e7eb;
+            vertical-align: top;
+          }
+          tr:nth-child(even) {
+            background-color: #f9fafb;
+          }
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+          }
+          @media print {
+            @page {
+              margin: 0.5in;
+            }
+            body {
+              margin: 0;
+              -webkit-print-color-adjust: exact;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🗺️ Districts Management Report</h1>
+          <div class="header-info">Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+          <div class="header-info">Total Districts: ${q.total} | Showing: ${e.length} districts</div>
+          <div class="header-info">Page: ${q.page} of ${q.totalPages}</div>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>Sr.</th>
+              <th>District Name</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${e.map((e,t)=>`
+              <tr>
+                <td>${t+1+(q.page-1)*q.limit}</td>
+                <td><strong>${e.name}</strong></td>
+                <td>${e.stateName||"N/A"}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Printed from Kissan Partner System | ${window.location.hostname}</p>
+          <p>\xa9 ${new Date().getFullYear()} Kissan Partner. All rights reserved.</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(() => {
+              if (confirm('Close print window?')) {
+                window.close();
+              }
+            }, 100);
+          };
+        </script>
+      </body>
+      </html>
+    `;t.document.write(a),t.document.close()};(0,a.useEffect)(()=>{let e=setTimeout(()=>{S||(W(1,y,H),G(e=>({...e,page:1})))},500);return()=>clearTimeout(e)},[y,S]),(0,a.useEffect)(()=>{S||(W(1,y,H),G(e=>({...e,page:1})))},[H,S]);let eu=()=>{N(""),J(""),G(e=>({...e,page:1})),S||W(1,"","")};return(0,t.jsxs)("div",{className:"p-[.6rem] relative text-black text-sm md:p-1 overflow-x-auto min-h-screen",children:[S&&(0,t.jsx)("div",{className:"min-h-screen absolute w-full top-0 left-0 bg-[#e9e7e773] z-[100] flex items-center justify-center",children:(0,t.jsx)("div",{className:"animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"})}),(0,t.jsx)("div",{className:"mb-6 flex justify-between items-center",children:(0,t.jsxs)("div",{children:[(0,t.jsx)("h1",{className:"text-2xl md:text-2xl font-bold text-gray-800",children:"Districts Management"}),(0,t.jsxs)("p",{className:"text-gray-600 mt-2",children:["Overview and detailed management of all districts. ",q.total," districts found."]})]})}),L.length>0&&(0,t.jsx)("div",{className:"mb-4 p-3 bg-red-50 border border-red-200 rounded-lg",children:(0,t.jsxs)("div",{className:"flex items-center justify-between",children:[(0,t.jsxs)("div",{className:"flex items-center gap-2",children:[(0,t.jsx)(s.FaCheck,{className:"text-red-600"}),(0,t.jsxs)("span",{className:"font-medium text-red-700",children:[L.length," district",1!==L.length?"s":""," selected"]})]}),(0,t.jsxs)("button",{onClick:()=>{0===L.length?x.default.error("No districts selected"):K(!0)},className:"flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors",children:[(0,t.jsx)(s.FaTrash,{className:"w-4 h-4"}),"Delete Selected"]})]})}),(0,t.jsx)("div",{className:"lg:hidden flex flex-wrap gap-[.6rem] text-sm bg-white p-[.6rem] shadow mb-2",children:[{label:"Copy",icon:s.FaCopy,onClick:en,color:"bg-gray-100 hover:bg-gray-200 text-gray-800"},{label:"Excel",icon:s.FaFileExcel,onClick:eo,color:"bg-green-100 hover:bg-green-200 text-green-800"},{label:"CSV",icon:s.FaFileCsv,onClick:ec,color:"bg-blue-100 hover:bg-blue-200 text-blue-800"},{label:"PDF",icon:s.FaFilePdf,onClick:em,color:"bg-red-100 hover:bg-red-200 text-red-800"},{label:"Print",icon:s.FaPrint,onClick:ex,color:"bg-purple-100 hover:bg-purple-200 text-purple-800"}].map((e,a)=>(0,t.jsx)("button",{onClick:e.onClick,className:`flex items-center justify-center gap-[.6rem] text-sm px-4 py-2 rounded transition-all duration-200 ${e.color} font-medium`,children:(0,t.jsx)(e.icon,{size:14})},a))}),(0,t.jsx)("div",{className:"bg-white rounded lg:rounded-none shadow p-[.4rem] text-sm mb-2",children:(0,t.jsxs)("div",{className:"gap-[.6rem] text-sm items-end flex flex-wrap md:flex-row flex-col md:*:w-fit *:w-full",children:[(0,t.jsx)("div",{className:"md:col-span-3",children:(0,t.jsxs)("div",{className:"relative",children:[(0,t.jsx)(s.FaSearch,{className:"absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400",size:14}),(0,t.jsx)("input",{type:"text",placeholder:"Search districts...",value:y,onChange:e=>N(e.target.value),className:"md:w-72 w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"})]})}),(0,t.jsx)("div",{className:"md:col-span-3",children:(0,t.jsxs)("div",{className:"relative",children:[(0,t.jsx)(s.FaFilter,{className:"absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400",size:14}),(0,t.jsx)("select",{className:"w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-green-600 transition-colors",value:H,onChange:e=>J(e.target.value),disabled:k,children:k?(0,t.jsx)("option",{children:"Loading states..."}):0===b.length?(0,t.jsx)("option",{value:"",children:"No states available"}):(0,t.jsxs)(t.Fragment,{children:[(0,t.jsx)("option",{value:"",children:"All States"}),b.map(e=>(0,t.jsx)("option",{value:e._id,children:e.name},e._id))]})})]})}),(0,t.jsx)("div",{className:"md:col-span-2",children:(0,t.jsxs)("button",{onClick:eu,className:"w-full px-4 py-2.5 border border-gray-300 rounded hover:bg-gray-50 transition-colors font-medium flex items-center justify-center gap-2",children:[(0,t.jsx)(s.FaRedo,{size:14})," Reset"]})}),(0,t.jsx)("div",{className:"lg:flex hidden ml-auto flex-wrap gap-[.6rem] text-sm",children:[{label:"Copy",icon:s.FaCopy,onClick:en,color:"bg-gray-100 hover:bg-gray-200 text-gray-800"},{label:"Excel",icon:s.FaFileExcel,onClick:eo,color:"bg-green-100 hover:bg-green-200 text-green-800"},{label:"CSV",icon:s.FaFileCsv,onClick:ec,color:"bg-blue-100 hover:bg-blue-200 text-blue-800"},{label:"PDF",icon:s.FaFilePdf,onClick:em,color:"bg-red-100 hover:bg-red-200 text-red-800"},{label:"Print",icon:s.FaPrint,onClick:ex,color:"bg-purple-100 hover:bg-purple-200 text-purple-800"}].map((e,a)=>(0,t.jsx)("button",{onClick:e.onClick,className:`flex items-center gap-[.6rem] text-sm px-4 py-2 rounded transition-all duration-200 shadow-sm hover:shadow-md ${e.color} font-medium`,children:(0,t.jsx)(e.icon,{size:14})},a))}),(0,t.jsx)("div",{className:"md:col-span-2",children:(0,t.jsxs)("button",{onClick:()=>{$(null),_(""),T(""),A(!0)},className:"w-full px-4 py-2.5 bg-green-500 text-white rounded hover:bg-green-600 transition-colors font-medium flex items-center justify-center gap-2",children:[(0,t.jsx)(s.FaPlus,{size:14})," Add District"]})})]})}),!S&&e.length>0&&(0,t.jsxs)(t.Fragment,{children:[(0,t.jsx)("div",{className:"hidden lg:block bg-white rounded shadow",children:(0,t.jsxs)("table",{className:"min-w-full",children:[(0,t.jsx)("thead",{className:"border-b border-zinc-200",children:(0,t.jsxs)("tr",{className:"*:text-zinc-800",children:[(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold w-10",children:(0,t.jsx)("input",{type:"checkbox",checked:I,onChange:t=>{t.target.checked?(U(e.map(e=>e._id)),R(!0)):(U([]),R(!1))},className:"rounded border-gray-300"})}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"Sr."}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"District Name"}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"State"}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"Created At"}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"Updated At"}),(0,t.jsx)("th",{className:"p-[.6rem] text-sm text-left font-semibold",children:"Actions"})]})}),(0,t.jsx)("tbody",{className:"divide-y divide-gray-100",children:e.map((e,a)=>(0,t.jsxs)("tr",{className:"hover:bg-gray-50 transition-colors",children:[(0,t.jsx)("td",{className:"p-[.6rem] text-sm",children:(0,t.jsx)("input",{type:"checkbox",checked:L.includes(e._id),onChange:t=>ea(e._id,t.target.checked),className:"rounded border-gray-300"})}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm text-center",children:a+1+(q.page-1)*q.limit}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm",children:(0,t.jsx)("div",{className:"font-semibold",children:e.name})}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm",children:(0,t.jsx)("div",{className:"text-gray-700",children:e.stateName||"N/A"})}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm text-gray-600",children:e.createdAt?new Date(e.createdAt).toLocaleDateString():"N/A"}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm text-gray-600",children:e.updatedAt?new Date(e.updatedAt).toLocaleDateString():"N/A"}),(0,t.jsx)("td",{className:"p-[.6rem] text-sm",children:(0,t.jsxs)("div",{className:"flex gap-[.6rem] text-sm",children:[(0,t.jsx)("button",{onClick:()=>es(e),className:"p-[.6rem] text-sm text-blue-600 hover:bg-blue-50 rounded transition-colors",title:"Edit District",children:(0,t.jsx)(s.FaEdit,{size:14})}),(0,t.jsx)("button",{onClick:()=>ei(e),className:"p-[.6rem] text-sm text-red-600 hover:bg-red-50 rounded transition-colors",title:"Delete District",children:(0,t.jsx)(s.FaTrash,{size:14})})]})})]},e._id))})]})}),(0,t.jsx)("div",{className:"lg:hidden space-y-2 p-[.2rem] text-sm",children:e.map((e,a)=>(0,t.jsxs)("div",{className:"rounded p-[.6rem] text-sm border border-zinc-200 bg-white shadow",children:[(0,t.jsxs)("div",{className:"flex justify-between items-start mb-3",children:[(0,t.jsxs)("div",{className:"flex items-center gap-2",children:[(0,t.jsx)("input",{type:"checkbox",checked:L.includes(e._id),onChange:t=>ea(e._id,t.target.checked),className:"rounded border-gray-300"}),(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{className:"font-bold text-gray-800",children:e.name}),(0,t.jsxs)("div",{className:"text-xs text-gray-500",children:["Sr. ",a+1+(q.page-1)*q.limit]})]})]}),(0,t.jsxs)("div",{className:"flex gap-[.6rem] text-sm",children:[(0,t.jsx)("button",{onClick:()=>es(e),className:"p-1.5 text-blue-600",children:(0,t.jsx)(s.FaEdit,{size:14})}),(0,t.jsx)("button",{onClick:()=>ei(e),className:"p-1.5 text-red-600",children:(0,t.jsx)(s.FaTrash,{size:14})})]})]}),(0,t.jsxs)("div",{className:"space-y-2 text-xs",children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{className:"text-xs text-gray-500",children:"State"}),(0,t.jsx)("div",{className:"text-xs font-medium",children:e.stateName||"N/A"})]}),(0,t.jsxs)("div",{className:"grid grid-cols-2 gap-[.6rem] text-sm",children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{className:"text-xs text-gray-500",children:"Created At"}),(0,t.jsx)("div",{className:"text-xs",children:e.createdAt?new Date(e.createdAt).toLocaleDateString():"N/A"})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("div",{className:"text-xs text-gray-500",children:"Updated At"}),(0,t.jsx)("div",{className:"text-xs",children:e.updatedAt?new Date(e.updatedAt).toLocaleDateString():"N/A"})]})]})]})]},e._id))})]}),!S&&0===e.length&&(0,t.jsxs)("div",{className:"text-center py-12",children:[(0,t.jsx)("div",{className:"text-gray-400 text-6xl mb-4",children:"🗺️"}),(0,t.jsx)("h3",{className:"text-xl font-semibold mb-2",children:"No districts found"}),(0,t.jsx)("p",{className:"text-gray-500",children:y?`No districts matching "${y}" found`:H?"No districts found for selected state":"Try adjusting your search or filters"}),(0,t.jsx)("button",{onClick:eu,className:"mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors",children:"Reset Filters"})]}),!S&&e.length>0&&(0,t.jsxs)("div",{className:"flex flex-col bg-white sm:flex-row p-3 shadow justify-between items-center gap-[.6rem] text-sm",children:[(0,t.jsxs)("div",{className:"text-gray-600",children:["Showing ",(0,t.jsxs)("span",{className:"font-semibold",children:[1+(q.page-1)*q.limit,"-",Math.min(q.page*q.limit,q.total)]})," of"," ",(0,t.jsx)("span",{className:"font-semibold",children:q.total})," districts",(0,t.jsx)("select",{value:q.limit,onChange:e=>{let t=Number(e.target.value);G(e=>({...e,limit:t,page:1})),W(1,y,H,t)},className:"p-1 ml-3 border border-zinc-300 rounded",children:[5,10,20,50,100].map(e=>(0,t.jsx)("option",{value:e,children:e},e))})]}),(0,t.jsxs)("div",{className:"flex items-center gap-4",children:[(0,t.jsxs)("div",{className:"text-sm text-gray-600",children:["Page ",q.page," of ",q.totalPages]}),(0,t.jsx)(i.default,{count:q.totalPages,page:q.page,onChange:(e,t)=>{G(e=>({...e,page:t})),W(t,y,H)},color:"primary",shape:"rounded",showFirstButton:!0,showLastButton:!0,siblingCount:1,boundaryCount:1})]})]}),F&&(0,t.jsx)("div",{className:"fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-3 backdrop-blur-sm",children:(0,t.jsxs)("div",{className:"bg-white p-6 rounded-xl w-full max-w-md shadow-2xl",children:[(0,t.jsxs)("div",{className:"flex justify-between items-center mb-4",children:[(0,t.jsx)("h2",{className:"font-semibold text-xl text-gray-800",children:P?"Edit District":"Add New District"}),(0,t.jsx)("button",{onClick:()=>A(!1),className:"text-gray-500 hover:text-gray-700 text-xl",children:(0,t.jsx)(r.MdClose,{size:24})})]}),(0,t.jsxs)("div",{className:"space-y-4",children:[(0,t.jsxs)("div",{children:[(0,t.jsx)("label",{className:"block text-sm font-medium text-gray-700 mb-1",children:"District Name *"}),(0,t.jsx)("input",{type:"text",value:E,onChange:e=>_(e.target.value),onKeyPress:e=>"Enter"===e.key&&er(),className:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500",placeholder:"Enter district name",autoFocus:!0})]}),(0,t.jsxs)("div",{children:[(0,t.jsx)("label",{className:"block text-sm font-medium text-gray-700 mb-1",children:"State *"}),(0,t.jsxs)("select",{className:"w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500",value:z,onChange:e=>T(e.target.value),disabled:k,children:[(0,t.jsx)("option",{value:"",children:"Select a state"}),b.map(e=>(0,t.jsx)("option",{value:e._id,children:e.name},e._id))]})]})]}),(0,t.jsxs)("div",{className:"flex justify-end gap-3 mt-6",children:[(0,t.jsx)("button",{onClick:()=>A(!1),className:"px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors",disabled:v,children:"Cancel"}),(0,t.jsx)("button",{onClick:er,className:"px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors",disabled:v,children:v?"Saving...":P?"Update":"Add District"})]})]})}),(0,t.jsxs)(l.default,{open:M,onClose:()=>O(!1),"aria-labelledby":"alert-dialog-title","aria-describedby":"alert-dialog-description",children:[(0,t.jsx)(d.default,{id:"alert-dialog-title",className:"font-semibold",children:"Delete District?"}),(0,t.jsx)(n.default,{children:(0,t.jsxs)(o.default,{id:"alert-dialog-description",children:['Are you sure you want to delete the district "',V.name,'"? This action cannot be undone.']})}),(0,t.jsxs)(c.default,{children:[(0,t.jsx)(m.default,{onClick:()=>O(!1),color:"primary",children:"Cancel"}),(0,t.jsx)(m.default,{onClick:el,color:"error",variant:"contained",autoFocus:!0,children:"Delete"})]})]}),(0,t.jsxs)(l.default,{open:B,onClose:()=>K(!1),"aria-labelledby":"alert-dialog-title","aria-describedby":"alert-dialog-description",children:[(0,t.jsx)(d.default,{id:"alert-dialog-title",className:"font-semibold",children:"Delete Selected Districts?"}),(0,t.jsx)(n.default,{children:(0,t.jsxs)(o.default,{id:"alert-dialog-description",children:["Are you sure you want to delete ",L.length," selected district(s)? This action cannot be undone."]})}),(0,t.jsxs)(c.default,{children:[(0,t.jsx)(m.default,{onClick:()=>K(!1),color:"primary",children:"Cancel"}),(0,t.jsxs)(m.default,{onClick:ed,color:"error",variant:"contained",autoFocus:!0,children:["Delete (",L.length,")"]})]})]})]})}e.s(["default",()=>f])}]);

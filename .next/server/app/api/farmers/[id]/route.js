@@ -1,0 +1,10 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/farmers/[id]/route.js")
+R.c("server/chunks/[root-of-the-server]__0596d598._.js")
+R.c("server/chunks/f6ba3_bcryptjs_index_b59a1966.js")
+R.c("server/chunks/f6ba3_next_dist_esm_build_templates_app-route_40b8c471.js")
+R.c("server/chunks/[root-of-the-server]__1c02e37a._.js")
+R.c("server/chunks/f6ba3_next_a157d32c._.js")
+R.c("server/chunks/Downloads_adminkisanpartner-1_adminkisanpartner_app_lib_auth_ts_fada3700._.js")
+R.c("server/chunks/9111e__next-internal_server_app_api_farmers_[id]_route_actions_b4366b82.js")
+R.m(241168)
+module.exports=R.m(241168).exports
