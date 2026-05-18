@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       postedByName: body.postedByName,
       status: 'active',
       isActive: true,
-      verificationStatus: "pending",
+      verificationStatus: "verified", // Set to verified by default for admin/subadmin
     };
     
     console.log("Creating product with data:", productData);
