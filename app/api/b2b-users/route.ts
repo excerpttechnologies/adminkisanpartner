@@ -82,8 +82,9 @@ export async function GET(request: NextRequest) {
     ];
     const safeSortBy    = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
     const safeSortOrder = sortOrder === "asc" ? 1 : -1;
-    const sort          = { [safeSortBy]: safeSortOrder };
-
+const sort: Record<string, 1 | -1> = {
+  [safeSortBy]: safeSortOrder as 1 | -1,
+};
     // ── query execution ───────────────────────────────────────────
     const baseQuery = B2BUser.find(query)
       .select("-security.password -security.mpin")

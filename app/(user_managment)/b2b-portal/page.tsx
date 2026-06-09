@@ -5480,23 +5480,281 @@
 
 
 
-//updated  by sagar
-// app/b2b/page.tsx
+// //updated  by sagar
+// // app/b2b/page.tsx
+// "use client";
+
+// import React, { useState, useEffect } from "react";
+
+// import { getAdminSessionAction } from "../../actions/auth-actions";
+// import { Toaster } from "react-hot-toast";
+// import B2BProducts from "@/app/_components/b2b/B2BProducts";
+// import B2BUsers from "@/app/_components/b2b/B2BUsers";
+// import B2BOrders from "@/app/_components/b2b/B2BOrders";
+
+
+// const B2B = () => {
+//   const [activeTab, setActiveTab] = useState<"users" | "products" | "orders">(
+//     "users",
+//   );
+//   const [adminSession, setAdminSession] = useState<any>(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const loadAdminSession = async () => {
+//       try {
+//         const session = await getAdminSessionAction();
+//         setAdminSession(session?.admin);
+//         console.log("Admin session:", session);
+//       } catch (error) {
+//         console.error("Error fetching admin session:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     loadAdminSession();
+//   }, []);
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+//           <p className="mt-4 text-gray-600">Loading dashboard...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       <Toaster position="top-right" />
+
+//       {/* Header - Removed top spacing */}
+//       <div className="  sticky top-0 z-50">
+//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//           <div className="flex justify-between items-center h-16">
+//             <h1 className="text-2xl font-bold text-gray-900">B2B Dashboard</h1>
+//             {adminSession && (
+//               <div className="flex items-center space-x-3">
+//                 <span className="text-sm text-gray-600">
+//                   {adminSession.name}
+//                 </span>
+//                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+//                   {adminSession.role}
+//                 </span>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Tabs - Removed sticky  spacing */}
+//       <div className="bg-white border-b rounded-full border-gray-200 sticky top-0 z-50">
+//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//           <nav className="-mb-px flex space-x-8">
+//             <button
+//               onClick={() => setActiveTab("users")}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+//                 activeTab === "users"
+//                   ? "border-blue-500 text-blue-600"
+//                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//               }`}
+//             >
+//               B2B Users
+//             </button>
+//             <button
+//               onClick={() => setActiveTab("products")}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+//                 activeTab === "products"
+//                   ? "border-blue-500 text-blue-600"
+//                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//               }`}
+//             >
+//               B2B Products
+//             </button>
+//             <button
+//               onClick={() => setActiveTab("orders")}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+//                 activeTab === "orders"
+//                   ? "border-blue-500 text-blue-600"
+//                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//               }`}
+//             >
+//               B2B Orders
+//             </button>
+//             <button
+//               onClick={() => setActiveTab("Re-Fund")}
+//               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+//                 activeTab === "Re-Fund"
+//                   ? "border-blue-500 text-blue-600"
+//                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//               }`}
+//             >
+//               B2B Re-Fund
+//             </button>
+//           </nav>
+//         </div>
+//       </div>
+
+//       {/* Content */}
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+//         {activeTab === "users" && <B2BUsers adminSession={adminSession} />}
+//         {activeTab === "products" && (
+//           <B2BProducts adminSession={adminSession} />
+//         )}
+//         {activeTab === "orders" && <B2BOrders />}
+//         {activeTab === "Re-Fund" && <B2BReFund />}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default B2B;
+
+
+
+
+
+
+
+
+
+
+
+
+// "use client";
+
+// import React, { useState, useEffect } from "react";
+// import { getAdminSessionAction } from "../../actions/auth-actions";
+// import { Toaster } from "react-hot-toast";
+// import B2BProducts from "@/app/_components/b2b/B2BProducts";
+// import B2BUsers from "@/app/_components/b2b/B2BUsers";
+// import B2BOrders from "@/app/_components/b2b/B2BOrders";
+// import B2BReFund from "@/app/_components/b2b/B2BRefundList"; // ← new import
+
+// type Tab = "users" | "products" | "orders" | "Re-Fund";
+
+// const B2B = () => {
+//   const [activeTab, setActiveTab] = useState<Tab>("users");
+//   const [adminSession, setAdminSession] = useState<any>(null);
+//   const [loading, setLoading] = useState(true);
+
+//   useEffect(() => {
+//     const loadAdminSession = async () => {
+//       try {
+//         const session = await getAdminSessionAction();
+//         setAdminSession(session?.admin);
+//         console.log("Admin session:", session);
+//       } catch (error) {
+//         console.error("Error fetching admin session:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     loadAdminSession();
+//   }, []);
+
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+//         <div className="text-center">
+//           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+//           <p className="mt-4 text-gray-600">Loading dashboard...</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const tabs: { key: Tab; label: string }[] = [
+//     { key: "users", label: "B2B Users" },
+//     { key: "products", label: "B2B Products" },
+//     { key: "orders", label: "B2B Orders" },
+//     { key: "Re-Fund", label: "B2B Re-Fund" },
+//   ];
+
+//   return (
+//     <div className="min-h-screen bg-gray-50">
+//       <Toaster position="top-right" />
+
+//       {/* Header */}
+//       <div className="sticky top-0 z-50">
+//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//           <div className="flex justify-between items-center h-16">
+//             <h1 className="text-2xl font-bold text-gray-900">B2B Dashboard</h1>
+//             {adminSession && (
+//               <div className="flex items-center space-x-3">
+//                 <span className="text-sm text-gray-600">
+//                   {adminSession.name}
+//                 </span>
+//                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+//                   {adminSession.role}
+//                 </span>
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Tabs */}
+//       <div className="bg-white border-b border-gray-200 sticky top-0 z-50">
+//         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+//           <nav className="-mb-px flex space-x-8">
+//             {tabs.map(({ key, label }) => (
+//               <button
+//                 key={key}
+//                 onClick={() => setActiveTab(key)}
+//                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+//                   activeTab === key
+//                     ? "border-blue-500 text-blue-600"
+//                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+//                 }`}
+//               >
+//                 {label}
+//               </button>
+//             ))}
+//           </nav>
+//         </div>
+//       </div>
+
+//       {/* Content */}
+//       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+//         {activeTab === "users" && <B2BUsers adminSession={adminSession} />}
+//         {activeTab === "products" && <B2BProducts adminSession={adminSession} />}
+//         {activeTab === "orders" && <B2BOrders />}
+//         {activeTab === "Re-Fund" && <B2BReFund />}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default B2B;
+
+
+
+
+
+
+
+
+
+
+
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-
 import { getAdminSessionAction } from "../../actions/auth-actions";
 import { Toaster } from "react-hot-toast";
 import B2BProducts from "@/app/_components/b2b/B2BProducts";
 import B2BUsers from "@/app/_components/b2b/B2BUsers";
 import B2BOrders from "@/app/_components/b2b/B2BOrders";
+import B2BReFund from "@/app/_components/b2b/B2BRefundList";
 
+type Tab = "users" | "products" | "orders" | "Re-Fund";
 
 const B2B = () => {
-  const [activeTab, setActiveTab] = useState<"users" | "products" | "orders">(
-    "users",
-  );
+  const [activeTab, setActiveTab] = useState<Tab>("users");
   const [adminSession, setAdminSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -5526,12 +5784,19 @@ const B2B = () => {
     );
   }
 
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "users", label: "B2B Users" },
+    { key: "products", label: "B2B Products" },
+    { key: "orders", label: "B2B Orders" },
+    { key: "Re-Fund", label: "B2B Re-Fund" },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Header - Removed top spacing */}
-      <div className="  sticky top-0 z-50">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <h1 className="text-2xl font-bold text-gray-900">B2B Dashboard</h1>
@@ -5549,51 +5814,33 @@ const B2B = () => {
         </div>
       </div>
 
-      {/* Tabs - Removed sticky  spacing */}
-      <div className="bg-white border-b rounded-full border-gray-200 sticky top-0 z-50">
+      {/* Tabs */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "users"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              B2B Users
-            </button>
-            <button
-              onClick={() => setActiveTab("products")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "products"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              B2B Products
-            </button>
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                activeTab === "orders"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              B2B Orders
-            </button>
+          <nav className="-mb-px flex space-x-8 overflow-x-auto scrollbar-hide">
+            {tabs.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeTab === key
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </nav>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Content - Remove padding and let child components manage their own spacing */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {activeTab === "users" && <B2BUsers adminSession={adminSession} />}
-        {activeTab === "products" && (
-          <B2BProducts adminSession={adminSession} />
-        )}
+        {activeTab === "products" && <B2BProducts adminSession={adminSession} />}
         {activeTab === "orders" && <B2BOrders />}
+        {activeTab === "Re-Fund" && <B2BReFund />}
       </div>
     </div>
   );

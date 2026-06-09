@@ -346,17 +346,170 @@
 
 
 
+// import { NextRequest, NextResponse } from "next/server";
+// import connectDB from "@/app/lib/Db";
+// import B2BOrder from "@/app/models/B2BOrder";
+
+// export async function GET(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     await connectDB();
+//     const { id } = params;
+    
+//     const order = await B2BOrder.findById(id);
+    
+//     if (!order) {
+//       return NextResponse.json(
+//         { success: false, message: "Order not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     return NextResponse.json({ 
+//       success: true, 
+//       data: order
+//     });
+//   } catch (error: any) {
+//     console.error("GET order error:", error);
+//     return NextResponse.json(
+//       { success: false, message: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// export async function PATCH(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     await connectDB();
+//     const { id } = params;
+//     const body = await request.json();
+    
+//     console.log("PATCH request received for ID:", params.id);
+//     console.log("Update data:", body);
+    
+//     // Update the order
+//     const updatedOrder = await B2BOrder.findByIdAndUpdate(
+//       id,
+//       { 
+//         $set: {
+//           status: body.status,
+//           "addressSnapshot.fullName": body.addressSnapshot?.fullName,
+//           "addressSnapshot.phoneNumber": body.addressSnapshot?.phoneNumber,
+//           "addressSnapshot.addressLine1": body.addressSnapshot?.addressLine1,
+//           "addressSnapshot.city": body.addressSnapshot?.city,
+//           "addressSnapshot.state": body.addressSnapshot?.state,
+//           "addressSnapshot.pincode": body.addressSnapshot?.pincode,
+//           updatedAt: new Date()
+//         },
+//         ...(body.status && {
+//           $push: {
+//             statusHistory: {
+//               status: body.status,
+//               timestamp: new Date(),
+//               note: `Status updated to ${body.status}`,
+//               updatedBy: "Admin"
+//             }
+//           }
+//         })
+//       },
+//       { new: true, runValidators: true }
+//     );
+    
+//     if (!updatedOrder) {
+//       return NextResponse.json(
+//         { success: false, message: "Order not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     return NextResponse.json({ 
+//       success: true, 
+//       data: updatedOrder,
+//       message: "Order updated successfully!"
+//     });
+//   } catch (error: any) {
+//     console.error("PATCH order error:", error);
+//     return NextResponse.json(
+//       { success: false, message: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+// export async function DELETE(
+//   request: NextRequest,
+//   { params }: { params: { id: string } }
+// ) {
+//   try {
+//     await connectDB();
+//     const { id } = params;
+    
+//     const deletedOrder = await B2BOrder.findByIdAndDelete(id);
+    
+//     if (!deletedOrder) {
+//       return NextResponse.json(
+//         { success: false, message: "Order not found" },
+//         { status: 404 }
+//       );
+//     }
+    
+//     return NextResponse.json({ 
+//       success: true, 
+//       message: "Order deleted successfully!" 
+//     });
+//   } catch (error: any) {
+//     console.error("DELETE order error:", error);
+//     return NextResponse.json(
+//       { success: false, message: error.message },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///updated by sagar
+
+
+
+
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/app/lib/Db";
 import B2BOrder from "@/app/models/B2BOrder";
 
+
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+{ params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
+    const { id } = await params;
     
     const order = await B2BOrder.findById(id);
     
@@ -382,16 +535,12 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+{ params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
-    const body = await request.json();
+const { id } = await params;    const body = await request.json();
     
-    console.log("PATCH request received for ID:", params.id);
-    console.log("Update data:", body);
-    
+   
     // Update the order
     const updatedOrder = await B2BOrder.findByIdAndUpdate(
       id,
@@ -443,12 +592,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+{ params }: RouteContext) {
   try {
     await connectDB();
-    const { id } = params;
-    
+const { id } = await params;    
     const deletedOrder = await B2BOrder.findByIdAndDelete(id);
     
     if (!deletedOrder) {

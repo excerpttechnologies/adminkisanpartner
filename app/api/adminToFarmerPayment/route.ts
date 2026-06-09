@@ -528,7 +528,7 @@ async function getAggregationStats(matchConditions: any) {
 }
 
 // 🔍 OPTIONAL: Separate endpoint to get all unique filter values
-export async function GETFilterOptions(req: NextRequest) {
+ async function GETFilterOptions(req: NextRequest) {
   try {
     await connectDB();
 
